@@ -11,9 +11,11 @@ namespace XYZ.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            // Database Context
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+            // Identity Configuration
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 6;
@@ -28,7 +30,11 @@ namespace XYZ.Infrastructure
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-            services.AddScoped<IUserRepository, UserRepository>();
+            // Multi-tenancy service
+            services.AddScoped<ITenantService, TenantService>();
+
+            // TODO: Repositories
+            // services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }
