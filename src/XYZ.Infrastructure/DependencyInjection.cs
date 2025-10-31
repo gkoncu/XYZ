@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XYZ.Domain.Entities;
 using XYZ.Infrastructure.Data;
+using XYZ.Infrastructure.MultiTenancy;
 
 namespace XYZ.Infrastructure
 {

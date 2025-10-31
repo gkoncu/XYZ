@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using XYZ.Domain.Common;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
