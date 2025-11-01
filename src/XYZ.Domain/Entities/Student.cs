@@ -24,5 +24,8 @@ namespace XYZ.Domain.Entities
         public Tenant Tenant { get; set; } = null!;
         public Class? Class { get; set; }
         public ICollection<Document> Documents { get; set; } = new List<Document>();
+        public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+        public ICollection<ProgressRecord> ProgressRecords { get; set; } = new List<ProgressRecord>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }

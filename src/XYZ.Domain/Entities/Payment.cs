@@ -21,6 +21,10 @@ namespace XYZ.Domain.Entities
         public string? Notes { get; set; }
         public string? DiscountReason { get; set; }
         public decimal? DiscountAmount { get; set; }
+        public int InstallmentNumber { get; set; } = 1;
+        public int TotalInstallments { get; set; } = 1;
+        public bool IsInstallment { get; set; } = false;
+        public string? InstallmentPlan { get; set; }
 
         public Student Student { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;
