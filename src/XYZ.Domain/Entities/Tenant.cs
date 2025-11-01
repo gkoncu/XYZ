@@ -23,7 +23,11 @@ namespace XYZ.Domain.Entities
         public string SubscriptionPlan { get; set; } = "Basic";
 
         public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+        public ICollection<Student> Students { get; set; } = new List<Student>();
+        public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
+        public ICollection<Admin> Admins { get; set; } = new List<Admin>();
         public ICollection<Class> Classes { get; set; } = new List<Class>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
         public ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
     }
 }

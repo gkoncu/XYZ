@@ -42,6 +42,8 @@ namespace XYZ.Infrastructure.Data
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
 
+            ConfigureCascadeRestrictions(builder);
+
             ConfigureDecimalPrecisions(builder);
 
             ConfigureOptionalRelationships(builder);
@@ -49,6 +51,62 @@ namespace XYZ.Infrastructure.Data
             // TODO : Tenant-based Query Filters (Multi-tenancy)
             // builder.Entity<Student>().HasQueryFilter(s => s.TenantId == _tenantService.GetCurrentTenantId());
             // builder.Entity<Coach>().HasQueryFilter(c => c.TenantId == _tenantService.GetCurrentTenantId());
+        }
+
+        private void ConfigureCascadeRestrictions(ModelBuilder builder)
+        {
+            builder.Entity<Class>(entity =>
+            {
+                entity.HasOne(c => c.Tenant)
+                      .WithMany(t => t.Classes)
+                      .HasForeignKey(c => c.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.HeadCoach)
+                      .WithMany(co => co.HeadClasses)
+                      .HasForeignKey(c => c.HeadCoachId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Student>(entity =>
+            {
+                entity.HasOne(s => s.Tenant)
+                      .WithMany(t => t.Students)
+                      .HasForeignKey(s => s.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Coach>(entity =>
+            {
+                entity.HasOne(c => c.Tenant)
+                      .WithMany(t => t.Coaches)
+                      .HasForeignKey(c => c.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Admin>(entity =>
+            {
+                entity.HasOne(a => a.Tenant)
+                      .WithMany(t => t.Admins)
+                      .HasForeignKey(a => a.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.Tenant)
+                      .WithMany(t => t.Payments)
+                      .HasForeignKey(p => p.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Announcement>(entity =>
+            {
+                entity.HasOne(a => a.Tenant)
+                      .WithMany(t => t.Announcements)
+                      .HasForeignKey(a => a.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
         }
 
         private void ConfigureDecimalPrecisions(ModelBuilder builder)
@@ -99,7 +157,7 @@ namespace XYZ.Infrastructure.Data
                       .IsRequired(false);
             });
 
-            builder.Entity<Domain.Entities.Document>(entity =>
+            builder.Entity<Document>(entity =>
             {
                 entity.HasOne(d => d.Student)
                       .WithMany(s => s.Documents)
