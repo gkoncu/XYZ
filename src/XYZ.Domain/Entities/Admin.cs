@@ -20,5 +20,6 @@ namespace XYZ.Domain.Entities
 
         public ApplicationUser User { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;
+        public ICollection<Document> Documents { get; set; } = new List<Document>();
     }
 }
