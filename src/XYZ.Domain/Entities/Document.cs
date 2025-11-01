@@ -11,7 +11,6 @@ namespace XYZ.Domain.Entities
 {
     public class Document : BaseEntity
     {
-        public int StudentId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -19,6 +18,12 @@ namespace XYZ.Domain.Entities
         public DateTime UploadDate { get; set; } = DateTime.UtcNow;
         public string UploadedBy { get; set; } = string.Empty;
 
-        public Student Student { get; set; } = null!;
+        public int? StudentId { get; set; }
+        public int? CoachId { get; set; }
+        public int? AdminId { get; set; }
+
+        public Student? Student { get; set; }
+        public Coach? Coach { get; set; }
+        public Admin? Admin { get; set; }
     }
 }

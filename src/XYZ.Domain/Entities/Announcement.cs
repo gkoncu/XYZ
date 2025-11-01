@@ -15,7 +15,6 @@ namespace XYZ.Domain.Entities
         public string Content { get; set; } = string.Empty;
         public DateTime PublishDate { get; set; }
         public DateTime? ExpiryDate { get; set; }
-        public bool IsImportant { get; set; }
         public AnnouncementType Type { get; set; }
 
         public Tenant Tenant { get; set; } = null!;

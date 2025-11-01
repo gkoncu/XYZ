@@ -11,6 +11,7 @@ namespace XYZ.Domain.Entities
     {
         public string UserId { get; set; } = null!;
         public int TenantId { get; set; }
+        public string IdentityNumber { get; set; } = string.Empty;
         public string? Department { get; set; }
         public string? Responsibilities { get; set; }
         public bool CanManageUsers { get; set; } = true;

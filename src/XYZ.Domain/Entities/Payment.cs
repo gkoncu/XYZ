@@ -19,6 +19,8 @@ namespace XYZ.Domain.Entities
         public string? PaymentMethod { get; set; }
         public string? TransactionId { get; set; }
         public string? Notes { get; set; }
+        public string? DiscountReason { get; set; }
+        public decimal? DiscountAmount { get; set; }
 
         public Student Student { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;

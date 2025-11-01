@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using XYZ.Domain.Enums;
@@ -16,6 +17,7 @@ namespace XYZ.Domain.Entities
         public int TenantId { get; set; }
         public UserRole Role { get; set; }
         public string Branch { get; set; } = string.Empty;
+        public Gender Gender { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

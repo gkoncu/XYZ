@@ -10,6 +10,7 @@ namespace XYZ.Domain.Entities
     public class ClassSchedule : BaseEntity
     {
         public int ClassId { get; set; }
+        public string Name { get; set; } = string.Empty;
         public DayOfWeek DayOfWeek { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
