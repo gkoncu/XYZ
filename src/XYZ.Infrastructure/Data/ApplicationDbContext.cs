@@ -74,6 +74,16 @@ namespace XYZ.Infrastructure.Data
                       .WithMany(t => t.Students)
                       .HasForeignKey(s => s.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(s => s.User)
+                      .WithOne(u => u.StudentProfile)
+                      .HasForeignKey<Student>(s => s.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(s => s.Class)
+                      .WithMany(c => c.Students)
+                      .HasForeignKey(s => s.ClassId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<Coach>(entity =>
@@ -81,6 +91,11 @@ namespace XYZ.Infrastructure.Data
                 entity.HasOne(c => c.Tenant)
                       .WithMany(t => t.Coaches)
                       .HasForeignKey(c => c.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.User)
+                      .WithOne(u => u.CoachProfile)
+                      .HasForeignKey<Coach>(c => c.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -90,6 +105,11 @@ namespace XYZ.Infrastructure.Data
                       .WithMany(t => t.Admins)
                       .HasForeignKey(a => a.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.User)
+                      .WithOne(u => u.AdminProfile)
+                      .HasForeignKey<Admin>(a => a.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<Payment>(entity =>
@@ -98,6 +118,11 @@ namespace XYZ.Infrastructure.Data
                       .WithMany(t => t.Payments)
                       .HasForeignKey(p => p.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Student)
+                      .WithMany(s => s.Payments)
+                      .HasForeignKey(p => p.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<Announcement>(entity =>
@@ -105,6 +130,66 @@ namespace XYZ.Infrastructure.Data
                 entity.HasOne(a => a.Tenant)
                       .WithMany(t => t.Announcements)
                       .HasForeignKey(a => a.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<ClassSchedule>(entity =>
+            {
+                entity.HasOne(cs => cs.Class)
+                      .WithMany(c => c.Schedules)
+                      .HasForeignKey(cs => cs.ClassId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Attendance>(entity =>
+            {
+                entity.HasOne(a => a.Student)
+                      .WithMany(s => s.Attendances)
+                      .HasForeignKey(a => a.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.ClassSchedule)
+                      .WithMany(cs => cs.Attendances)
+                      .HasForeignKey(a => a.ClassScheduleId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<ProgressRecord>(entity =>
+            {
+                entity.HasOne(pr => pr.Student)
+                      .WithMany(s => s.ProgressRecords)
+                      .HasForeignKey(pr => pr.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<ClassAssistantCoach>(entity =>
+            {
+                entity.HasOne(cac => cac.Class)
+                      .WithMany(c => c.AssistantCoaches)
+                      .HasForeignKey(cac => cac.ClassId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(cac => cac.Coach)
+                      .WithMany(c => c.AssistantClasses)
+                      .HasForeignKey(cac => cac.CoachId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Domain.Entities.Document>(entity =>
+            {
+                entity.HasOne(d => d.Student)
+                      .WithMany(s => s.Documents)
+                      .HasForeignKey(d => d.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Coach)
+                      .WithMany(c => c.Documents)
+                      .HasForeignKey(d => d.CoachId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Admin)
+                      .WithMany(a => a.Documents)
+                      .HasForeignKey(d => d.AdminId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
         }

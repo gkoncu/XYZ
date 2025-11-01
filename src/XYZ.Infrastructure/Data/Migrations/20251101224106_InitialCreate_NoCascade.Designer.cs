@@ -12,8 +12,8 @@ using XYZ.Infrastructure.Data;
 namespace XYZ.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251101220824_FixTenantNavigationProperties")]
-    partial class FixTenantNavigationProperties
+    [Migration("20251101224106_InitialCreate_NoCascade")]
+    partial class InitialCreate_NoCascade
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -946,7 +946,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.ApplicationUser", "User")
                         .WithOne("AdminProfile")
                         .HasForeignKey("XYZ.Domain.Entities.Admin", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Tenant");
@@ -978,11 +978,13 @@ namespace XYZ.Infrastructure.Data.Migrations
                 {
                     b.HasOne("XYZ.Domain.Entities.ClassSchedule", "ClassSchedule")
                         .WithMany("Attendances")
-                        .HasForeignKey("ClassScheduleId");
+                        .HasForeignKey("ClassScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("XYZ.Domain.Entities.Student", "Student")
                         .WithMany("Attendances")
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ClassSchedule");
 
@@ -1012,11 +1014,13 @@ namespace XYZ.Infrastructure.Data.Migrations
                 {
                     b.HasOne("XYZ.Domain.Entities.Class", "Class")
                         .WithMany("AssistantCoaches")
-                        .HasForeignKey("ClassId");
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("XYZ.Domain.Entities.Coach", "Coach")
                         .WithMany("AssistantClasses")
-                        .HasForeignKey("CoachId");
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Class");
 
@@ -1028,7 +1032,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.Class", "Class")
                         .WithMany("Schedules")
                         .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Class");
@@ -1045,7 +1049,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.ApplicationUser", "User")
                         .WithOne("CoachProfile")
                         .HasForeignKey("XYZ.Domain.Entities.Coach", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Tenant");
@@ -1057,15 +1061,18 @@ namespace XYZ.Infrastructure.Data.Migrations
                 {
                     b.HasOne("XYZ.Domain.Entities.Admin", "Admin")
                         .WithMany("Documents")
-                        .HasForeignKey("AdminId");
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("XYZ.Domain.Entities.Coach", "Coach")
                         .WithMany("Documents")
-                        .HasForeignKey("CoachId");
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("XYZ.Domain.Entities.Student", "Student")
                         .WithMany("Documents")
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Admin");
 
@@ -1079,7 +1086,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.Student", "Student")
                         .WithMany("Payments")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("XYZ.Domain.Entities.Tenant", "Tenant")
@@ -1098,7 +1105,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.Student", "Student")
                         .WithMany("ProgressRecords")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Student");
@@ -1108,7 +1115,8 @@ namespace XYZ.Infrastructure.Data.Migrations
                 {
                     b.HasOne("XYZ.Domain.Entities.Class", "Class")
                         .WithMany("Students")
-                        .HasForeignKey("ClassId");
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("XYZ.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Students")
@@ -1119,7 +1127,7 @@ namespace XYZ.Infrastructure.Data.Migrations
                     b.HasOne("XYZ.Domain.Entities.ApplicationUser", "User")
                         .WithOne("StudentProfile")
                         .HasForeignKey("XYZ.Domain.Entities.Student", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Class");
