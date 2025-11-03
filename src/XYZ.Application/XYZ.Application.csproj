@@ -17,4 +17,21 @@
     <ProjectReference Include="..\XYZ.Domain\XYZ.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Common\Interfaces\" />
+    <Folder Include="Common\Models\" />
+    <Folder Include="Common\Behaviors\" />
+    <Folder Include="Features\Coaches\" />
+    <Folder Include="Features\Classes\" />
+    <Folder Include="Features\Attendances\" />
+    <Folder Include="Features\Documents\" />
+    <Folder Include="Features\Announcements\" />
+    <Folder Include="Features\Dashboard\" />
+    <Folder Include="Features\Tenants\" />
+    <Folder Include="Features\ProgressRecords\" />
+    <Folder Include="Features\Payments\" />
+    <Folder Include="Features\Students\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>
