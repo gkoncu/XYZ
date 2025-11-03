@@ -22,8 +22,4 @@
     <ProjectReference Include="..\XYZ.Domain\XYZ.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ExternalServices\" />
-  </ItemGroup>
-
 </Project>

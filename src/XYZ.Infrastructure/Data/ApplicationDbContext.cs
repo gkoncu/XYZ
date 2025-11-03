@@ -1,30 +1,33 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Infrastructure.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
 
-        public DbSet<Tenant> Tenants { get; set; }
-        public DbSet<Student> Students { get; set; }
-        public DbSet<Coach> Coaches { get; set; }
-        public DbSet<Admin> Admins { get; set; }
-        public DbSet<Class> Classes { get; set; }
-        public DbSet<ClassSchedule> ClassSchedules { get; set; }
-        public DbSet<ClassAssistantCoach> ClassAssistantCoaches { get; set; }
-        public DbSet<Attendance> Attendances { get; set; }
-        public DbSet<Domain.Entities.Document> Documents { get; set; }
-        public DbSet<ProgressRecord> ProgressRecords { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<Announcement> Announcements { get; set; }
+        public DbSet<Tenant> Tenants => Set<Tenant>();
+        public DbSet<Student> Students => Set<Student>();
+        public DbSet<Coach> Coaches => Set<Coach>();
+        public DbSet<Class> Classes => Set<Class>();
+        public DbSet<ClassAssistantCoach> ClassAssistantCoaches => Set<ClassAssistantCoach>();
+        public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
+        public DbSet<Attendance> Attendances => Set<Attendance>();
+        public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<Document> Documents => Set<Document>();
+        public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
+        public DbSet<Announcement> Announcements => Set<Announcement>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
             builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
 
