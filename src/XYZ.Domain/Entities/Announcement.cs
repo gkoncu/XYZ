@@ -11,6 +11,7 @@ namespace XYZ.Domain.Entities
     public class Announcement : BaseEntity
     {
         public int TenantId { get; set; }
+        public int? ClassId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public DateTime PublishDate { get; set; }
@@ -18,5 +19,6 @@ namespace XYZ.Domain.Entities
         public AnnouncementType Type { get; set; }
 
         public Tenant Tenant { get; set; } = null!;
+        public Class Class { get; set; } = null!;
     }
 }

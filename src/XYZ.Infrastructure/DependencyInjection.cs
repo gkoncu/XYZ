@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Infrastructure.Data;
 using XYZ.Infrastructure.ExternalServices;
 
