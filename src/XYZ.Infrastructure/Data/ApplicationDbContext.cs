@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Infrastructure.Data
