@@ -16,9 +16,18 @@ namespace XYZ.Domain.Entities
         public string Branch { get; set; } = string.Empty;
         public string IdentityNumber { get; set; } = string.Empty;
 
-        public decimal MonthlyFee { get; set; }
-        public string? PaymentPlan { get; set; }
+        public string? Parent1FirstName { get; set; }
+        public string? Parent1LastName { get; set; }
+        public string? Parent1Email { get; set; }
+        public string? Parent1PhoneNumber { get; set; }
 
+        public string? Parent2FirstName { get; set; }
+        public string? Parent2LastName { get; set; }
+        public string? Parent2Email { get; set; }
+        public string? Parent2PhoneNumber { get; set; }
+
+        public string? MedicalInformation { get; set; }
+        public string? Notes { get; set; }
 
         public ApplicationUser User { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;

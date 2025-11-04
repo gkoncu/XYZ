@@ -17,6 +17,11 @@ namespace XYZ.Application.Common.Interfaces
         IQueryable<Payment> ApplyPaymentScope(IQueryable<Payment> query, ApplicationUser currentUser);
         IQueryable<Announcement> ApplyAnnouncementScope(IQueryable<Announcement> query, ApplicationUser currentUser);
 
+        //Scoped queries
+        IQueryable<Student> GetScopedStudents();
+        IQueryable<Coach> GetScopedCoaches();
+        IQueryable<Class> GetScopedClasses();
+
         Task<bool> CanAccessStudentAsync(int studentId, ApplicationUser currentUser);
         Task<bool> CanAccessClassAsync(int classId, ApplicationUser currentUser);
         Task<bool> CanAccessDocumentAsync(int documentId, ApplicationUser currentUser);

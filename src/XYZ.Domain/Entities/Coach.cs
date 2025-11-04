@@ -18,7 +18,6 @@ namespace XYZ.Domain.Entities
         public Tenant Tenant { get; set; } = null!;
 
         public ICollection<Document> Documents { get; set; } = new List<Document>();
-        public ICollection<Class> HeadClasses { get; set; } = new List<Class>();
-        public ICollection<ClassAssistantCoach> AssistantClasses { get; set; } = new List<ClassAssistantCoach>();
+        public ICollection<Class> Classes { get; set; } = new List<Class>();
     }
 }

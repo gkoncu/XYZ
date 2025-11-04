@@ -213,5 +213,9 @@ public class DataScopeService : IDataScopeService
             UserRole.Student => attendance.Student.UserId == currentUser.Id,
             _ => false
         };
+
     }
+
+
+
 }
