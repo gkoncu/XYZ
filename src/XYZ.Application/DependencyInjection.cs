@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Application.Data;
 using XYZ.Application.ExternalServices;
 using XYZ.Application.Services;
 
