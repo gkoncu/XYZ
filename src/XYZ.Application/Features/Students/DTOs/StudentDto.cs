@@ -9,21 +9,34 @@ namespace XYZ.Application.Features.Students.DTOs
     public class StudentDto
     {
         public int Id { get; set; }
+
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public DateTime BirthDate { get; set; }
-        public string? ParentName { get; set; }
-        public string? ParentPhone { get; set; }
-        public string? EmergencyContact { get; set; }
+
+        public string Branch { get; set; } = string.Empty;
+        public string IdentityNumber { get; set; } = string.Empty;
+
+        public string? Parent1FirstName { get; set; }
+        public string? Parent1LastName { get; set; }
+        public string? Parent1Email { get; set; }
+        public string? Parent1PhoneNumber { get; set; }
+
+        public string? Parent2FirstName { get; set; }
+        public string? Parent2LastName { get; set; }
+        public string? Parent2Email { get; set; }
+        public string? Parent2PhoneNumber { get; set; }
+
         public string? MedicalInformation { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
+        public string? Notes { get; set; }
 
         public int? ClassId { get; set; }
         public string? ClassName { get; set; }
-        public string CoachName { get; set; } = string.Empty;
+        public List<string> CoachNames { get; set; } = new();
+
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 
     public class CreateStudentDto
@@ -32,26 +45,44 @@ namespace XYZ.Application.Features.Students.DTOs
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public DateTime BirthDate { get; set; }
-        public string? ParentName { get; set; }
-        public string? ParentPhone { get; set; }
-        public string? EmergencyContact { get; set; }
+
+        public string Branch { get; set; } = string.Empty;
+        public string IdentityNumber { get; set; } = string.Empty;
+
+        public string? Parent1FirstName { get; set; }
+        public string? Parent1LastName { get; set; }
+        public string? Parent1Email { get; set; }
+        public string? Parent1PhoneNumber { get; set; }
+
+        public string? Parent2FirstName { get; set; }
+        public string? Parent2LastName { get; set; }
+        public string? Parent2Email { get; set; }
+        public string? Parent2PhoneNumber { get; set; }
+
         public string? MedicalInformation { get; set; }
+        public string? Notes { get; set; }
+
         public int? ClassId { get; set; }
-        public int CoachId { get; set; }
     }
 
     public class UpdateStudentDto
     {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public DateTime BirthDate { get; set; }
-        public string? ParentName { get; set; }
-        public string? ParentPhone { get; set; }
-        public string? EmergencyContact { get; set; }
+        public string Branch { get; set; } = string.Empty;
+        public string IdentityNumber { get; set; } = string.Empty;
+
+        public string? Parent1FirstName { get; set; }
+        public string? Parent1LastName { get; set; }
+        public string? Parent1Email { get; set; }
+        public string? Parent1PhoneNumber { get; set; }
+
+        public string? Parent2FirstName { get; set; }
+        public string? Parent2LastName { get; set; }
+        public string? Parent2Email { get; set; }
+        public string? Parent2PhoneNumber { get; set; }
+
         public string? MedicalInformation { get; set; }
+        public string? Notes { get; set; }
+
         public int? ClassId { get; set; }
-        public int CoachId { get; set; }
     }
 }
