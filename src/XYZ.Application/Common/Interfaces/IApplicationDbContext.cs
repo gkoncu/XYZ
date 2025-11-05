@@ -15,7 +15,6 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<Student> Students { get; }
         DbSet<Coach> Coaches { get; }
         DbSet<Class> Classes { get; }
-        DbSet<ClassAssistantCoach> ClassAssistantCoaches { get; }
         DbSet<ClassSchedule> ClassSchedules { get; }
         DbSet<Attendance> Attendances { get; }
         DbSet<Payment> Payments { get; }

@@ -1,217 +1,317 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
-using XYZ.Domain;
 using XYZ.Domain.Entities;
-using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Services;
 
 public class DataScopeService : IDataScopeService
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public DataScopeService(IApplicationDbContext context)
+    public DataScopeService(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
-    public IQueryable<Student> ApplyStudentScope(IQueryable<Student> query, ApplicationUser currentUser)
+    public IQueryable<Student> GetScopedStudents()
     {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(s => s.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(s => s.TenantId == currentUser.TenantId &&
-                                              (s.Class.HeadCoach.UserId == currentUser.Id ||
-                                               s.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(s => s.UserId == currentUser.Id),
-            _ => query.Where(s => false)
-        };
-    }
-
-    public IQueryable<Class> ApplyClassScope(IQueryable<Class> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(c => c.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(c => c.TenantId == currentUser.TenantId &&
-                                              (c.HeadCoach.UserId == currentUser.Id ||
-                                               c.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(c => c.TenantId == currentUser.TenantId &&
-                                               c.Students.Any(s => s.UserId == currentUser.Id)),
-            _ => query.Where(c => false)
-        };
-    }
-
-    public IQueryable<Document> ApplyDocumentScope(IQueryable<Document> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(d => d.Student.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(d => d.Student.TenantId == currentUser.TenantId &&
-                                              (d.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                                               d.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(d => d.Student.UserId == currentUser.Id),
-            _ => query.Where(d => false)
-        };
-    }
-
-    public IQueryable<Attendance> ApplyAttendanceScope(IQueryable<Attendance> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(a => a.Student.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(a => a.Student.TenantId == currentUser.TenantId &&
-                                              (a.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                                               a.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(a => a.Student.UserId == currentUser.Id),
-            _ => query.Where(a => false)
-        };
-    }
-
-    public IQueryable<ProgressRecord> ApplyProgressRecordScope(IQueryable<ProgressRecord> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(p => p.Student.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(p => p.Student.TenantId == currentUser.TenantId &&
-                                              (p.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                                               p.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(p => p.Student.UserId == currentUser.Id),
-            _ => query.Where(p => false)
-        };
-    }
-
-    public IQueryable<Payment> ApplyPaymentScope(IQueryable<Payment> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(p => p.Student.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(p => p.Student.TenantId == currentUser.TenantId &&
-                                              (p.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                                               p.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id))),
-            UserRole.Student => query.Where(p => p.Student.UserId == currentUser.Id),
-            _ => query.Where(p => false)
-        };
-    }
-
-    public IQueryable<Announcement> ApplyAnnouncementScope(IQueryable<Announcement> query, ApplicationUser currentUser)
-    {
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => query,
-            UserRole.Admin => query.Where(a => a.TenantId == currentUser.TenantId),
-            UserRole.Coach => query.Where(a => a.TenantId == currentUser.TenantId &&
-                                              (a.ClassId == null ||
-                                               (a.Class.HeadCoach.UserId == currentUser.Id ||
-                                                a.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id)))),
-            UserRole.Student => query.Where(a => a.TenantId == currentUser.TenantId &&
-                                               (a.ClassId == null ||
-                                                a.Class.Students.Any(s => s.UserId == currentUser.Id))),
-            _ => query.Where(a => false)
-        };
-    }
-
-    public async Task<bool> CanAccessStudentAsync(int studentId, ApplicationUser currentUser)
-    {
-        var student = await _context.Students
+        var query = _context.Students
             .Include(s => s.Class)
-                .ThenInclude(c => c.HeadCoach)
-            .Include(s => s.Class)
-                .ThenInclude(c => c.AssistantCoaches)
-                    .ThenInclude(ac => ac.Coach)
+                .ThenInclude(c => c.Coaches)
+            .Include(s => s.User)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Class> GetScopedClasses()
+    {
+        var query = _context.Classes
+            .Include(c => c.Coaches)
+            .Include(c => c.Students)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Coach> GetScopedCoaches()
+    {
+        var query = _context.Coaches
+            .Include(c => c.Classes)
+            .Include(c => c.User)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Document> GetScopedDocuments()
+    {
+        var query = _context.Documents
+            .Include(d => d.Student)
+                .ThenInclude(s => s.Class)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Attendance> GetScopedAttendances()
+    {
+        var query = _context.Attendances
+            .Include(a => a.Student)
+                .ThenInclude(s => s.Class)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<ProgressRecord> GetScopedProgressRecords()
+    {
+        var query = _context.ProgressRecords
+            .Include(p => p.Student)
+                .ThenInclude(s => s.Class)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Payment> GetScopedPayments()
+    {
+        var query = _context.Payments
+            .Include(p => p.Student)
+                .ThenInclude(s => s.Class)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    public IQueryable<Announcement> GetScopedAnnouncements()
+    {
+        var query = _context.Announcements
+            .Include(a => a.Class)
+            .AsQueryable();
+
+        return ApplyDataScoping(query);
+    }
+
+    private IQueryable<T> ApplyDataScoping<T>(IQueryable<T> query) where T : class
+    {
+        var user = _currentUserService;
+        if (user == null) return query;
+
+        return user.Role switch
+        {
+            "SuperAdmin" => query,
+            "Admin" => ApplyAdminScoping(query),
+            "Coach" => ApplyCoachScoping(query),
+            "Student" => ApplyStudentScoping(query),
+            _ => query.Where(x => false)
+        };
+    }
+
+    private IQueryable<T> ApplyAdminScoping<T>(IQueryable<T> query)
+    {
+        var tenantId = _currentUserService.TenantId;
+        if (tenantId == null) return query.Where(x => false);
+
+        if (typeof(T) == typeof(Student))
+        {
+            return query.Cast<Student>()
+                .Where(s => s.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Class))
+        {
+            return query.Cast<Class>()
+                .Where(c => c.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Coach))
+        {
+            return query.Cast<Coach>()
+                .Where(c => c.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Document))
+        {
+            return query.Cast<Document>()
+                .Where(d => d.Student.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Attendance))
+        {
+            return query.Cast<Attendance>()
+                .Where(a => a.Student.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(ProgressRecord))
+        {
+            return query.Cast<ProgressRecord>()
+                .Where(p => p.Student.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Payment))
+        {
+            return query.Cast<Payment>()
+                .Where(p => p.Student.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Announcement))
+        {
+            return query.Cast<Announcement>()
+                .Where(a => a.TenantId == tenantId)
+                .Cast<T>();
+        }
+
+        return query;
+    }
+
+    private IQueryable<T> ApplyCoachScoping<T>(IQueryable<T> query)
+    {
+        var coachId = _currentUserService.CoachId;
+        var tenantId = _currentUserService.TenantId;
+
+        if (coachId == null || tenantId == null) return query.Where(x => false);
+
+        if (typeof(T) == typeof(Student))
+        {
+            return query.Cast<Student>()
+                .Where(s => s.TenantId == tenantId &&
+                           s.Class != null &&
+                           s.Class.Coaches.Any(c => c.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Class))
+        {
+            return query.Cast<Class>()
+                .Where(c => c.TenantId == tenantId &&
+                           c.Coaches.Any(co => co.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Coach))
+        {
+            return query.Cast<Coach>()
+                .Where(c => c.Id == coachId && c.TenantId == tenantId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Document))
+        {
+            return query.Cast<Document>()
+                .Where(d => d.Student.TenantId == tenantId &&
+                           d.Student.Class != null &&
+                           d.Student.Class.Coaches.Any(c => c.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Attendance))
+        {
+            return query.Cast<Attendance>()
+                .Where(a => a.Student.TenantId == tenantId &&
+                           a.Student.Class != null &&
+                           a.Student.Class.Coaches.Any(c => c.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(ProgressRecord))
+        {
+            return query.Cast<ProgressRecord>()
+                .Where(p => p.Student.TenantId == tenantId &&
+                           p.Student.Class != null &&
+                           p.Student.Class.Coaches.Any(c => c.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Payment))
+        {
+            return query.Cast<Payment>()
+                .Where(p => p.Student.TenantId == tenantId &&
+                           p.Student.Class != null &&
+                           p.Student.Class.Coaches.Any(c => c.Id == coachId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Announcement))
+        {
+            return query.Cast<Announcement>()
+                .Where(a => a.TenantId == tenantId &&
+                           (a.ClassId == null ||
+                            a.Class.Coaches.Any(c => c.Id == coachId)))
+                .Cast<T>();
+        }
+
+        return query;
+    }
+
+    private IQueryable<T> ApplyStudentScoping<T>(IQueryable<T> query)
+    {
+        var studentId = _currentUserService.StudentId;
+        if (studentId == null) return query.Where(x => false);
+
+        if (typeof(T) == typeof(Student))
+        {
+            return query.Cast<Student>()
+                .Where(s => s.Id == studentId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Document))
+        {
+            return query.Cast<Document>()
+                .Where(d => d.StudentId == studentId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Attendance))
+        {
+            return query.Cast<Attendance>()
+                .Where(a => a.StudentId == studentId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(ProgressRecord))
+        {
+            return query.Cast<ProgressRecord>()
+                .Where(p => p.StudentId == studentId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Payment))
+        {
+            return query.Cast<Payment>()
+                .Where(p => p.StudentId == studentId)
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Class))
+        {
+            return query.Cast<Class>()
+                .Where(c => c.Students.Any(s => s.Id == studentId))
+                .Cast<T>();
+        }
+        else if (typeof(T) == typeof(Announcement))
+        {
+            return query.Cast<Announcement>()
+                .Where(a => a.ClassId == null ||
+                           a.Class.Students.Any(s => s.Id == studentId))
+                .Cast<T>();
+        }
+
+        return query;
+    }
+
+    public async Task<bool> CanAccessStudentAsync(int studentId)
+    {
+        var student = await GetScopedStudents()
             .FirstOrDefaultAsync(s => s.Id == studentId);
 
-        if (student == null) return false;
-
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => true,
-            UserRole.Admin => student.TenantId == currentUser.TenantId,
-            UserRole.Coach => student.TenantId == currentUser.TenantId &&
-                             (student.Class.HeadCoach.UserId == currentUser.Id ||
-                              student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id)),
-            UserRole.Student => student.UserId == currentUser.Id,
-            _ => false
-        };
+        return student != null;
     }
 
-    public async Task<bool> CanAccessClassAsync(int classId, ApplicationUser currentUser)
+    public async Task<bool> CanAccessClassAsync(int classId)
     {
-        var classEntity = await _context.Classes
-            .Include(c => c.HeadCoach)
-            .Include(c => c.AssistantCoaches)
-                .ThenInclude(ac => ac.Coach)
+        var classEntity = await GetScopedClasses()
             .FirstOrDefaultAsync(c => c.Id == classId);
 
-        if (classEntity == null) return false;
-
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => true,
-            UserRole.Admin => classEntity.TenantId == currentUser.TenantId,
-            UserRole.Coach => classEntity.TenantId == currentUser.TenantId &&
-                             (classEntity.HeadCoach.UserId == currentUser.Id ||
-                              classEntity.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id)),
-            UserRole.Student => classEntity.Students.Any(s => s.UserId == currentUser.Id),
-            _ => false
-        };
+        return classEntity != null;
     }
 
-    public async Task<bool> CanAccessDocumentAsync(int documentId, ApplicationUser currentUser)
+    public async Task<bool> CanAccessDocumentAsync(int documentId)
     {
-        var document = await _context.Documents
-            .Include(d => d.Student)
-                .ThenInclude(s => s.Class)
-                    .ThenInclude(c => c.HeadCoach)
-            .Include(d => d.Student)
-                .ThenInclude(s => s.Class)
-                    .ThenInclude(c => c.AssistantCoaches)
-                        .ThenInclude(ac => ac.Coach)
+        var document = await GetScopedDocuments()
             .FirstOrDefaultAsync(d => d.Id == documentId);
 
-        if (document == null) return false;
-
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => true,
-            UserRole.Admin => document.Student.TenantId == currentUser.TenantId,
-            UserRole.Coach => document.Student.TenantId == currentUser.TenantId &&
-                             (document.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                              document.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id)),
-            UserRole.Student => document.Student.UserId == currentUser.Id,
-            _ => false
-        };
-    }
-
-    public async Task<bool> CanAccessAttendanceAsync(int attendanceId, ApplicationUser currentUser)
-    {
-        var attendance = await _context.Attendances
-            .Include(a => a.Student)
-                .ThenInclude(s => s.Class)
-                    .ThenInclude(c => c.HeadCoach)
-            .Include(a => a.Student)
-                .ThenInclude(s => s.Class)
-                    .ThenInclude(c => c.AssistantCoaches)
-                        .ThenInclude(ac => ac.Coach)
-            .FirstOrDefaultAsync(a => a.Id == attendanceId);
-
-        if (attendance == null) return false;
-
-        return currentUser.Role switch
-        {
-            UserRole.SuperAdmin => true,
-            UserRole.Admin => attendance.Student.TenantId == currentUser.TenantId,
-            UserRole.Coach => attendance.Student.TenantId == currentUser.TenantId &&
-                             (attendance.Student.Class.HeadCoach.UserId == currentUser.Id ||
-                              attendance.Student.Class.AssistantCoaches.Any(ac => ac.Coach.UserId == currentUser.Id)),
-            UserRole.Student => attendance.Student.UserId == currentUser.Id,
-            _ => false
-        };
+        return document != null;
     }
 }
