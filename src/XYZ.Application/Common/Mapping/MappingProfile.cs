@@ -17,7 +17,7 @@ namespace XYZ.Application.Common.Mapping
             CreateMap<Student, StudentDto>()
                 .ForMember(dest => dest.ClassName, opt => opt.MapFrom(src => src.Class != null ? src.Class.Name : null))
                 .ForMember(dest => dest.CoachName, opt => opt.MapFrom(src =>
-                    src.Class.HeadCoach != null ? src.Class.HeadCoach.User.FullName : string.Empty));
+                    src.Class.Coach != null ? src.Class.Coach.User.FullName : string.Empty));
 
             CreateMap<CreateStudentDto, Student>();
             CreateMap<UpdateStudentDto, Student>();

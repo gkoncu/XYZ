@@ -16,7 +16,6 @@ namespace XYZ.Infrastructure.Data
         public DbSet<Student> Students => Set<Student>();
         public DbSet<Coach> Coaches => Set<Coach>();
         public DbSet<Class> Classes => Set<Class>();
-        public DbSet<ClassAssistantCoach> ClassAssistantCoaches => Set<ClassAssistantCoach>();
         public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
         public DbSet<Attendance> Attendances => Set<Attendance>();
         public DbSet<Payment> Payments => Set<Payment>();
@@ -30,16 +29,14 @@ namespace XYZ.Infrastructure.Data
 
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
-
             // Soft Delete Query Filters
+            builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
             builder.Entity<Tenant>().HasQueryFilter(t => t.IsActive);
             builder.Entity<Student>().HasQueryFilter(s => s.IsActive);
             builder.Entity<Coach>().HasQueryFilter(c => c.IsActive);
             builder.Entity<Admin>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Class>().HasQueryFilter(c => c.IsActive);
             builder.Entity<ClassSchedule>().HasQueryFilter(cs => cs.IsActive);
-            builder.Entity<ClassAssistantCoach>().HasQueryFilter(cac => cac.IsActive);
             builder.Entity<Attendance>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Domain.Entities.Document>().HasQueryFilter(d => d.IsActive);
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
@@ -47,14 +44,13 @@ namespace XYZ.Infrastructure.Data
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
 
             ConfigureCascadeRestrictions(builder);
-
             ConfigureDecimalPrecisions(builder);
-
             ConfigureOptionalRelationships(builder);
 
             // TODO : Tenant-based Query Filters (Multi-tenancy)
             // builder.Entity<Student>().HasQueryFilter(s => s.TenantId == _tenantService.GetCurrentTenantId());
             // builder.Entity<Coach>().HasQueryFilter(c => c.TenantId == _tenantService.GetCurrentTenantId());
+            // builder.Entity<Class>().HasQueryFilter(c => c.TenantId == _tenantService.GetCurrentTenantId());
         }
 
         private void ConfigureCascadeRestrictions(ModelBuilder builder)
@@ -66,10 +62,6 @@ namespace XYZ.Infrastructure.Data
                       .HasForeignKey(c => c.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(c => c.HeadCoach)
-                      .WithMany(co => co.HeadClasses)
-                      .HasForeignKey(c => c.HeadCoachId)
-                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<Student>(entity =>
@@ -101,6 +93,7 @@ namespace XYZ.Infrastructure.Data
                       .WithOne(u => u.CoachProfile)
                       .HasForeignKey<Coach>(c => c.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
+
             });
 
             builder.Entity<Admin>(entity =>
@@ -166,19 +159,6 @@ namespace XYZ.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<ClassAssistantCoach>(entity =>
-            {
-                entity.HasOne(cac => cac.Class)
-                      .WithMany(c => c.AssistantCoaches)
-                      .HasForeignKey(cac => cac.ClassId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(cac => cac.Coach)
-                      .WithMany(c => c.AssistantClasses)
-                      .HasForeignKey(cac => cac.CoachId)
-                      .OnDelete(DeleteBehavior.Restrict);
-            });
-
             builder.Entity<Domain.Entities.Document>(entity =>
             {
                 entity.HasOne(d => d.Student)
@@ -216,33 +196,27 @@ namespace XYZ.Infrastructure.Data
                 entity.Property(p => p.Endurance).HasPrecision(4, 1);
                 entity.Property(p => p.Flexibility).HasPrecision(4, 1);
             });
-
-            builder.Entity<Student>(entity =>
-            {
-                entity.Property(s => s.MonthlyFee).HasPrecision(18, 2);
-            });
         }
 
         private void ConfigureOptionalRelationships(ModelBuilder builder)
         {
+            builder.Entity<Class>()
+                    .HasMany(c => c.Coaches)
+                    .WithMany(co => co.Classes)
+                    .UsingEntity<Dictionary<string, object>>(
+                    "ClassCoach",
+                    j => j.HasOne<Coach>().WithMany().HasForeignKey("CoachId").OnDelete(DeleteBehavior.Restrict),
+                    j => j.HasOne<Class>().WithMany().HasForeignKey("ClassId").OnDelete(DeleteBehavior.Restrict),
+                    j =>
+                    {
+                        j.HasKey("ClassId", "CoachId");
+                    });
+
             builder.Entity<ApplicationUser>(entity =>
             {
                 entity.HasOne(au => au.Tenant)
                       .WithMany(t => t.Users)
                       .HasForeignKey(au => au.TenantId)
-                      .IsRequired(false);
-            });
-
-            builder.Entity<ClassAssistantCoach>(entity =>
-            {
-                entity.HasOne(cac => cac.Class)
-                      .WithMany(c => c.AssistantCoaches)
-                      .HasForeignKey(cac => cac.ClassId)
-                      .IsRequired(false);
-
-                entity.HasOne(cac => cac.Coach)
-                      .WithMany(c => c.AssistantClasses)
-                      .HasForeignKey(cac => cac.CoachId)
                       .IsRequired(false);
             });
 

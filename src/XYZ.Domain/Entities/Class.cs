@@ -15,8 +15,6 @@ namespace XYZ.Domain.Entities
         public int? AgeGroupMax { get; set; }
         public int MaxCapacity { get; set; }
 
-        public int CoachId { get; set; }
-        public Coach Coach { get; set; } = null!;
         public int TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
 

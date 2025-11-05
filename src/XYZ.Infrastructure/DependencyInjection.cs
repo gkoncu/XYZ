@@ -1,22 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Infrastructure.Data;
 using XYZ.Infrastructure.ExternalServices;
 
-namespace XYZ.Infrastructure;
-
-public static class DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static class DependencyInjection
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddScoped<IFileService, FileService>();
-        services.AddScoped<ITenantService, TenantService>();
+            services.AddScoped<IApplicationDbContext>(provider =>
+                provider.GetRequiredService<ApplicationDbContext>());
 
-        return services;
+            services.AddScoped<IFileService, FileService>();
+            services.AddScoped<ITenantService, TenantService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+            return services;
+        }
     }
 }
