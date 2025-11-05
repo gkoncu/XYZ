@@ -9,7 +9,7 @@ using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Students.DTOs;
 
-namespace XYZ.Application.Features.Students.Queries.GetStudents
+namespace XYZ.Application.Features.Students.Queries
 {
     public class GetStudentsQuery : IRequest<PaginationResult<StudentDto>>
     {
@@ -17,7 +17,7 @@ namespace XYZ.Application.Features.Students.Queries.GetStudents
         public int PageSize { get; set; } = 10;
         public string? SearchTerm { get; set; }
         public int? ClassId { get; set; }
-        public int? CoachId { get; set; }
+        public string? Branch { get; set; }
     }
 
     public class GetStudentsQueryHandler : IRequestHandler<GetStudentsQuery, PaginationResult<StudentDto>>
@@ -40,9 +40,10 @@ namespace XYZ.Application.Features.Students.Queries.GetStudents
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
                 baseQuery = baseQuery.Where(s =>
-                    s.FirstName.Contains(request.SearchTerm) ||
-                    s.LastName.Contains(request.SearchTerm) ||
-                    s.Email.Contains(request.SearchTerm));
+                    s.User.FirstName.Contains(request.SearchTerm) ||
+                    s.User.LastName.Contains(request.SearchTerm) ||
+                    s.User.Email.Contains(request.SearchTerm) ||
+                    s.IdentityNumber.Contains(request.SearchTerm));
             }
 
             if (request.ClassId.HasValue)
@@ -50,18 +51,20 @@ namespace XYZ.Application.Features.Students.Queries.GetStudents
                 baseQuery = baseQuery.Where(s => s.ClassId == request.ClassId);
             }
 
-            if (request.CoachId.HasValue)
+            if (!string.IsNullOrEmpty(request.Branch))
             {
-                baseQuery = baseQuery.Where(s => s.CoachId == request.CoachId);
+                baseQuery = baseQuery.Where(s => s.Branch == request.Branch);
             }
 
             var totalCount = await baseQuery.CountAsync(cancellationToken);
 
             var students = await baseQuery
+                .Include(s => s.User)
                 .Include(s => s.Class)
-                .Include(s => s.Coach)
-                .OrderBy(s => s.LastName)
-                .ThenBy(s => s.FirstName)
+                    .ThenInclude(c => c.Coaches)
+                        .ThenInclude(co => co.User)
+                .OrderBy(s => s.User.LastName)
+                .ThenBy(s => s.User.FirstName)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
