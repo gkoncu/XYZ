@@ -8,7 +8,7 @@ using XYZ.Domain.Entities;
 using XYZ.Infrastructure.Data;
 using XYZ.Application.Common.Interfaces;
 
-namespace XYZ.Infrastructure.ExternalServices
+namespace XYZ.Application.ExternalServices
 {
     public class TenantService : ITenantService
     {

@@ -4,7 +4,7 @@ using System.Reflection;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
-namespace XYZ.Infrastructure.Data
+namespace XYZ.Application.Data;
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
     {
