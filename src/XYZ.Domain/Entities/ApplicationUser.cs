@@ -19,6 +19,8 @@ namespace XYZ.Domain.Entities
         public string Branch { get; set; } = string.Empty;
         public Gender Gender { get; set; }
         public BloodType BloodType { get; set; }
+        public DateTime BirthDate { get; set; }
+        public int Age { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

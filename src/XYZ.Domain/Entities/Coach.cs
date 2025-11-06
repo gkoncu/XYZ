@@ -13,6 +13,8 @@ namespace XYZ.Domain.Entities
         public string UserId { get; set; } = null!;
         public int TenantId { get; set; }
         public string Branch { get; set; } = string.Empty;
+        public string IdentityNumber { get; set; } = string.Empty;
+        public string LicenseNumber { get; set; } = string.Empty;
 
         public ApplicationUser User { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;
