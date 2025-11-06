@@ -15,6 +15,7 @@ namespace XYZ.Domain.Entities
         public int? ClassId { get; set; }
         public string Branch { get; set; } = string.Empty;
         public string IdentityNumber { get; set; } = string.Empty;
+        public string? Address { get; set; }
 
         public string? Parent1FirstName { get; set; }
         public string? Parent1LastName { get; set; }
