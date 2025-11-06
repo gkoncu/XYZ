@@ -11,7 +11,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Common\Mappings\" />
 		<Folder Include="Features\Coaches\" />
 		<Folder Include="Features\Classes\" />
 		<Folder Include="Features\Attendances\" />
