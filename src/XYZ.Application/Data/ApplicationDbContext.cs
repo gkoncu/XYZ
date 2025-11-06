@@ -4,9 +4,9 @@ using System.Reflection;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
-namespace XYZ.Infrastructure.Data
-{
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
+namespace XYZ.Application.Data;
+
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -260,4 +260,3 @@ namespace XYZ.Infrastructure.Data
             });
         }
     }
-}

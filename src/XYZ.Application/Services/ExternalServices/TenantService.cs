@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XYZ.Domain.Entities;
-using XYZ.Infrastructure.Data;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Application.Data;
 
-namespace XYZ.Infrastructure.ExternalServices
+namespace XYZ.Application.Services.ExternalServices
 {
     public class TenantService : ITenantService
     {
