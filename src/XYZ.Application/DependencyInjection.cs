@@ -16,15 +16,13 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddScoped<IApplicationDbContext>(provider =>
-                provider.GetRequiredService<ApplicationDbContext>());
+            services.AddScoped<IApplicationDbContext>(sp =>
+                sp.GetRequiredService<ApplicationDbContext>());
 
             services.AddScoped<IDataScopeService, DataScopeService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
