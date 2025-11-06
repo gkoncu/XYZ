@@ -21,8 +21,6 @@
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
 		<Folder Include="Common" />
-		<Folder Include="Services" />
-		<Folder Include="ExternalServices" />
 	</ItemGroup>
 
 	<ItemGroup>
