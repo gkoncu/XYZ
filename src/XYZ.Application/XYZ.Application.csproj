@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Common\Mappings\" />
 		<Folder Include="Features\Coaches\" />
 		<Folder Include="Features\Classes\" />
 		<Folder Include="Features\Attendances\" />
@@ -21,7 +22,6 @@
 		<Folder Include="Features\Tenants\" />
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
-		<Folder Include="Common" />
 	</ItemGroup>
 
 	<ItemGroup>
