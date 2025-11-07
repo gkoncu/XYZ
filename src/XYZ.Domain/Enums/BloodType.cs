@@ -8,6 +8,7 @@ namespace XYZ.Domain.Enums
 {
     public enum BloodType
     {
+        Unknown,
         A_Positive,
         A_Negative,
         B_Positive,
