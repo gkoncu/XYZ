@@ -47,7 +47,7 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
 
             var subject = new JwtSubject(
                 UserId: user.Id,
-                Roles: roles,
+                Roles: roles.ToArray(),
                 TenantId: user.TenantId.ToString(),
                 Email: user.Email,
                 PhoneNumber: user.PhoneNumber,
