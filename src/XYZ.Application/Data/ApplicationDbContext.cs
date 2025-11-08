@@ -4,8 +4,8 @@ using System.Reflection;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
-namespace XYZ.Application.Data;
-
+namespace XYZ.Application.Data
+{
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
@@ -22,6 +22,7 @@ namespace XYZ.Application.Data;
         public DbSet<Document> Documents => Set<Document>();
         public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
         public DbSet<Announcement> Announcements => Set<Announcement>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -260,3 +261,4 @@ namespace XYZ.Application.Data;
             });
         }
     }
+}

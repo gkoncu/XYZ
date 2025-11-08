@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
+using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Services.Auth
 {
@@ -31,11 +32,13 @@ namespace XYZ.Application.Services.Auth
             var raw = GenerateToken();
             var hash = HashToken(raw);
 
+            int? tenantIdInt = TryParseNullableInt(tenantId);
+
             var entity = new RefreshToken
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                TenantId = tenantId,
+                TenantId = tenantIdInt,
                 Hash = hash,
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 ExpiresAtUtc = expiresAtUtc,
@@ -72,7 +75,7 @@ namespace XYZ.Application.Services.Auth
             return new RefreshTokenValidationResult(
                 IsValid: valid,
                 UserId: rt.UserId,
-                TenantId: rt.TenantId,
+                TenantId: rt.TenantId?.ToString(),
                 TokenId: rt.Id.ToString(),
                 ExpiresAtUtc: rt.ExpiresAtUtc,
                 IsRevoked: revoked
@@ -97,10 +100,8 @@ namespace XYZ.Application.Services.Auth
             if (existing.RevokedAtUtc.HasValue || existing.ExpiresAtUtc <= DateTimeOffset.UtcNow)
                 throw new InvalidOperationException("Refresh token is not valid for rotation.");
 
-            // Revoke old
             existing.RevokedAtUtc = DateTimeOffset.UtcNow;
 
-            // Create new
             var raw = GenerateToken();
             var hash = HashToken(raw);
 
@@ -143,7 +144,6 @@ namespace XYZ.Application.Services.Auth
 
         private static string GenerateToken()
         {
-            // 32 byte crypto-random → URL-safe Base64 (padding'siz).
             Span<byte> bytes = stackalloc byte[32];
             RandomNumberGenerator.Fill(bytes);
             var b64 = Convert.ToBase64String(bytes);
@@ -161,5 +161,8 @@ namespace XYZ.Application.Services.Auth
 
         private static string ToUrlSafe(string base64)
             => base64.Replace("+", "-").Replace("/", "_").TrimEnd('=');
+
+        private static int? TryParseNullableInt(string? value)
+            => int.TryParse(value, out var i) ? i : (int?)null;
     }
 }
