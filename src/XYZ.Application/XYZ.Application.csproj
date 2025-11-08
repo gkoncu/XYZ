@@ -20,6 +20,7 @@
 		<Folder Include="Features\Tenants\" />
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
+		<Folder Include="Services\Auth\" />
 	</ItemGroup>
 
 	<ItemGroup>
