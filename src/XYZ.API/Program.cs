@@ -65,11 +65,11 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // --- MediatR & FluentValidation (Application assembly scan) ---
-var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginCommand).Assembly;
+//var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginCommand).Assembly;
 
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssembly(appAssembly);
+//builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
+//builder.Services.AddFluentValidationAutoValidation();
+//builder.Services.AddValidatorsFromAssembly(appAssembly);
 
 // --- IHttpContextAccessor + CurrentUserService ---
 builder.Services.AddHttpContextAccessor();
