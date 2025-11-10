@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
@@ -74,11 +75,19 @@ namespace XYZ.API.Controllers
             var ok = await _mediator.Send(new LogoutCommand(request.RefreshToken), ct);
             return ok ? Ok() : BadRequest();
         }
-    }
 
-    // === Request models ===
-    public sealed record LoginRequest(string Identifier, string Password);
-    public sealed record RefreshRequest(string RefreshToken);
-    public sealed record LogoutRequest(string RefreshToken);
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult ProtectedEndpoint()
+        {
+            return Ok(new { message = "You have accessed a protected endpoint." });
+        }
+
+        // === Request models ===
+        public sealed record LoginRequest(string Identifier, string Password);
+        public sealed record RefreshRequest(string RefreshToken);
+        public sealed record LogoutRequest(string RefreshToken);
+    }
 }
 

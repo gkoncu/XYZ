@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using XYZ.API.Dev;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
@@ -65,11 +66,11 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // --- MediatR & FluentValidation (Application assembly scan) ---
-//var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginCommand).Assembly;
+var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginCommand).Assembly;
 
-//builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
-//builder.Services.AddFluentValidationAutoValidation();
-//builder.Services.AddValidatorsFromAssembly(appAssembly);
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssembly(appAssembly);
 
 // --- IHttpContextAccessor + CurrentUserService ---
 builder.Services.AddHttpContextAccessor();
@@ -116,6 +117,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await DevIdentitySeeder.RunAsync(app.Services);
 }
 
 app.UseAuthentication();
