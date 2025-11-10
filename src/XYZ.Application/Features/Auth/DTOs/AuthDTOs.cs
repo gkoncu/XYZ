@@ -24,3 +24,9 @@ public class LoginResponse
     public string? Error { get; set; }
     public string? ReturnUrl { get; set; }
 }
+
+public sealed record LoginResultDto(
+    string AccessToken,
+    string RefreshToken,
+    DateTimeOffset ExpiresAtUtc
+);

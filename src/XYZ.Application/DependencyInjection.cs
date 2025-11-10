@@ -7,8 +7,8 @@ using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Data;
+using XYZ.Application.Features.Auth.Login.Commands;
 using XYZ.Application.Services;
-using XYZ.Application.Services.ExternalServices;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -33,9 +33,17 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(config);
             services.AddScoped<IMapper, ServiceMapper>();
 
-            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            //services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+            //services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+            var authAssembly = typeof(LoginCommand).Assembly;
+
+            services.AddValidatorsFromAssembly(authAssembly);
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(authAssembly));
+
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(XYZ.Application.Common.Behaviors.ValidationBehavior<,>));
+
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));

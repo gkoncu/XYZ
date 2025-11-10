@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 
-namespace XYZ.Application.Services.ExternalServices
+namespace XYZ.Application.Services
 {
     public class FileService : IFileService
     {
