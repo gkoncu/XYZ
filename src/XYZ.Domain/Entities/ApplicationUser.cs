@@ -24,6 +24,10 @@ namespace XYZ.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
 
+        public string? StudentId => StudentProfile?.Id.ToString();
+        public string? CoachId => CoachProfile?.Id.ToString();
+        public string? AdminId => AdminProfile?.Id.ToString();
+
         public Tenant Tenant { get; set; } = null!;
         public Student? StudentProfile { get; set; }
         public Coach? CoachProfile { get; set; }

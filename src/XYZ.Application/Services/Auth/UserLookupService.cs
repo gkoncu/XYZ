@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Domain.Entities;
 
@@ -12,10 +14,12 @@ namespace XYZ.Application.Services.Auth
     public sealed class UserLookupService : IUserLookup
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private IApplicationDbContext _context;
 
-        public UserLookupService(UserManager<ApplicationUser> userManager)
+        public UserLookupService(UserManager<ApplicationUser> userManager, IApplicationDbContext context)
         {
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<UserIdentity?> FindByEmailAsync(string email, CancellationToken ct = default)
@@ -32,10 +36,29 @@ namespace XYZ.Application.Services.Auth
 
         public async Task<UserIdentity?> FindByIdentifierAsync(string identifier, CancellationToken ct = default)
         {
-            if (identifier.Contains("@"))
-                return await FindByEmailAsync(identifier, ct);
+            var user = await _context.Users
+            .Include(u => u.StudentProfile)
+            .Include(u => u.CoachProfile)
+            .Include(u => u.AdminProfile)
+            .FirstOrDefaultAsync(x => x.Email == identifier || x.UserName == identifier, ct);
 
-            return await FindByPhoneAsync(identifier, ct);
+
+            if (user is null) return null;
+
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+
+            return new UserIdentity(
+                user.Id,
+                user.Email,
+                user.PhoneNumber,
+                roles.ToArray(),
+                user.TenantId.ToString(),
+                user.StudentId,
+                user.CoachId,
+                user.AdminId
+            );
         }
 
         private async Task<UserIdentity?> ToIdentityOrNullAsync(ApplicationUser? user, CancellationToken ct)
@@ -46,11 +69,14 @@ namespace XYZ.Application.Services.Auth
             string? tenantId = user.TenantId.ToString();
 
             return new UserIdentity(
-                UserId: user.Id,
-                Email: user.Email,
-                PhoneNumber: user.PhoneNumber,
-                Roles: roles as IReadOnlyCollection<string> ?? roles.ToList(),
-                TenantId: tenantId
+                user.Id,
+                user.Email,
+                user.PhoneNumber,
+                roles.ToArray(),
+                user.TenantId.ToString(),
+                user.StudentId,
+                user.CoachId,
+                user.AdminId
             );
         }
     }

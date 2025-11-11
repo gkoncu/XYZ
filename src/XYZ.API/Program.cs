@@ -82,6 +82,7 @@ builder.Services.AddScoped<IUserLookup, UserLookupService>();
 builder.Services.AddScoped<IPasswordSignIn, PasswordSignInService>();
 builder.Services.AddScoped<IJwtFactory, JwtFactory>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 
 builder.Services.AddControllers();
 
