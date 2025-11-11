@@ -15,7 +15,6 @@ namespace XYZ.Domain.Entities
         public string LastName { get; set; } = string.Empty;
         public string? ProfilePictureUrl { get; set; }
         public int TenantId { get; set; }
-        public UserRole Role { get; set; }
         public string Branch { get; set; } = string.Empty;
         public Gender Gender { get; set; }
         public BloodType BloodType { get; set; }
