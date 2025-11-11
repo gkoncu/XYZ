@@ -18,6 +18,9 @@ namespace XYZ.Application.Common.Interfaces.Auth
         string? Email,
         string? PhoneNumber,
         IReadOnlyCollection<string> Roles,
-        string? TenantId
+        string? TenantId,
+        string? StudentId,
+        string? CoachId,
+        string? AdminId
     );
 }

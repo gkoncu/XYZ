@@ -15,7 +15,6 @@ namespace XYZ.Domain.Entities
         public string LastName { get; set; } = string.Empty;
         public string? ProfilePictureUrl { get; set; }
         public int TenantId { get; set; }
-        public UserRole Role { get; set; }
         public string Branch { get; set; } = string.Empty;
         public Gender Gender { get; set; }
         public BloodType BloodType { get; set; }
@@ -23,6 +22,10 @@ namespace XYZ.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+
+        public string? StudentId => StudentProfile?.Id.ToString();
+        public string? CoachId => CoachProfile?.Id.ToString();
+        public string? AdminId => AdminProfile?.Id.ToString();
 
         public Tenant Tenant { get; set; } = null!;
         public Student? StudentProfile { get; set; }
