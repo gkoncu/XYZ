@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Students.Commands.CreateStudent
 {
-    public class CreateStudentRequest
+    public class CreateStudentRequestDTO
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
