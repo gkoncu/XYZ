@@ -22,6 +22,8 @@ namespace XYZ.Application.Services
 
         public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
 
+        public string? Branch => _httpContextAccessor.HttpContext?.User?.FindFirstValue("Branch");
+
         public int? TenantId => GetClaimValueAsInt("TenantId");
 
         public int? CoachId => GetClaimValueAsInt("CoachId");
