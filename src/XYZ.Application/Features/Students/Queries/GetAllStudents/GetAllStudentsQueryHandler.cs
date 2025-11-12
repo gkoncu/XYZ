@@ -20,39 +20,38 @@ namespace XYZ.Application.Features.Students.Queries.GetAllStudents
 
         public async Task<List<StudentListItemDto>> Handle(GetAllStudentsQuery request, CancellationToken cancellationToken)
         {
-            var query = _dataScope.GetScopedStudents()
-                .Include(s => s.User)
-                .Include(s => s.Class)
-                .ThenInclude(c => c.Branch)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-            {
-                var term = request.SearchTerm.ToLower();
-                query = query.Where(s =>
-                    (s.User.FirstName + " " + s.User.LastName).ToLower().Contains(term) ||
-                    (s.User.Email ?? "").ToLower().Contains(term) ||
-                    (s.IdentityNumber ?? "").Contains(term));
-            }
+            var query = _dataScope.Students();
 
             if (request.ClassId.HasValue)
                 query = query.Where(s => s.ClassId == request.ClassId.Value);
 
-            var students = await query
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var term = "%" + request.SearchTerm.Trim() + "%";
+                query = query.Where(s =>
+                    EF.Functions.Like(s.User.FullName, term) ||
+                    (s.User.Email != null && EF.Functions.Like(s.User.Email, term)) ||
+                    (s.IdentityNumber != null && EF.Functions.Like(s.IdentityNumber, term)));
+            }
+
+            var list = await query
                 .OrderBy(s => s.User.FirstName)
                 .ThenBy(s => s.User.LastName)
+                .Select(s => new StudentListItemDto
+                {
+                    Id = s.Id,
+                    FullName = s.User.FullName,
+                    Email = s.User.Email ?? string.Empty,
+                    PhoneNumber = s.User.PhoneNumber,
+                    ClassId = s.ClassId,
+                    ClassName = s.Class != null ? s.Class.Name : null,
+                    BranchName = s.Class != null ? s.Class.Branch.Name : null,
+                    IsActive = s.User.IsActive
+                })
+                .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            return students.Select(s => new StudentListItemDto
-            {
-                Id = s.Id,
-                FullName = $"{s.User.FirstName} {s.User.LastName}",
-                Email = s.User.Email ?? string.Empty,
-                PhoneNumber = s.User.PhoneNumber,
-                ClassName = s.Class?.Name,
-                Branch = s.User.Branch,
-                IsActive = s.User.IsActive
-            }).ToList();
+            return list;
         }
     }
 }
