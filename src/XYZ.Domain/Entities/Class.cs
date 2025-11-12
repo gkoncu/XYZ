@@ -18,6 +18,9 @@ namespace XYZ.Domain.Entities
         public int TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
 
+        public int BranchId { get; set; }
+        public Branch Branch { get; set; } = null!;
+
         public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
         public ICollection<Student> Students { get; set; } = new List<Student>();
         public ICollection<ClassSchedule> Schedules { get; set; } = new List<ClassSchedule>();
