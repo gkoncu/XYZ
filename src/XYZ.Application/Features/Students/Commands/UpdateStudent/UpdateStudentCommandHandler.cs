@@ -85,7 +85,6 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
                 throw new InvalidOperationException($"Kullanıcı güncellenemedi: {msg}");
             }
 
-            student.ClassId = request.ClassId;
             student.IdentityNumber = request.IdentityNumber;
             student.Address = request.Address;
 
