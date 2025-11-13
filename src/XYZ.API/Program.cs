@@ -11,6 +11,7 @@ using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
 using XYZ.Application.Features.Auth.Options;
+using XYZ.Application.Services;
 using XYZ.Application.Services.Auth;
 using XYZ.Domain.Entities;
 
@@ -78,6 +79,8 @@ builder.Services.AddHttpContextAccessor();
 
 // --- Application Services (Auth) ---
 // Interface -> Implementation Matchup
+builder.Services.AddScoped<IDataScopeService, DataScopeService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserLookup, UserLookupService>();
 builder.Services.AddScoped<IPasswordSignIn, PasswordSignInService>();
 builder.Services.AddScoped<IJwtFactory, JwtFactory>();
