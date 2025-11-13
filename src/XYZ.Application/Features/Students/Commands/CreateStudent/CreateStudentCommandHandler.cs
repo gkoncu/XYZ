@@ -15,86 +15,102 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
     public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, int>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
         private readonly IDataScopeService _dataScope;
+        private readonly ICurrentUserService _currentUser;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public CreateStudentCommandHandler(
             IApplicationDbContext context,
-            ICurrentUserService currentUser,
             IDataScopeService dataScope,
+            ICurrentUserService currentUser,
             UserManager<ApplicationUser> userManager)
         {
             _context = context;
-            _currentUser = currentUser;
             _dataScope = dataScope;
+            _currentUser = currentUser;
             _userManager = userManager;
         }
 
-        public async Task<int> Handle(CreateStudentCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateStudentCommand request, CancellationToken ct)
         {
-            var tenantId = _currentUser.TenantId ?? throw new UnauthorizedAccessException("TenantId not found.");
+            var tenantId = _currentUser.TenantId
+                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
-            var @class = request.ClassId.HasValue
-                ? await _dataScope.GetScopedClasses()
-                    .Include(c => c.Branch)
-                    .FirstOrDefaultAsync(c => c.Id == request.ClassId.Value, cancellationToken)
-                : null;
+            if (request.ClassId.HasValue)
+                await _dataScope.EnsureClassAccessAsync(request.ClassId.Value, ct);
 
-            if (@class is null && request.ClassId.HasValue)
-                throw new UnauthorizedAccessException("Bu sınıfa erişiminiz yok.");
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var normalized = _userManager.NormalizeEmail(request.Email);
+                var emailInTenant = await _context.Users
+                    .AnyAsync(u => u.TenantId == tenantId && u.NormalizedEmail == normalized, ct);
 
-            if (!Enum.TryParse<Gender>(request.Gender, out var gender))
-                throw new ArgumentException("Geçersiz cinsiyet bilgisi.");
+                if (emailInTenant)
+                    throw new InvalidOperationException("Bu e-posta adresi bu tenant içinde zaten kullanılıyor.");
+            }
 
-            if (!Enum.TryParse<BloodType>(request.BloodType, out var bloodType))
-                throw new ArgumentException("Geçersiz kan grubu bilgisi.");
+            if (!string.IsNullOrWhiteSpace(request.IdentityNumber))
+            {
+                var identityInTenant = await _context.Students
+                    .AnyAsync(s => s.TenantId == tenantId && s.IdentityNumber == request.IdentityNumber, ct);
 
-            var appUser = new ApplicationUser
+                if (identityInTenant)
+                    throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
+            }
+
+            var user = new ApplicationUser
             {
                 UserName = request.Email,
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Gender = gender,
-                BloodType = bloodType,
                 BirthDate = request.BirthDate,
-                Branch = @class?.Branch.Name ?? string.Empty,
+                Gender = Enum.Parse<Gender>(request.Gender, true),
+                BloodType = Enum.Parse<BloodType>(request.BloodType, true),
                 TenantId = tenantId,
                 IsActive = true
             };
 
-            var identityResult = await _userManager.CreateAsync(appUser);
-            if (!identityResult.Succeeded)
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
             {
-                var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
-                throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {errors}");
+                var msg = string.Join("; ", createResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {msg}");
             }
 
-            await _userManager.AddToRoleAsync(appUser, "Student");
+            var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+            if (!roleResult.Succeeded)
+            {
+                var msg = string.Join("; ", roleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                throw new InvalidOperationException($"Rol atanamadı (Student): {msg}");
+            }
 
             var student = new Student
             {
-                Address = request.Address,
-                IdentityNumber = request.IdentityNumber,
-                ClassId = request.ClassId,
+                UserId = user.Id,
                 TenantId = tenantId,
+                ClassId = request.ClassId,
+
+                IdentityNumber = request.IdentityNumber,
+                Address = request.Address,
+
                 Parent1FirstName = request.Parent1FirstName,
                 Parent1LastName = request.Parent1LastName,
                 Parent1Email = request.Parent1Email,
                 Parent1PhoneNumber = request.Parent1PhoneNumber,
+
                 Parent2FirstName = request.Parent2FirstName,
                 Parent2LastName = request.Parent2LastName,
                 Parent2Email = request.Parent2Email,
                 Parent2PhoneNumber = request.Parent2PhoneNumber,
+
                 MedicalInformation = request.MedicalInformation,
-                Notes = request.Notes,
-                UserId = appUser.Id
+                Notes = request.Notes
             };
 
-            await _context.Students.AddAsync(student, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.Students.AddAsync(student, ct);
+            await _context.SaveChangesAsync(ct);
 
             return student.Id;
         }
