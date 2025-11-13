@@ -31,6 +31,8 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
 
         public async Task<int> Handle(UpdateStudentCommand request, CancellationToken ct)
         {
+            var role = (_dataScope as dynamic)?._current?.Role as string;
+
             var student = await _dataScope.Students()
                 .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);

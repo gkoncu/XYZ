@@ -12,35 +12,61 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
     {
         public CreateStudentCommandValidator()
         {
-            RuleFor(x => x.FirstName)
-                .NotEmpty().WithMessage("Ad alanı zorunludur.");
-
-            RuleFor(x => x.LastName)
-                .NotEmpty().WithMessage("Soyad alanı zorunludur.");
+            RuleFor(x => x.FirstName).NotEmpty().MinimumLength(2).MaximumLength(100);
+            RuleFor(x => x.LastName).NotEmpty().MinimumLength(2).MaximumLength(100);
 
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email zorunludur.")
-                .EmailAddress().WithMessage("Geçerli bir email adresi giriniz.");
+                .NotEmpty()
+                .MaximumLength(256)
+                .EmailAddress();
+
+            RuleFor(x => x.PhoneNumber)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
 
             RuleFor(x => x.BirthDate)
-                .NotEmpty().WithMessage("Doğum tarihi zorunludur.")
-                .LessThan(DateTime.Today).WithMessage("Doğum tarihi bugünden ileri olamaz.");
+                .LessThan(DateTime.UtcNow.Date)
+                .GreaterThan(new DateTime(1900, 1, 1));
 
             RuleFor(x => x.Gender)
-                .Must(value => Enum.TryParse<Gender>(value, out _))
-                .WithMessage("Geçerli bir cinsiyet seçimi yapılmalıdır.");
+                .NotEmpty()
+                .Must(v => Enum.TryParse<Gender>(v, true, out _))
+                .WithMessage("Geçerli bir cinsiyet değeri giriniz.");
 
             RuleFor(x => x.BloodType)
-                .Must(value => Enum.TryParse<BloodType>(value, out _))
-                .WithMessage("Geçerli bir kan grubu seçilmelidir.");
-
-            RuleFor(x => x.IdentityNumber)
-                .Matches(@"^\d{11}$").When(x => !string.IsNullOrWhiteSpace(x.IdentityNumber))
-                .WithMessage("T.C. Kimlik Numarası 11 haneli olmalıdır.");
+                .NotEmpty()
+                .Must(v => Enum.TryParse<BloodType>(v, true, out _))
+                .WithMessage("Geçerli bir kan grubu değeri giriniz.");
 
             RuleFor(x => x.ClassId)
-                .GreaterThan(0).When(x => x.ClassId.HasValue)
-                .WithMessage("Geçerli bir sınıf ID'si belirtilmelidir.");
+                .GreaterThan(0).When(x => x.ClassId.HasValue);
+
+            RuleFor(x => x.IdentityNumber)
+                .Matches(@"^\d{11}$")
+                .When(x => !string.IsNullOrWhiteSpace(x.IdentityNumber))
+                .WithMessage("TC Kimlik No 11 haneli olmalıdır.");
+
+            RuleFor(x => x.Parent1Email)
+                .EmailAddress()
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.Parent1Email));
+
+            RuleFor(x => x.Parent2Email)
+                .EmailAddress()
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.Parent2Email));
+
+            RuleFor(x => x.Parent1PhoneNumber)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.Parent1PhoneNumber));
+
+            RuleFor(x => x.Parent2PhoneNumber)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.Parent2PhoneNumber));
+
+            RuleFor(x => x.Address).MaximumLength(500).When(x => !string.IsNullOrWhiteSpace(x.Address));
+            RuleFor(x => x.Notes).MaximumLength(2000).When(x => !string.IsNullOrWhiteSpace(x.Notes));
+            RuleFor(x => x.MedicalInformation).MaximumLength(2000).When(x => !string.IsNullOrWhiteSpace(x.MedicalInformation));
         }
     }
 }

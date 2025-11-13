@@ -33,6 +33,10 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
 
         public async Task<int> Handle(CreateStudentCommand request, CancellationToken ct)
         {
+            var role = _currentUser.Role;
+            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
+                throw new UnauthorizedAccessException("Öğrenci oluşturma yetkiniz yok.");
+
             var tenantId = _currentUser.TenantId
                 ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
