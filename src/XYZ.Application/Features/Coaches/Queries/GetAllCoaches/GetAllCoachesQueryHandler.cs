@@ -42,7 +42,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                     (c.User.Email != null && EF.Functions.Like(c.User.Email, term)) ||
                     (c.IdentityNumber != null && EF.Functions.Like(c.IdentityNumber, term)) ||
                     (c.LicenseNumber != null && EF.Functions.Like(c.LicenseNumber, term)) ||
-                    (c.Branch != null && EF.Functions.Like(c.Branch, term)));
+                    (c.Branch != null && EF.Functions.Like(c.Branch.Name, term)));
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
@@ -71,8 +71,8 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                 "Email" => asc ? query.OrderBy(c => c.User.Email)
                                     : query.OrderByDescending(c => c.User.Email),
 
-                "BranchName" => asc ? query.OrderBy(c => c.Branch)
-                                    : query.OrderByDescending(c => c.Branch),
+                "BranchName" => asc ? query.OrderBy(c => c.Branch.Name)
+                                    : query.OrderByDescending(c => c.Branch.Name),
 
                 "ClassesCount" => asc ? query.OrderBy(c => c.Classes.Count)
                                       : query.OrderByDescending(c => c.Classes.Count),
@@ -99,7 +99,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                     FullName = c.User.FirstName + " " + c.User.LastName,
                     Email = c.User.Email ?? string.Empty,
                     PhoneNumber = c.User.PhoneNumber,
-                    BranchName = c.Branch ?? string.Empty,
+                    BranchName = c.Branch.Name,
                     ClassesCount = c.Classes.Count,
                     IsActive = c.IsActive && c.User.IsActive
                 })
