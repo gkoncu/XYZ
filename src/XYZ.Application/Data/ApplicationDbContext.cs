@@ -23,6 +23,7 @@ namespace XYZ.Application.Data
         public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
         public DbSet<Announcement> Announcements => Set<Announcement>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<Admin> Admins => Set<Admin>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

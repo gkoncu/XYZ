@@ -1,80 +1,109 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace XYZ.Application.Features.Students.Commands.UpdateStudent
 {
-    public class UpdateStudentCommandHandler : IRequestHandler<UpdateStudentCommand, bool>
+    public class UpdateStudentCommandHandler : IRequestHandler<UpdateStudentCommand, int>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
         private readonly IDataScopeService _dataScope;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public UpdateStudentCommandHandler(
             IApplicationDbContext context,
-            ICurrentUserService currentUser,
-            IDataScopeService dataScope)
+            IDataScopeService dataScope,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
-            _currentUser = currentUser;
             _dataScope = dataScope;
+            _userManager = userManager;
         }
 
-        public async Task<bool> Handle(UpdateStudentCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(UpdateStudentCommand request, CancellationToken ct)
         {
-            var student = await _dataScope.GetScopedStudents()
+            var role = (_dataScope as dynamic)?._current?.Role as string;
+
+            var student = await _dataScope.Students()
                 .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == request.StudentId, cancellationToken);
+                .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
 
             if (student is null)
-                throw new Exception("Öğrenci bulunamadı veya erişim izniniz yok.");
+                throw new NotFoundException("Student", request.StudentId);
 
-            student.User.FirstName = request.FirstName;
-            student.User.LastName = request.LastName;
-            student.User.PhoneNumber = request.PhoneNumber;
-            student.User.Email = request.Email;
-            student.User.Gender = Enum.Parse<Gender>(request.Gender);
-            student.User.BloodType = Enum.Parse<BloodType>(request.BloodType);
-            student.User.BirthDate = request.BirthDate;
-            student.User.ProfilePictureUrl = request.ProfilePictureUrl;
-            student.User.IsActive = request.IsActive;
+            if (request.ClassId.HasValue && request.ClassId != student.ClassId)
+                await _dataScope.EnsureClassAccessAsync(request.ClassId.Value, ct);
 
-            if (request.ClassId.HasValue)
+            var user = student.User;
+
+            if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
             {
-                var targetClass = await _dataScope.GetScopedClasses()
-                    .FirstOrDefaultAsync(c => c.Id == request.ClassId.Value, cancellationToken);
+                var setEmail = await _userManager.SetEmailAsync(user, request.Email);
+                if (!setEmail.Succeeded)
+                {
+                    var msg = string.Join("; ", setEmail.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                    throw new InvalidOperationException($"E-posta güncellenemedi: {msg}");
+                }
 
-                if (targetClass is null)
-                    throw new UnauthorizedAccessException("Bu sınıfa erişiminiz yok.");
-
-                student.ClassId = request.ClassId;
+                var setUserName = await _userManager.SetUserNameAsync(user, request.Email);
+                if (!setUserName.Succeeded)
+                {
+                    var msg = string.Join("; ", setUserName.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                    throw new InvalidOperationException($"Kullanıcı adı güncellenemedi: {msg}");
+                }
             }
-            else
+
+            if (user.PhoneNumber != request.PhoneNumber)
             {
-                student.ClassId = null;
+                var setPhone = await _userManager.SetPhoneNumberAsync(user, request.PhoneNumber ?? string.Empty);
+                if (!setPhone.Succeeded)
+                {
+                    var msg = string.Join("; ", setPhone.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                    throw new InvalidOperationException($"Telefon güncellenemedi: {msg}");
+                }
+            }
+
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.BirthDate = request.BirthDate;
+            user.Gender = Enum.Parse<Gender>(request.Gender, true);
+            user.BloodType = Enum.Parse<BloodType>(request.BloodType, true);
+
+            var userUpdate = await _userManager.UpdateAsync(user);
+            if (!userUpdate.Succeeded)
+            {
+                var msg = string.Join("; ", userUpdate.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                throw new InvalidOperationException($"Kullanıcı güncellenemedi: {msg}");
             }
 
             student.IdentityNumber = request.IdentityNumber;
             student.Address = request.Address;
+
             student.Parent1FirstName = request.Parent1FirstName;
             student.Parent1LastName = request.Parent1LastName;
             student.Parent1Email = request.Parent1Email;
             student.Parent1PhoneNumber = request.Parent1PhoneNumber;
+
             student.Parent2FirstName = request.Parent2FirstName;
             student.Parent2LastName = request.Parent2LastName;
             student.Parent2Email = request.Parent2Email;
             student.Parent2PhoneNumber = request.Parent2PhoneNumber;
-            student.MedicalInformation = request.MedicalInformation;
-            student.Notes = request.Notes;
 
-            await _context.SaveChangesAsync(cancellationToken);
-            return true;
+            student.Notes = request.Notes;
+            student.MedicalInformation = request.MedicalInformation;
+
+            await _context.SaveChangesAsync(ct);
+
+            return student.Id;
         }
     }
 }

@@ -1,15 +1,14 @@
-﻿using MediatR;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XYZ.Application.Features.Students.Commands.UpdateStudent
+namespace XYZ.Application.Features.Students.Queries.GetStudentById
 {
-    public class UpdateStudentCommand : IRequest<int>
+    public class StudentDetailDto
     {
-        public int StudentId { get; set; }
+        public int Id { get; set; }
 
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
@@ -18,10 +17,14 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
         public DateTime BirthDate { get; set; }
         public string Gender { get; set; } = null!;
         public string BloodType { get; set; } = null!;
+        public bool IsActive { get; set; }
 
-        public int? ClassId { get; set; }
         public string? IdentityNumber { get; set; }
         public string? Address { get; set; }
+
+        public int? ClassId { get; set; }
+        public string? ClassName { get; set; }
+        public string? BranchName { get; set; }
 
         public string? Parent1FirstName { get; set; }
         public string? Parent1LastName { get; set; }

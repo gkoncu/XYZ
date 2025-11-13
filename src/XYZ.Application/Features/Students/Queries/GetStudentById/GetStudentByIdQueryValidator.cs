@@ -1,4 +1,4 @@
-﻿using MediatR;
+﻿using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,13 +7,11 @@ using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Students.Queries.GetStudentById
 {
-    public class GetStudentByIdQuery : IRequest<StudentDetailDto>
+    public class GetStudentByIdQueryValidator : AbstractValidator<GetStudentByIdQuery>
     {
-        public int StudentId { get; }
-
-        public GetStudentByIdQuery(int studentId)
+        public GetStudentByIdQueryValidator()
         {
-            StudentId = studentId;
+            RuleFor(x => x.StudentId).GreaterThan(0);
         }
     }
 }

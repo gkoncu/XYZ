@@ -12,7 +12,6 @@
 
 	<ItemGroup>
 		<Folder Include="Features\Coaches\" />
-		<Folder Include="Features\Classes\" />
 		<Folder Include="Features\Attendances\" />
 		<Folder Include="Features\Documents\" />
 		<Folder Include="Features\Announcements\" />
