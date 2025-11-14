@@ -9,7 +9,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
     public class CoachClassItemDto
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
         public string BranchName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
     }
@@ -41,5 +41,17 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 
         public List<CoachClassItemDto> Classes { get; set; } = new();
     }
+
+    public class CoachListItemDto
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public string BranchName { get; set; } = string.Empty;
+        public int ClassesCount { get; set; }
+        public bool IsActive { get; set; }
+    }
+
 
 }

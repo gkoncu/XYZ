@@ -55,7 +55,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetCoachById
                         .Select(cls => new CoachClassItemDto
                         {
                             Id = cls.Id,
-                            Name = cls.Name,
+                            FullName = cls.Name,
                             BranchName = cls.Branch.Name,
                             IsActive = cls.IsActive
                         })

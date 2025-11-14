@@ -39,4 +39,15 @@ namespace XYZ.Application.Features.Classes.Queries.GetAllClasses
         public List<ClassCoachItemDto> Coaches { get; set; } = new();
         public List<ClassStudentItemDto> Students { get; set; } = new();
     }
+
+    public class ClassListItemDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string BranchName { get; set; } = string.Empty;
+        public int StudentsCount { get; set; }
+        public int CoachesCount { get; set; }
+        public bool IsActive { get; set; }
+    }
+
 }
