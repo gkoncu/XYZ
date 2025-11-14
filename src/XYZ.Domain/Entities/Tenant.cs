@@ -15,6 +15,7 @@ namespace XYZ.Domain.Entities
         public string? Address { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
+
         public string? LogoUrl { get; set; }
         public string PrimaryColor { get; set; } = "#3B82F6";
         public string SecondaryColor { get; set; } = "#1E40AF";
@@ -27,6 +28,7 @@ namespace XYZ.Domain.Entities
         public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
         public ICollection<Admin> Admins { get; set; } = new List<Admin>();
         public ICollection<Class> Classes { get; set; } = new List<Class>();
+        public ICollection<Branch> Branches { get; set; } = new List<Branch>();
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
         public ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
     }

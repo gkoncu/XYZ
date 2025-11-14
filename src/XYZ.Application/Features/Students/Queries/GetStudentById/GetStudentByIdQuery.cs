@@ -9,11 +9,6 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
 {
     public class GetStudentByIdQuery : IRequest<StudentDetailDto>
     {
-        public int StudentId { get; }
-
-        public GetStudentByIdQuery(int studentId)
-        {
-            StudentId = studentId;
-        }
+        public int StudentId { get; set; }
     }
 }
