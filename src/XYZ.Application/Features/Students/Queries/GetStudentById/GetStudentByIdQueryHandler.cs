@@ -10,7 +10,8 @@ using XYZ.Application.Common.Interfaces;
 
 namespace XYZ.Application.Features.Students.Queries.GetStudentById
 {
-    public class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQuery, StudentDetailDto>
+    public class GetStudentByIdQueryHandler
+        : IRequestHandler<GetStudentByIdQuery, StudentDetailDto>
     {
         private readonly IDataScopeService _dataScope;
 
@@ -19,29 +20,33 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
             _dataScope = dataScope;
         }
 
-        public async Task<StudentDetailDto> Handle(GetStudentByIdQuery request, CancellationToken cancellationToken)
+        public async Task<StudentDetailDto> Handle(
+            GetStudentByIdQuery request,
+            CancellationToken ct)
         {
             var dto = await _dataScope.Students()
                 .Where(s => s.Id == request.StudentId)
                 .Select(s => new StudentDetailDto
                 {
                     Id = s.Id,
-
-                    FirstName = s.User.FirstName,
-                    LastName = s.User.LastName,
-                    Email = s.User.Email,
+                    UserId = s.UserId,
+                    FullName = s.User.FirstName + " " + s.User.LastName,
+                    Email = s.User.Email ?? string.Empty,
                     PhoneNumber = s.User.PhoneNumber,
-                    BirthDate = s.User.BirthDate,
+
                     Gender = s.User.Gender.ToString(),
                     BloodType = s.User.BloodType.ToString(),
-                    IsActive = s.User.IsActive,
+                    BirthDate = s.User.BirthDate,
 
-                    IdentityNumber = s.IdentityNumber,
-                    Address = s.Address,
+                    TenantId = s.TenantId,
 
                     ClassId = s.ClassId,
                     ClassName = s.Class != null ? s.Class.Name : null,
+                    BranchId = s.Class != null ? (int?)s.Class.BranchId : null,
                     BranchName = s.Class != null ? s.Class.Branch.Name : null,
+
+                    IdentityNumber = s.IdentityNumber,
+                    Address = s.Address,
 
                     Parent1FirstName = s.Parent1FirstName,
                     Parent1LastName = s.Parent1LastName,
@@ -53,11 +58,15 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
                     Parent2Email = s.Parent2Email,
                     Parent2PhoneNumber = s.Parent2PhoneNumber,
 
+                    MedicalInformation = s.MedicalInformation,
                     Notes = s.Notes,
-                    MedicalInformation = s.MedicalInformation
+
+                    IsActive = s.IsActive && s.User.IsActive,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 })
                 .AsNoTracking()
-                .FirstOrDefaultAsync(cancellationToken);
+                .SingleOrDefaultAsync(ct);
 
             if (dto is null)
                 throw new NotFoundException("Student", request.StudentId);

@@ -1,0 +1,17 @@
+﻿using FluentValidation;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace XYZ.Application.Features.Classes.Queries.GetClassById
+{
+    public class GetClassByIdQueryValidator : AbstractValidator<GetClassByIdQuery>
+    {
+        public GetClassByIdQueryValidator()
+        {
+            RuleFor(x => x.ClassId).GreaterThan(0);
+        }
+    }
+}
