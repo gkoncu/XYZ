@@ -44,6 +44,7 @@ namespace XYZ.Application.Data
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
+            builder.Entity<Branch>().HasQueryFilter(b => b.IsActive);
 
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);
