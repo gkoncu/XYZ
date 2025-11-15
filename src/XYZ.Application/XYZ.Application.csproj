@@ -15,7 +15,6 @@
 		<Folder Include="Features\Documents\" />
 		<Folder Include="Features\Announcements\" />
 		<Folder Include="Features\Dashboard\" />
-		<Folder Include="Features\Branches\" />
 		<Folder Include="Features\Tenants\" />
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
