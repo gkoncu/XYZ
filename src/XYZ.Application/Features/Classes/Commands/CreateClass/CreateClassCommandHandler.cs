@@ -38,12 +38,17 @@ namespace XYZ.Application.Features.Classes.Commands.CreateClass
             if (branch is null)
                 throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
 
-
             var entity = new Class
             {
                 Name = request.Name.Trim(),
+                Description = request.Description,
+                AgeGroupMin = request.AgeGroupMin,
+                AgeGroupMax = request.AgeGroupMax,
+                MaxCapacity = request.MaxCapacity,
+
                 BranchId = request.BranchId,
                 TenantId = tenantId,
+
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };

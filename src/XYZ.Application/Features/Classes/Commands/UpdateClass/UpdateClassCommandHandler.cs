@@ -44,6 +44,11 @@ namespace XYZ.Application.Features.Classes.Commands.UpdateClass
             }
 
             @class.Name = request.Name.Trim();
+            @class.Description = request.Description;
+            @class.AgeGroupMin = request.AgeGroupMin;
+            @class.AgeGroupMax = request.AgeGroupMax;
+            @class.MaxCapacity = request.MaxCapacity;
+
             @class.BranchId = request.BranchId;
             @class.UpdatedAt = DateTime.UtcNow;
 
