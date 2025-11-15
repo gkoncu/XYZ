@@ -22,6 +22,7 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<ProgressRecord> ProgressRecords { get; }
         DbSet<Announcement> Announcements { get; }
         DbSet<Admin> Admins { get; }
+        DbSet<Branch> Branches { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
