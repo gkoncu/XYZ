@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Features.Classes.Commands.AssignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
 using XYZ.Application.Features.Classes.Commands.CreateClass;
 using XYZ.Application.Features.Classes.Commands.DeleteClass;
+using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
 using XYZ.Application.Features.Classes.Commands.UpdateClass;
 using XYZ.Application.Features.Classes.Queries.GetAllClasses;
@@ -103,6 +105,32 @@ namespace XYZ.API.Controllers
         public async Task<ActionResult<int>> UnassignStudent(
             int id,
             [FromBody] UnassignStudentFromClassCommand command,
+            CancellationToken cancellationToken)
+        {
+            command.ClassId = id;
+
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("{id:int}/assign-coach")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<ActionResult<int>> AssignCoach(
+            int id,
+            [FromBody] AssignCoachToClassCommand command,
+            CancellationToken cancellationToken)
+        {
+            command.ClassId = id;
+
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPost("{id:int}/unassign-coach")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<ActionResult<int>> UnassignCoach(
+            int id,
+            [FromBody] UnassignCoachFromClassCommand command,
             CancellationToken cancellationToken)
         {
             command.ClassId = id;
