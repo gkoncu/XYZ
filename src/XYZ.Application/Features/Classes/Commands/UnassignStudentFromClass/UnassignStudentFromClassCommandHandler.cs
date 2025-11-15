@@ -10,41 +10,42 @@ using XYZ.Application.Common.Interfaces;
 
 namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
 {
-    public class UnassignStudentFromClassCommandHandler : IRequestHandler<UnassignStudentFromClassCommand, int>
+    public class UnassignStudentFromClassCommandHandler
+        : IRequestHandler<UnassignStudentFromClassCommand, int>
     {
-        private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
+        private readonly IDataScopeService _dataScope;
 
         public UnassignStudentFromClassCommandHandler(
-            IDataScopeService dataScope,
             IApplicationDbContext context,
-            ICurrentUserService currentUser)
+            IDataScopeService dataScope)
         {
-            _dataScope = dataScope;
             _context = context;
-            _current = currentUser;
+            _dataScope = dataScope;
         }
 
-        public async Task<int> Handle(UnassignStudentFromClassCommand request, CancellationToken ct)
+        public async Task<int> Handle(
+            UnassignStudentFromClassCommand request,
+            CancellationToken cancellationToken)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Sınıf ilişkisini kaldırma yetkiniz yok.");
-
             var student = await _dataScope.Students()
-                .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
+                .Include(s => s.Class)
+                .FirstOrDefaultAsync(s => s.Id == request.StudentId, cancellationToken);
 
             if (student is null)
                 throw new NotFoundException("Student", request.StudentId);
 
-            if (student.ClassId is null)
-                return student.Id;
+            if (!student.ClassId.HasValue)
+                throw new InvalidOperationException("Öğrencinin atanmış bir sınıfı yok.");
+
+            if (request.ClassId.HasValue && student.ClassId != request.ClassId.Value)
+                throw new InvalidOperationException("Öğrenci bu sınıfa kayıtlı değil.");
 
             student.ClassId = null;
             student.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync(ct);
+            await _context.SaveChangesAsync(cancellationToken);
+
             return student.Id;
         }
     }

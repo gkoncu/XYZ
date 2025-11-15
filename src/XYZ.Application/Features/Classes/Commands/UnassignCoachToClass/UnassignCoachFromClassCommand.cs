@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
+namespace XYZ.Application.Features.Classes.Commands.UnassignCoachToClass
 {
-    public class UnassignStudentFromClassCommand : IRequest<int>
+    public class UnassignCoachFromClassCommand : IRequest<int>
     {
-        public int StudentId { get; set; }
+        public int CoachId { get; set; }
         public int? ClassId { get; set; }
     }
 }

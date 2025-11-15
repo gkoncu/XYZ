@@ -24,6 +24,7 @@ namespace XYZ.Application.Data
         public DbSet<Announcement> Announcements => Set<Announcement>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Admin> Admins => Set<Admin>();
+        public DbSet<Branch> Branches => Set<Branch>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
