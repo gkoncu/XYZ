@@ -23,7 +23,6 @@ namespace XYZ.Domain.Entities
 
         public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
         public ICollection<Student> Students { get; set; } = new List<Student>();
-        public ICollection<ClassSchedule> Schedules { get; set; } = new List<ClassSchedule>();
     }
 
 }

@@ -17,6 +17,5 @@ namespace XYZ.Domain.Entities
         public string? Notes { get; set; }
 
         public Student Student { get; set; } = null!;
-        public ClassSchedule ClassSchedule { get; set; } = null!;
     }
 }
