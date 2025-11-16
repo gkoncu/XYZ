@@ -16,7 +16,6 @@ namespace XYZ.Application.Data
         public DbSet<Student> Students => Set<Student>();
         public DbSet<Coach> Coaches => Set<Coach>();
         public DbSet<Class> Classes => Set<Class>();
-        public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
         public DbSet<Attendance> Attendances => Set<Attendance>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Document> Documents => Set<Document>();
