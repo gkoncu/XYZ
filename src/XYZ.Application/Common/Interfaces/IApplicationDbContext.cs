@@ -22,6 +22,9 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<Announcement> Announcements { get; }
         DbSet<Admin> Admins { get; }
         DbSet<Branch> Branches { get; }
+        DbSet<ClassSession> ClassSessions { get; }
+        DbSet<ClassEnrollment> ClassEnrollments { get; }
+
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

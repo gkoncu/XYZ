@@ -24,6 +24,9 @@ namespace XYZ.Application.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Admin> Admins => Set<Admin>();
         public DbSet<Branch> Branches => Set<Branch>();
+        public DbSet<ClassSession> ClassSessions => Set<ClassSession>();
+        public DbSet<ClassEnrollment> ClassEnrollments => Set<ClassEnrollment>();
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -38,7 +41,8 @@ namespace XYZ.Application.Data
             builder.Entity<Coach>().HasQueryFilter(c => c.IsActive);
             builder.Entity<Admin>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Class>().HasQueryFilter(c => c.IsActive);
-            builder.Entity<ClassSchedule>().HasQueryFilter(cs => cs.IsActive);
+            builder.Entity<ClassSession>().HasQueryFilter(cs => cs.IsActive);
+            builder.Entity<ClassEnrollment>().HasQueryFilter(ce => ce.IsActive);
             builder.Entity<Attendance>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Domain.Entities.Document>().HasQueryFilter(d => d.IsActive);
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
