@@ -7,12 +7,12 @@ namespace XYZ.API.Dev;
 
 internal static class DevIdentitySeeder
 {
-    private static readonly string[] Roles = { "Superadmin", "Admin", "Coach", "Student" };
+    private static readonly string[] Roles = { "SuperAdmin", "Admin", "Coach", "Student" };
 
     private sealed record UserSeed(string Email, string Password, string Role);
     private static readonly UserSeed[] Users =
     {
-        new("superadmin@xyz.local", "Superadmin#123", "Superadmin"),
+        new("superadmin@xyz.local", "Superadmin#123", "SuperAdmin"),
         new("admin@xyz.local",   "Admin#123",   "Admin"),
         new("coach@xyz.local",   "Coach#123",   "Coach"),
         new("student@xyz.local", "Student#123", "Student"),
