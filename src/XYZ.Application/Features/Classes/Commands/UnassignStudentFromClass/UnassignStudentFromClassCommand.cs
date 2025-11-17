@@ -10,6 +10,7 @@ namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
     public class UnassignStudentFromClassCommand : IRequest<int>
     {
         public int StudentId { get; set; }
-        public int? ClassId { get; set; }
+        public int ClassId { get; set; }
     }
+
 }
