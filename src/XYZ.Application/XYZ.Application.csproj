@@ -11,7 +11,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Features\Dashboard\Queries\GetStudentDashboard\" />
 		<Folder Include="Features\Documents\" />
 		<Folder Include="Features\Announcements\" />
 		<Folder Include="Features\ProgressRecords\" />
