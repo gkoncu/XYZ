@@ -1,0 +1,74 @@
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Application.Common.Models;
+
+namespace XYZ.Application.Features.Payments.Queries.GetPayments
+{
+    public class GetPaymentsQueryHandler
+        : IRequestHandler<GetPaymentsQuery, PaginationResult<PaymentListItemDto>>
+    {
+        private readonly IDataScopeService _dataScope;
+
+        public GetPaymentsQueryHandler(IDataScopeService dataScope)
+        {
+            _dataScope = dataScope;
+        }
+
+        public async Task<PaginationResult<PaymentListItemDto>> Handle(
+            GetPaymentsQuery request,
+            CancellationToken ct)
+        {
+            var query = _dataScope.Payments()
+                .Include(p => p.Student)
+                    .ThenInclude(s => s.User)
+                .AsQueryable();
+
+            if (request.StudentId.HasValue)
+            {
+                query = query.Where(p => p.StudentId == request.StudentId.Value);
+            }
+
+            if (request.Status.HasValue)
+            {
+                query = query.Where(p => p.Status == request.Status.Value);
+            }
+
+            var totalCount = await query.CountAsync(ct);
+
+            var page = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var size = request.PageSize <= 0 ? 20 : request.PageSize;
+
+            var items = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Skip((page - 1) * size)
+                .Take(size)
+                .Select(p => new PaymentListItemDto
+                {
+                    Id = p.Id,
+                    StudentId = p.StudentId,
+                    StudentFullName = p.Student.User.FullName,
+                    Amount = p.Amount,
+                    DiscountAmount = p.DiscountAmount,
+                    Status = p.Status,
+                    CreatedAt = p.CreatedAt
+                })
+                .AsNoTracking()
+                .ToListAsync(ct);
+
+            return new PaginationResult<PaymentListItemDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = size
+            };
+        }
+    }
+}
