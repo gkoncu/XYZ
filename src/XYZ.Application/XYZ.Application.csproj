@@ -11,9 +11,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Features\Dashboard\Queries\GetAdminCoachDashboard\" />
+		<Folder Include="Features\Dashboard\Queries\GetStudentDashboard\" />
 		<Folder Include="Features\Documents\" />
 		<Folder Include="Features\Announcements\" />
-		<Folder Include="Features\Dashboard\" />
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
 	</ItemGroup>
