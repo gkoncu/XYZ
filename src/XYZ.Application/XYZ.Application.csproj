@@ -12,7 +12,6 @@
 
 	<ItemGroup>
 		<Folder Include="Features\Documents\" />
-		<Folder Include="Features\Announcements\" />
 		<Folder Include="Features\ProgressRecords\" />
 		<Folder Include="Features\Payments\" />
 	</ItemGroup>
