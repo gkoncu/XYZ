@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,6 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord
             if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
                 throw new UnauthorizedAccessException("Gelişim kaydı oluşturma yetkiniz yok.");
 
-            // Öğrenci, erişebildiğin scope içinde mi?
             var student = await _dataScope.Students()
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
 

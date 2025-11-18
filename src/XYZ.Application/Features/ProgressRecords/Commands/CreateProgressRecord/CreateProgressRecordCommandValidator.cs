@@ -27,14 +27,29 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord
             RuleFor(x => x.BodyFatPercentage)
                 .InclusiveBetween(0, 100).When(x => x.BodyFatPercentage.HasValue);
 
-            RuleForEach(x => new[] { x.TechnicalScore, x.TacticalScore, x.PhysicalScore, x.MentalScore })
-                .InclusiveBetween(0, 100)
-                .When(x => x.HasValue());
-        }
-    }
+            RuleFor(x => x.VerticalJump)
+                .GreaterThanOrEqualTo(0).When(x => x.VerticalJump.HasValue);
 
-    internal static class IntExtensions
-    {
-        public static bool HasValue(this int? value) => value.HasValue;
+            RuleFor(x => x.SprintTime)
+                .GreaterThanOrEqualTo(0).When(x => x.SprintTime.HasValue);
+
+            RuleFor(x => x.Endurance)
+                .GreaterThanOrEqualTo(0).When(x => x.Endurance.HasValue);
+
+            RuleFor(x => x.Flexibility)
+                .GreaterThanOrEqualTo(0).When(x => x.Flexibility.HasValue);
+
+            RuleFor(x => x.TechnicalScore)
+                .InclusiveBetween(0, 100).When(x => x.TechnicalScore.HasValue);
+
+            RuleFor(x => x.TacticalScore)
+                .InclusiveBetween(0, 100).When(x => x.TacticalScore.HasValue);
+
+            RuleFor(x => x.PhysicalScore)
+                .InclusiveBetween(0, 100).When(x => x.PhysicalScore.HasValue);
+
+            RuleFor(x => x.MentalScore)
+                .InclusiveBetween(0, 100).When(x => x.MentalScore.HasValue);
+        }
     }
 }

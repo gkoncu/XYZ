@@ -11,7 +11,7 @@ using XYZ.Application.Common.Interfaces;
 namespace XYZ.Application.Features.ProgressRecords.Commands.DeleteProgressRecord
 {
     public class DeleteProgressRecordCommandHandler
-        : IRequestHandler(DeleteProgressRecordCommand, int)
+    : IRequestHandler<DeleteProgressRecordCommand, int>
     {
         private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
