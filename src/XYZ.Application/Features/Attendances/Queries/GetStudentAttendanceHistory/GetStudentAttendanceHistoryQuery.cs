@@ -5,12 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
+namespace XYZ.Application.Features.Attendances.Queries.GetStudentAttendanceHistory
 {
-    public class UnassignStudentFromClassCommand : IRequest<int>
+    public class GetStudentAttendanceHistoryQuery
+        : IRequest<IList<StudentAttendanceHistoryItemDto>>
     {
         public int StudentId { get; set; }
-        public int ClassId { get; set; }
     }
-
 }

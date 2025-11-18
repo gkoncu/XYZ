@@ -7,14 +7,13 @@ using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
 {
-    public class UnassignStudentFromClassCommandValidator : AbstractValidator<UnassignStudentFromClassCommand>
+    public class UnassignStudentFromClassCommandValidator
+        : AbstractValidator<UnassignStudentFromClassCommand>
     {
         public UnassignStudentFromClassCommandValidator()
         {
             RuleFor(x => x.StudentId).GreaterThan(0);
-            RuleFor(x => x.ClassId)
-                .GreaterThan(0)
-                .When(x => x.ClassId.HasValue);
+            RuleFor(x => x.ClassId).GreaterThan(0);
         }
     }
 }

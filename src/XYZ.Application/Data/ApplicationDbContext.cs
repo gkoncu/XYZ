@@ -16,7 +16,6 @@ namespace XYZ.Application.Data
         public DbSet<Student> Students => Set<Student>();
         public DbSet<Coach> Coaches => Set<Coach>();
         public DbSet<Class> Classes => Set<Class>();
-        public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
         public DbSet<Attendance> Attendances => Set<Attendance>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Document> Documents => Set<Document>();
@@ -25,6 +24,8 @@ namespace XYZ.Application.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Admin> Admins => Set<Admin>();
         public DbSet<Branch> Branches => Set<Branch>();
+        public DbSet<ClassSession> ClassSessions => Set<ClassSession>();
+        public DbSet<ClassEnrollment> ClassEnrollments => Set<ClassEnrollment>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -32,16 +33,16 @@ namespace XYZ.Application.Data
 
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            // Soft Delete Query Filters
             builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
             builder.Entity<Tenant>().HasQueryFilter(t => t.IsActive);
             builder.Entity<Student>().HasQueryFilter(s => s.IsActive);
             builder.Entity<Coach>().HasQueryFilter(c => c.IsActive);
             builder.Entity<Admin>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Class>().HasQueryFilter(c => c.IsActive);
-            builder.Entity<ClassSchedule>().HasQueryFilter(cs => cs.IsActive);
+            builder.Entity<ClassSession>().HasQueryFilter(cs => cs.IsActive);
+            builder.Entity<ClassEnrollment>().HasQueryFilter(ce => ce.IsActive);
             builder.Entity<Attendance>().HasQueryFilter(a => a.IsActive);
-            builder.Entity<Domain.Entities.Document>().HasQueryFilter(d => d.IsActive);
+            builder.Entity<Document>().HasQueryFilter(d => d.IsActive);
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
@@ -65,7 +66,6 @@ namespace XYZ.Application.Data
                       .WithMany(t => t.Classes)
                       .HasForeignKey(c => c.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
-
             });
 
             builder.Entity<Student>(entity =>
@@ -97,7 +97,6 @@ namespace XYZ.Application.Data
                       .WithOne(u => u.CoachProfile)
                       .HasForeignKey<Coach>(c => c.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
-
             });
 
             builder.Entity<Admin>(entity =>
@@ -134,12 +133,42 @@ namespace XYZ.Application.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<ClassSchedule>(entity =>
+            builder.Entity<ClassSession>(entity =>
             {
                 entity.HasOne(cs => cs.Class)
-                      .WithMany(c => c.Schedules)
+                      .WithMany()
                       .HasForeignKey(cs => cs.ClassId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(cs => cs.Title)
+                      .HasMaxLength(200)
+                      .IsRequired();
+
+                entity.Property(cs => cs.Location)
+                      .HasMaxLength(200);
+
+                entity.Property(cs => cs.Description)
+                      .HasMaxLength(2000);
+
+                entity.Property(cs => cs.CoachNote)
+                      .HasMaxLength(2000);
+
+                entity.HasIndex(cs => new { cs.ClassId, cs.Date });
+            });
+
+            builder.Entity<ClassEnrollment>(entity =>
+            {
+                entity.HasOne(e => e.Student)
+                      .WithMany()
+                      .HasForeignKey(e => e.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Class)
+                      .WithMany()
+                      .HasForeignKey(e => e.ClassId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.ClassId, e.StudentId, e.StartDate });
             });
 
             builder.Entity<Attendance>(entity =>
@@ -149,10 +178,24 @@ namespace XYZ.Application.Data
                       .HasForeignKey(a => a.StudentId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(a => a.ClassSchedule)
+                entity.HasOne(a => a.ClassSession)
                       .WithMany(cs => cs.Attendances)
-                      .HasForeignKey(a => a.ClassScheduleId)
+                      .HasForeignKey(a => a.ClassSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(a => a.Class)
+                      .WithMany()
+                      .HasForeignKey(a => a.ClassId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(a => a.Note)
+                      .HasMaxLength(1000);
+
+                entity.Property(a => a.CoachComment)
+                      .HasMaxLength(2000);
+
+                entity.HasIndex(a => new { a.ClassSessionId, a.StudentId })
+                      .IsUnique();
             });
 
             builder.Entity<ProgressRecord>(entity =>
@@ -163,7 +206,7 @@ namespace XYZ.Application.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<Domain.Entities.Document>(entity =>
+            builder.Entity<Document>(entity =>
             {
                 entity.HasOne(d => d.Student)
                       .WithMany(s => s.Documents)
@@ -208,13 +251,19 @@ namespace XYZ.Application.Data
                     .HasMany(c => c.Coaches)
                     .WithMany(co => co.Classes)
                     .UsingEntity<Dictionary<string, object>>(
-                    "ClassCoach",
-                    j => j.HasOne<Coach>().WithMany().HasForeignKey("CoachId").OnDelete(DeleteBehavior.Restrict),
-                    j => j.HasOne<Class>().WithMany().HasForeignKey("ClassId").OnDelete(DeleteBehavior.Restrict),
-                    j =>
-                    {
-                        j.HasKey("ClassId", "CoachId");
-                    });
+                        "ClassCoach",
+                        j => j.HasOne<Coach>()
+                              .WithMany()
+                              .HasForeignKey("CoachId")
+                              .OnDelete(DeleteBehavior.Restrict),
+                        j => j.HasOne<Class>()
+                              .WithMany()
+                              .HasForeignKey("ClassId")
+                              .OnDelete(DeleteBehavior.Restrict),
+                        j =>
+                        {
+                            j.HasKey("ClassId", "CoachId");
+                        });
 
             builder.Entity<ApplicationUser>(entity =>
             {
@@ -247,19 +296,6 @@ namespace XYZ.Application.Data
                 entity.HasOne(s => s.Class)
                       .WithMany(c => c.Students)
                       .HasForeignKey(s => s.ClassId)
-                      .IsRequired(false);
-            });
-
-            builder.Entity<Attendance>(entity =>
-            {
-                entity.HasOne(a => a.Student)
-                      .WithMany(s => s.Attendances)
-                      .HasForeignKey(a => a.StudentId)
-                      .IsRequired(false);
-
-                entity.HasOne(a => a.ClassSchedule)
-                      .WithMany(cs => cs.Attendances)
-                      .HasForeignKey(a => a.ClassScheduleId)
                       .IsRequired(false);
             });
         }

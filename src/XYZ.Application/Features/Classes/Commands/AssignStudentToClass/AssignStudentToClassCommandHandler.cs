@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
 {
@@ -39,9 +41,7 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
                 throw new NotFoundException("Student", request.StudentId);
 
             var cls = await _dataScope.Classes()
-                .Where(c => c.Id == request.ClassId)
-                .Select(c => new { c.Id, c.TenantId })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(c => c.Id == request.ClassId, ct);
 
             if (cls is null)
                 throw new NotFoundException("Class", request.ClassId);
@@ -49,11 +49,77 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
             if (cls.TenantId != student.TenantId)
                 throw new UnauthorizedAccessException("Öğrenci ve sınıf farklı tenant'a ait.");
 
-            if (student.ClassId == request.ClassId)
-                return student.Id;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            student.ClassId = request.ClassId;
-            student.UpdatedAt = DateTime.UtcNow;
+            var existingEnrollment = await _context.ClassEnrollments
+                .FirstOrDefaultAsync(e =>
+                        e.StudentId == student.Id &&
+                        e.ClassId == cls.Id &&
+                        e.EndDate == null,
+                    ct);
+
+            if (existingEnrollment is null)
+            {
+                var enrollment = new ClassEnrollment
+                {
+                    StudentId = student.Id,
+                    ClassId = cls.Id,
+                    StartDate = today,
+                    EndDate = null
+                };
+
+                await _context.ClassEnrollments.AddAsync(enrollment, ct);
+            }
+            else
+            {
+                if (existingEnrollment.StartDate > today)
+                {
+                    existingEnrollment.StartDate = today;
+                }
+            }
+
+            if (student.ClassId != request.ClassId)
+            {
+                student.ClassId = request.ClassId;
+                student.UpdatedAt = DateTime.UtcNow;
+            }
+
+            var futureSessions = await _context.ClassSessions
+                .Where(cs =>
+                    cs.ClassId == cls.Id &&
+                    cs.Date >= today &&
+                    cs.Status != SessionStatus.Cancelled &&
+                    cs.IsActive)
+                .ToListAsync(ct);
+
+            if (futureSessions.Count > 0)
+            {
+                var futureSessionIds = futureSessions.Select(cs => cs.Id).ToList();
+
+                var existingAttendanceSessionIds = await _dataScope.Attendances()
+                    .Where(a =>
+                        a.StudentId == student.Id &&
+                        a.ClassId == cls.Id &&
+                        futureSessionIds.Contains(a.ClassSessionId))
+                    .Select(a => a.ClassSessionId)
+                    .ToListAsync(ct);
+
+                foreach (var session in futureSessions)
+                {
+                    if (existingAttendanceSessionIds.Contains(session.Id))
+                        continue;
+
+                    var attendance = new Attendance
+                    {
+                        ClassSessionId = session.Id,
+                        ClassId = cls.Id,
+                        StudentId = student.Id,
+                        Status = AttendanceStatus.Unknown
+                    };
+
+                    await _context.Attendances.AddAsync(attendance, ct);
+                }
+            }
 
             await _context.SaveChangesAsync(ct);
             return student.Id;

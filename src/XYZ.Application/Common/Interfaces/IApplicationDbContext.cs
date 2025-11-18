@@ -15,7 +15,6 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<Student> Students { get; }
         DbSet<Coach> Coaches { get; }
         DbSet<Class> Classes { get; }
-        DbSet<ClassSchedule> ClassSchedules { get; }
         DbSet<Attendance> Attendances { get; }
         DbSet<Payment> Payments { get; }
         DbSet<Document> Documents { get; }
@@ -23,6 +22,9 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<Announcement> Announcements { get; }
         DbSet<Admin> Admins { get; }
         DbSet<Branch> Branches { get; }
+        DbSet<ClassSession> ClassSessions { get; }
+        DbSet<ClassEnrollment> ClassEnrollments { get; }
+
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

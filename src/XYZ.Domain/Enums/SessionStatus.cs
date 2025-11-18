@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace XYZ.Domain.Enums
 {
-    public enum AttendanceStatus
+    public enum SessionStatus
     {
-        Unknown,
-        Present,
-        Absent,
-        Excused,
-        Late
+        Planned = 0,
+        Completed = 1,
+        Cancelled = 2
     }
 }
