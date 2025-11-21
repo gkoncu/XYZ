@@ -87,6 +87,7 @@ builder.Services.AddScoped<IJwtFactory, JwtFactory>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 builder.Services.AddScoped<IRoleAssignmentService, RoleAssignmentService>();
+builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddControllers();
 
 // --- Swagger Dev---
