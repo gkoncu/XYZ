@@ -95,6 +95,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "XYZ API", Version = "v1" });
+
+    c.MapType<DateOnly>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Format = "date"
+    });
+
+    c.MapType<TimeOnly>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Format = "time"
+    });
+
     var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         Scheme = "bearer",

@@ -16,6 +16,17 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.API.Controllers
 {
+    public class UploadStudentDocumentRequest
+    {
+        public IFormFile File { get; set; } = null!;
+
+        public string? Name { get; set; }
+
+        public string? Description { get; set; }
+
+        public DocumentType Type { get; set; } = DocumentType.Other;
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -65,31 +76,29 @@ namespace XYZ.API.Controllers
 
         [HttpPost("student/{studentId:int}")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        [RequestSizeLimit(52_428_800)] // ~50 MB
+        [RequestSizeLimit(52_428_800)]
+        [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         public async Task<ActionResult<int>> UploadForStudent(
             int studentId,
-            [FromForm] IFormFile file,
-            [FromForm] string? name,
-            [FromForm] string? description,
-            [FromForm] DocumentType type,
+            [FromForm] UploadStudentDocumentRequest model,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
+            if (model.File == null || model.File.Length == 0)
             {
                 return BadRequest("Dosya yüklenmedi.");
             }
 
-            await using var stream = file.OpenReadStream();
-            var filePath = await _fileService.UploadFileAsync(stream, file.FileName);
+            await using var stream = model.File.OpenReadStream();
+            var filePath = await _fileService.UploadFileAsync(stream, model.File.FileName);
 
             var command = new CreateDocumentCommand
             {
                 StudentId = studentId,
-                Name = string.IsNullOrWhiteSpace(name) ? file.FileName : name!,
-                Description = description,
+                Name = string.IsNullOrWhiteSpace(model.Name) ? model.File.FileName : model.Name!,
+                Description = model.Description,
                 FilePath = filePath,
-                Type = type
+                Type = model.Type
             };
 
             var id = await _mediator.Send(command, cancellationToken);
