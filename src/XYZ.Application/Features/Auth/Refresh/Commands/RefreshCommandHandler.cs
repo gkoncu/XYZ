@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
@@ -44,10 +43,11 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
                 throw new UnauthorizedAccessException("User not found.");
 
             var roles = await _userManager.GetRolesAsync(user);
+            var rolesArray = roles.ToArray();
 
             var subject = new JwtSubject(
                 UserId: user.Id,
-                Roles: roles.ToArray(),
+                Roles: rolesArray,
                 TenantId: user.TenantId.ToString(),
                 Email: user.Email,
                 PhoneNumber: user.PhoneNumber,
@@ -72,7 +72,12 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
             return new LoginResultDto(
                 AccessToken: at.Token,
                 RefreshToken: rotated.RefreshToken,
-                ExpiresAtUtc: at.ExpiresAtUtc
+                ExpiresAtUtc: at.ExpiresAtUtc,
+                UserId: user.Id,
+                Email: user.Email ?? string.Empty,
+                FullName: user.FullName,
+                Roles: rolesArray,
+                TenantId: user.TenantId.ToString()
             );
         }
     }

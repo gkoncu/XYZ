@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
@@ -49,6 +48,10 @@ namespace XYZ.Application.Features.Auth.Login.Commands
             if (!pwd.Succeeded)
                 throw new UnauthorizedAccessException("Invalid credentials.");
 
+            var user = await _userManager.FindByIdAsync(userIdentity.UserId);
+            if (user is null)
+                throw new UnauthorizedAccessException("User not found.");
+
             var subject = new JwtSubject(
                 UserId: userIdentity.UserId,
                 Roles: userIdentity.Roles,
@@ -74,10 +77,17 @@ namespace XYZ.Application.Features.Auth.Login.Commands
                 userAgent: request.UserAgent,
                 ct: ct);
 
+            var rolesArray = userIdentity.Roles.ToArray();
+
             return new LoginResultDto(
                 AccessToken: at.Token,
                 RefreshToken: rt.RefreshToken,
-                ExpiresAtUtc: at.ExpiresAtUtc
+                ExpiresAtUtc: at.ExpiresAtUtc,
+                UserId: userIdentity.UserId,
+                Email: userIdentity.Email ?? user.Email ?? string.Empty,
+                FullName: user.FullName,
+                Roles: rolesArray,
+                TenantId: userIdentity.TenantId
             );
         }
     }

@@ -59,14 +59,31 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
 
+            // === Claims ===
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, model.Email),
-
-                new Claim(ClaimTypes.NameIdentifier, model.Email),
-
+                new Claim(ClaimTypes.NameIdentifier, loginResult.UserId),
+                new Claim(ClaimTypes.Name, loginResult.FullName),
+                new Claim(ClaimTypes.Email, loginResult.Email),
                 new Claim("access_token", loginResult.AccessToken)
             };
+
+            if (loginResult.Roles is not null)
+            {
+                foreach (var role in loginResult.Roles)
+                {
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(loginResult.TenantId))
+            {
+                claims.Add(new Claim("tenant_id", loginResult.TenantId));
+            }
 
             var identity = new ClaimsIdentity(
                 claims,
