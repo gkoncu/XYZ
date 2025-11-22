@@ -1,0 +1,148 @@
+﻿@model PaginationResult<StudentListItemDto>
+@{
+    ViewData["Title"] = "Students";
+    var searchTerm = ViewBag.SearchTerm as string;
+}
+
+<section class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h2 class="h4 mb-1">Öğrenciler</h2>
+            <p class="text-muted small mb-0">
+                Kulübe kayıtlı tüm öğrenciler. Arama kutusunu kullanarak hızlıca filtreleyebilirsiniz.
+            </p>
+        </div>
+        <div>
+            @*Yeni Öğrenci butonu ekle*@
+        </div>
+    </div>
+
+    <div class="students-toolbar">
+        <form asp-action="Index" asp-controller="Students" method="get" class="d-flex students-search">
+            <input type="text"
+                   name="searchTerm"
+                   value="@searchTerm"
+                   class="form-control form-control-sm me-2"
+                   placeholder="İsim, sınıf veya veli bilgisi ile ara..." />
+            <button type="submit" class="btn btn-sm btn-outline-light">
+                Ara
+            </button>
+        </form>
+        <div class="small text-muted">
+            Toplam @Model.TotalCount kayıt · Sayfa @Model.PageNumber / @Model.TotalPages
+        </div>
+    </div>
+
+    <div class="card-surface">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Öğrenci</th>
+                        <th>Sınıf</th>
+                        <th>Şube</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Kriterlere uygun öğrenci bulunamadı.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var s in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@s.FullName</div>
+                                    <div class="small text-muted">@s.Email</div>
+                                    @if (!string.IsNullOrWhiteSpace(s.PhoneNumber))
+                                    {
+                                        <div class="small text-muted">@s.PhoneNumber</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (s.ClassId.HasValue)
+                                    {
+                                        <span>@s.ClassName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Henüz atanmadı</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(s.BranchName))
+                                    {
+                                        <span>@s.BranchName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (s.IsActive)
+                                    {
+                                        <span class="badge-soft badge-soft-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-soft badge-soft-muted">Pasif</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-light">
+                                        Detay
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination pagination-modern justify-content-end mb-0">
+                    @{
+                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+                    }
+                    <li class="page-item @prevDisabled">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           asp-route-searchTerm="@searchTerm">Önceki</a>
+                    </li>
+
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        var active = i == Model.PageNumber ? "active" : "";
+                        <li class="page-item @active">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@i"
+                               asp-route-searchTerm="@searchTerm">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @nextDisabled">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           asp-route-searchTerm="@searchTerm">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</section>
