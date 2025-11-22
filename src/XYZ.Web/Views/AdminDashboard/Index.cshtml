@@ -1,0 +1,85 @@
+﻿@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="dashboard-hero mb-4 position-relative overflow-hidden">
+    <div class="row align-items-center">
+        <div class="col-md-7">
+            <div class="dashboard-pill mb-2">
+                Yönetim Paneli
+            </div>
+            <h1 class="dashboard-hero-title mb-2">
+                Merhaba, @Model.UserDisplayName
+            </h1>
+            <p class="dashboard-hero-subtitle mb-3">
+                Kulübünüzün durumunu tek ekranda takip edin. Öğrenciler, sınıflar, dersler ve ödemeler için hızlı bir özet.
+            </p>
+            <div class="dashboard-hero-metrics">
+                <div class="d-flex flex-column">
+                    <span class="text-sm text-uppercase text-muted small">Aktif Öğrenci</span>
+                    <span class="fw-semibold">@Model.Stats.StudentCount</span>
+                </div>
+                <div class="vr text-white-50 mx-2 d-none d-md-block"></div>
+                <div class="d-flex flex-column">
+                    <span class="text-sm text-uppercase text-muted small">Aktif Sınıf</span>
+                    <span class="fw-semibold">@Model.Stats.ClassCount</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 d-none d-md-flex justify-content-end">
+            <div class="text-end">
+                <div class="small text-muted mb-1">Bugünkü Dersler</div>
+                <div class="h3 mb-2">@Model.Stats.TodaySessionsCount</div>
+                <div class="small text-muted">Yaklaşan ders sayısı: <strong>@Model.Stats.UpcomingSessionsCount</strong></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Öğrenciler</span>
+            <a asp-controller="Students" asp-action="Index" class="text-decoration-none small text-muted">Listeyi aç →</a>
+        </div>
+        <div class="stat-card-value">@Model.Stats.StudentCount</div>
+        <div class="stat-card-sub">Aktif olarak takip edilen öğrenci</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Sınıflar</span>
+        </div>
+        <div class="stat-card-value">@Model.Stats.ClassCount</div>
+        <div class="stat-card-sub">Farklı yaş grubu ve seviye</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Dersler</span>
+        </div>
+        <div class="stat-card-value">@Model.Stats.TodaySessionsCount</div>
+        <div class="stat-card-sub">
+            Bugünkü dersler · Yaklaşan: @Model.Stats.UpcomingSessionsCount
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Ödemeler</span>
+        </div>
+        <div class="stat-card-value">@Model.Stats.PendingPaymentsAmount.ToString("C0")</div>
+        <div class="stat-card-sub">
+            Bekleyen @Model.Stats.PendingPaymentsCount ödeme
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <span>Duyurular</span>
+        </div>
+        <div class="stat-card-value">@Model.Stats.RecentAnnouncementsCount</div>
+        <div class="stat-card-sub">Son günlerde paylaşılan duyuru sayısı</div>
+    </div>
+</section>
