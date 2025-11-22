@@ -1,7 +1,22 @@
+using System;
+using XYZ.Web.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        throw new InvalidOperationException("Api:BaseUrl is not configured in appsettings.json");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 var app = builder.Build();
 
@@ -22,6 +37,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=AdminDashboard}/{action=Index}/{id?}");
 
 app.Run();

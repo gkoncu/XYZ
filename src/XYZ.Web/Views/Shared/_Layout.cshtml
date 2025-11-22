@@ -1,49 +1,89 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var primaryColor = ViewData["PrimaryColor"] as string ?? "#3B82F6";
+    var secondaryColor = ViewData["SecondaryColor"] as string ?? "#1E40AF";
+    var tenantName = ViewData["TenantName"] as string ?? "XYZ Club";
+    var logoUrl = ViewData["LogoUrl"] as string;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - XYZ.Web</title>
+    <title>@ViewData["Title"] - @tenantName</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/XYZ.Web.styles.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+<body class="app-shell" style="--primary-color:@primaryColor; --secondary-color:@secondaryColor;">
+    <header class="app-header shadow-sm">
+        <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">XYZ.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="AdminDashboard" asp-action="Index">
+                    @if (!string.IsNullOrEmpty(logoUrl))
+                    {
+                        <img src="@logoUrl" alt="@tenantName logo" class="club-logo img-fluid" />
+                    }
+                    else
+                    {
+                        <div class="club-logo-placeholder">
+                            <span>@tenantName.Substring(0, 1)</span>
+                        </div>
+                    }
+                    <span class="fw-semibold">@tenantName</span>
+                </a>
+                <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 app-nav-links">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" asp-controller="Students" asp-action="Index">Students</a>
                         </li>
+                        @* Navlinkler *@
                     </ul>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-end small text-white-50">
+                            @if (User?.Identity?.IsAuthenticated ?? false)
+                            {
+                                <div>@User.Identity!.Name</div>
+                                <div>
+                                    @string.Join(" / ",
+                                    User.Claims
+                                    .Where(c => c.Type == "role" || c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+                                    .Select(c => c.Value))
+                            </div>
+                                                        }
+                            else
+                            {
+                                <div>Guest</div>
+                            }
+                        </div>
+                        @* Logout butonu vs.*@
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="app-content">
+        <main role="main" class="app-main container-fluid py-4">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - XYZ.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="app-footer border-top">
+        <div class="container-fluid d-flex justify-content-between small text-muted py-2">
+            <span>&copy; @DateTime.Now.Year - @tenantName</span>
+            <span>Powered by XYZ</span>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
