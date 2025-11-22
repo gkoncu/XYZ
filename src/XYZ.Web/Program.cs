@@ -1,12 +1,22 @@
 using System;
+using XYZ.Web.Infrastructure;
 using XYZ.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
-
+// Add services to the container.
 builder.Services.AddHttpContextAccessor();
 
+// TenantThemeFilter
+builder.Services.AddScoped<TenantThemeFilter>();
+
+builder.Services.AddControllersWithViews(options =>
+{
+    // Tüm MVC action'larýnda theme otomatik yüklensin
+    options.Filters.AddService<TenantThemeFilter>();
+});
+
+// Typed HttpClient -> ApiClient
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
     var baseUrl = builder.Configuration["Api:BaseUrl"];
@@ -24,7 +34,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

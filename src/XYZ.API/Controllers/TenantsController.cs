@@ -7,6 +7,7 @@ using XYZ.Application.Features.Tenants.Commands.CreateTenant;
 using XYZ.Application.Features.Tenants.Commands.DeleteTenant;
 using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
+using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 
 namespace XYZ.API.Controllers
@@ -76,5 +77,15 @@ namespace XYZ.API.Controllers
 
             return Ok(deletedId);
         }
+
+        [HttpGet("current-theme")]
+        [ProducesResponseType(typeof(TenantThemeDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<TenantThemeDto>> GetCurrentTheme(
+            CancellationToken cancellationToken)
+        {
+            var dto = await _mediator.Send(new GetCurrentTenantThemeQuery(), cancellationToken);
+            return Ok(dto);
+        }
+
     }
 }

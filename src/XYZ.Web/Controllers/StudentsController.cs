@@ -21,11 +21,6 @@ namespace XYZ.Web.Controllers
             int pageSize = 20,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Sabiti değiştir ve temayı dinamik yap
-            ViewData["PrimaryColor"] = "#3B82F6";
-            ViewData["SecondaryColor"] = "#1E40AF";
-            ViewData["TenantName"] = "XYZ Sports Club";
-
             var result = await _apiClient.GetStudentsAsync(searchTerm, pageNumber, pageSize, cancellationToken);
             ViewBag.SearchTerm = searchTerm;
 
@@ -35,10 +30,6 @@ namespace XYZ.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
-            ViewData["PrimaryColor"] = "#3B82F6";
-            ViewData["SecondaryColor"] = "#1E40AF";
-            ViewData["TenantName"] = "XYZ Sports Club";
-
             var student = await _apiClient.GetStudentAsync(id, cancellationToken);
             if (student == null)
             {

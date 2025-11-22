@@ -1,6 +1,7 @@
-﻿using System.Threading;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+using XYZ.Web.Infrastructure;
 using XYZ.Web.Models.Dashboard;
 using XYZ.Web.Models.Theming;
 using XYZ.Web.Services;
@@ -22,14 +23,8 @@ namespace XYZ.Web.Controllers
             var stats = await _apiClient.GetAdminCoachDashboardAsync(cancellationToken)
                         ?? new XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard.AdminCoachDashboardDto();
 
-            // TODO: Sabiti değiştir ve temayı dinamik yap
-            var theme = new TenantThemeViewModel
-            {
-                Name = "XYZ Sports Club",
-                PrimaryColor = "#3B82F6",
-                SecondaryColor = "#1E40AF",
-                LogoUrl = null
-            };
+            var theme = TenantThemeFilter.GetThemeFromHttpContext(HttpContext)
+                ?? new TenantThemeViewModel();
 
             var model = new AdminDashboardViewModel
             {
@@ -37,11 +32,6 @@ namespace XYZ.Web.Controllers
                 Stats = stats,
                 UserDisplayName = User?.Identity?.Name ?? "Kullanıcı"
             };
-
-            ViewData["PrimaryColor"] = theme.PrimaryColor;
-            ViewData["SecondaryColor"] = theme.SecondaryColor;
-            ViewData["TenantName"] = theme.Name;
-            ViewData["LogoUrl"] = theme.LogoUrl;
 
             return View(model);
         }
