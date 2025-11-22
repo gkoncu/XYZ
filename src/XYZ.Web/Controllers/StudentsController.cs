@@ -1,10 +1,12 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
+    [Authorize]
     public class StudentsController : Controller
     {
         private readonly IApiClient _apiClient;

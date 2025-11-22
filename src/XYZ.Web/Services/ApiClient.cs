@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.WebUtilities;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
@@ -20,6 +21,30 @@ namespace XYZ.Web.Services
             _httpClient = httpClient;
         }
 
+        // === Auth ===
+        public async Task<LoginResultDto?> LoginAsync(
+            string identifier,
+            string password,
+            CancellationToken cancellationToken = default)
+        {
+            var requestBody = new
+            {
+                Identifier = identifier,
+                Password = password
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("auth/login", requestBody, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<LoginResultDto>(
+                cancellationToken: cancellationToken);
+        }
+
+        // === Dashboard ===
         public async Task<AdminCoachDashboardDto?> GetAdminCoachDashboardAsync(
             CancellationToken cancellationToken = default)
         {
@@ -33,6 +58,7 @@ namespace XYZ.Web.Services
                 cancellationToken: cancellationToken);
         }
 
+        // === Students ===
         public async Task<PaginationResult<StudentListItemDto>> GetStudentsAsync(
             string? searchTerm,
             int pageNumber,
@@ -75,6 +101,7 @@ namespace XYZ.Web.Services
                 cancellationToken: cancellationToken);
         }
 
+        // === Tenant Theme ===
         public async Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
             CancellationToken cancellationToken = default)
         {

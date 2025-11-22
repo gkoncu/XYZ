@@ -1,0 +1,43 @@
+﻿@{
+    var primaryColor = ViewData["PrimaryColor"] as string ?? "#3B82F6";
+    var secondaryColor = ViewData["SecondaryColor"] as string ?? "#1E40AF";
+    var tenantName = ViewData["TenantName"] as string ?? "XYZ Club";
+    var logoUrl = ViewData["LogoUrl"] as string;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @tenantName</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/XYZ.Web.styles.css" asp-append-version="true" />
+</head>
+<body class="app-shell" style="--primary-color:@primaryColor; --secondary-color:@secondaryColor;">
+    <div class="min-vh-100 d-flex flex-column justify-content-center align-items-center">
+        <div class="mb-4 text-center">
+            @if (!string.IsNullOrEmpty(logoUrl))
+            {
+                <img src="@logoUrl" alt="@tenantName logo" style="width:64px;height:64px;object-fit:contain;" />
+            }
+            else
+            {
+                <div style="width:64px;height:64px;border-radius:999px;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;color:#e5e7eb;font-weight:700;font-size:1.5rem;">
+                    @tenantName.Substring(0, 1)
+                </div>
+            }
+            <div class="mt-2 text-white-50 small">@tenantName Yönetim Paneli</div>
+        </div>
+
+        <div class="card-surface" style="min-width:320px;max-width:420px;">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

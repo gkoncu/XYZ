@@ -56,13 +56,18 @@
                                     .Where(c => c.Type == "role" || c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
                                     .Select(c => c.Value))
                             </div>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="ms-3">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-light">
+                                    Çıkış
+                                </button>
+                            </form>
                                                         }
                             else
                             {
                                 <div>Guest</div>
                             }
                         </div>
-                        @* Logout butonu vs.*@
                     </div>
                 </div>
             </div>

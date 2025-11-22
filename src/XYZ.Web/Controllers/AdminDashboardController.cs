@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Web.Infrastructure;
@@ -8,6 +9,7 @@ using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
+    [Authorize]
     public class AdminDashboardController : Controller
     {
         private readonly IApiClient _apiClient;

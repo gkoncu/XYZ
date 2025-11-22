@@ -1,0 +1,52 @@
+﻿@model LoginRequest
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Giriş Yap";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<h2 class="h4 mb-3 text-center">Giriş Yap</h2>
+<p class="text-muted small text-center mb-4">
+    Kulüp yönetim paneline erişmek için hesabınızla giriş yapın.
+</p>
+
+<form asp-action="Login" method="post">
+    @Html.AntiForgeryToken()
+
+    @if (!string.IsNullOrEmpty(returnUrl))
+    {
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+    }
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label small text-muted">Email</label>
+        <input asp-for="Email" class="form-control form-control-sm" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label small text-muted">Şifre</label>
+        <input asp-for="Password" class="form-control form-control-sm" type="password" />
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label small text-muted">Beni hatırla</label>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger py-2 small">
+            Lütfen formdaki hataları düzeltin.
+        </div>
+    }
+
+    <button type="submit" class="btn btn-sm w-100" style="background:var(--primary-color);border:none;color:white;">
+        Giriş Yap
+    </button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
