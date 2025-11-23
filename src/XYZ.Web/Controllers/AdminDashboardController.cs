@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
+using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Web.Infrastructure;
 using XYZ.Web.Models.Dashboard;
 using XYZ.Web.Models.Theming;
@@ -9,7 +10,7 @@ using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public class AdminDashboardController : Controller
     {
         private readonly IApiClient _apiClient;
@@ -23,10 +24,10 @@ namespace XYZ.Web.Controllers
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             var stats = await _apiClient.GetAdminCoachDashboardAsync(cancellationToken)
-                        ?? new XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard.AdminCoachDashboardDto();
+                        ?? new AdminCoachDashboardDto();
 
             var theme = TenantThemeFilter.GetThemeFromHttpContext(HttpContext)
-                ?? new TenantThemeViewModel();
+                        ?? new TenantThemeViewModel();
 
             var model = new AdminDashboardViewModel
             {
