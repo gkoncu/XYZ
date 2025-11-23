@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
+using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
+using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Web.Models.Theming;
@@ -19,6 +21,12 @@ namespace XYZ.Web.Services
 
         // Dashboard
         Task<AdminCoachDashboardDto?> GetAdminCoachDashboardAsync(
+            CancellationToken cancellationToken = default);
+
+        Task<StudentDashboardDto?> GetStudentDashboardAsync(
+            CancellationToken cancellationToken = default);
+
+        Task<SuperAdminDashboardDto?> GetSuperAdminDashboardAsync(
             CancellationToken cancellationToken = default);
 
         // Students

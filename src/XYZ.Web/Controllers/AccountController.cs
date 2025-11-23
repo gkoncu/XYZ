@@ -26,7 +26,18 @@ namespace XYZ.Web.Controllers
         {
             if (User?.Identity?.IsAuthenticated ?? false)
             {
-                return RedirectToAction("Index", "AdminDashboard");
+                if (User.IsInRole("SuperAdmin"))
+                {
+                    return RedirectToAction("Index", "SuperAdminDashboard");
+                }
+                if (User.IsInRole("Admin") || User.IsInRole("Coach"))
+                {
+                    return RedirectToAction("Index", "AdminDashboard");
+                }
+                if (User.IsInRole("Student"))
+                {
+                    return RedirectToAction("Index", "StudentDashboard");
+                }
             }
 
             var model = new LoginRequest
@@ -60,7 +71,6 @@ namespace XYZ.Web.Controllers
             }
 
             // === Claims ===
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, loginResult.UserId),
@@ -105,6 +115,21 @@ namespace XYZ.Web.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
+            }
+
+            if (principal.IsInRole("SuperAdmin"))
+            {
+                return RedirectToAction("Index", "SuperAdminDashboard");
+            }
+
+            if (principal.IsInRole("Admin") || principal.IsInRole("Coach"))
+            {
+                return RedirectToAction("Index", "AdminDashboard");
+            }
+
+            if (principal.IsInRole("Student"))
+            {
+                return RedirectToAction("Index", "StudentDashboard");
             }
 
             return RedirectToAction("Index", "AdminDashboard");
