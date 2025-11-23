@@ -1,0 +1,63 @@
+﻿@model SuperAdminDashboardViewModel
+@{
+    ViewData["Title"] = "Sistem Yönetimi";
+}
+
+<h2 class="mb-3">Sistem Yönetim Paneli</h2>
+<p class="text-muted small mb-4">
+    Hoş geldin, @Model.UserDisplayName
+</p>
+
+<div class="row g-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Toplam Tenant</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.TotalTenants</div>
+            <div class="text-muted small">Aktif: @Model.Stats.ActiveTenants</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Toplam Öğrenci</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.TotalStudents</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Toplam Antrenör</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.TotalCoaches</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Toplam Sınıf</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.TotalClasses</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-3">
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Ödemeler</div>
+            <div class="d-flex justify-content-between align-items-baseline mt-1">
+                <div>
+                    <div class="fw-semibold">@Model.Stats.TotalPayments adet</div>
+                    <div class="text-muted small">Toplam ödeme kaydı</div>
+                </div>
+                <div class="fs-5 fw-semibold">
+                    @Model.Stats.TotalPaidAmount.ToString("C2")
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Yaklaşan Seanslar (Global)</div>
+            <div class="fs-4 fw-semibold mt-1">
+                @Model.Stats.UpcomingSessions
+            </div>
+            <div class="text-muted small">Tüm tenant'lar için</div>
+        </div>
+    </div>
+</div>
