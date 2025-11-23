@@ -322,29 +322,4 @@ public class DataScopeService : IDataScopeService
                 return q.Where(_ => false);
         }
     }
-
-    // -------- OBSOLETE --------
-    [System.Obsolete("Use Students()")]
-    public IQueryable<Student> GetScopedStudents() => Students();
-
-    [System.Obsolete("Use Classes()")]
-    public IQueryable<Class> GetScopedClasses() => Classes();
-
-    [System.Obsolete("Use Coaches()")]
-    public IQueryable<Coach> GetScopedCoaches() => Coaches();
-
-    [System.Obsolete("Use Documents()")]
-    public IQueryable<Document> GetScopedDocuments() => Documents();
-
-    [System.Obsolete("Use Attendances()")]
-    public IQueryable<Attendance> GetScopedAttendances() => Attendances();
-
-    [System.Obsolete("Use ProgressRecords()")]
-    public IQueryable<ProgressRecord> GetScopedProgressRecords() => ProgressRecords();
-
-    [System.Obsolete("Use Payments()")]
-    public IQueryable<Payment> GetScopedPayments() => Payments();
-
-    [System.Obsolete("Use Announcements()")]
-    public IQueryable<Announcement> GetScopedAnnouncements() => Announcements();
 }
