@@ -52,7 +52,7 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
                 Title = request.Title,
                 Description = request.Description,
                 Location = request.Location,
-                Status = SessionStatus.Planned
+                Status = SessionStatus.Scheduled
             };
 
             if (request.GenerateAttendance)

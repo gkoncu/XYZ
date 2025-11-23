@@ -1,9 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
@@ -37,13 +35,16 @@ namespace XYZ.Application.Features.Attendances.Queries.GetSessionAttendance
 
             await _dataScope.EnsureClassAccessAsync(session.ClassId, ct);
 
-            var attendances = await _context.Attendances
+            var attendancesQuery = _context.Attendances
                 .Include(a => a.Student)
                     .ThenInclude(s => s.User)
                 .Where(a =>
                     a.ClassSessionId == session.Id &&
-                    a.IsActive)
-                .OrderBy(a => a.Student.User.FullName)
+                    a.IsActive);
+
+            var attendances = await attendancesQuery
+                .OrderBy(a => a.Student.User.FirstName)
+                .ThenBy(a => a.Student.User.LastName)
                 .ToListAsync(ct);
 
             var dto = new SessionAttendanceDto

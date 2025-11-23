@@ -312,16 +312,16 @@ internal static class DevIdentitySeeder
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            var existingSession = await db.ClassSessions
+            var session = await db.ClassSessions
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(cs =>
                     cs.ClassId == demoClass.Id &&
                     cs.Date == today,
                     ct);
 
-            if (existingSession is null)
+            if (session is null)
             {
-                var session = new ClassSession
+                session = new ClassSession
                 {
                     ClassId = demoClass.Id,
                     Date = today,
@@ -335,7 +335,15 @@ internal static class DevIdentitySeeder
 
                 db.ClassSessions.Add(session);
                 await db.SaveChangesAsync(ct);
+            }
 
+            var existingAttendances = await db.Attendances
+                .IgnoreQueryFilters()
+                .Where(a => a.ClassSessionId == session.Id)
+                .ToListAsync(ct);
+
+            if (existingAttendances.Count == 0)
+            {
                 var activeEnrollments = await db.ClassEnrollments
                     .IgnoreQueryFilters()
                     .Where(e => e.ClassId == demoClass.Id && e.EndDate == null)
@@ -347,6 +355,7 @@ internal static class DevIdentitySeeder
                     {
                         StudentId = e.StudentId,
                         ClassSessionId = session.Id,
+                        ClassId = demoClass.Id,
                         Status = AttendanceStatus.Absent,
                         IsActive = true
                     };

@@ -50,7 +50,7 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard
             var upcomingSessions = await _context.ClassSessions
                 .CountAsync(cs =>
                     cs.Date >= today &&
-                    cs.Status == SessionStatus.Planned &&
+                    cs.Status == SessionStatus.Scheduled &&
                     cs.IsActive,
                     ct);
 
