@@ -1,12 +1,12 @@
-﻿using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
+﻿using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Web.Models.Theming;
 
 namespace XYZ.Web.Models.Dashboard
 {
-    public class AdminDashboardViewModel
+    public class StudentDashboardViewModel
     {
         public TenantThemeViewModel Theme { get; set; } = new();
-        public AdminCoachDashboardDto Stats { get; set; } = new();
+        public StudentDashboardDto Stats { get; set; } = new();
         public string UserDisplayName { get; set; } = string.Empty;
     }
 }
