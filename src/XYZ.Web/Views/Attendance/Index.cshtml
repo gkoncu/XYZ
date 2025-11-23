@@ -1,0 +1,93 @@
+﻿@using XYZ.Web.Models.Attendance
+@model IList<TodaySessionViewModel>
+
+@{
+    ViewData["Title"] = "Bugünkü Seanslar";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1">Bugünkü Seanslar</h1>
+            <p class="text-muted mb-0">
+                Bugün için planlanan dersler ve yoklama durumları.
+            </p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-light text-secondary">
+                @DateTime.UtcNow.ToLocalTime().ToString("dd.MM.yyyy")
+            </span>
+        </div>
+    </div>
+
+    @if (ViewData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+    {
+        <div class="alert alert-danger">@err</div>
+    }
+
+    @if (Model is null || !Model.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <h5 class="card-title mb-2">Bugün için seans bulunamadı</h5>
+                <p class="text-muted mb-0">
+                    Takvimde bugüne ait planlanmış herhangi bir ders yok.
+                </p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var s in Model)
+            {
+                var statusText = s.HasAttendance ? "Yoklama alındı" : "Yoklama bekliyor";
+                var statusClass = s.HasAttendance ? "bg-success" : "bg-warning text-dark";
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="card-title mb-1">@s.ClassName</h5>
+                                    <small class="text-muted">
+                                        @s.Title
+                                    </small>
+                                </div>
+                                <span class="badge @statusClass">
+                                    @statusText
+                                </span>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="small text-muted">
+                                    @s.BranchName
+                                </div>
+                                <div class="small">
+                                    <i class="bi bi-clock"></i>
+                                    @s.StartTime.ToString("HH\\:mm") &ndash; @s.EndTime.ToString("HH\\:mm")
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="small text-muted">
+                                        Öğrenci: @s.TotalStudents<br />
+                                        Katılan: @s.PresentCount &nbsp;|&nbsp;
+                                        Katılmayan: @s.AbsentCount
+                                    </div>
+                                </div>
+                                <a asp-controller="Attendance"
+                                   asp-action="Session"
+                                   asp-route-id="@s.SessionId"
+                                   class="btn btn-sm btn-primary w-100">
+                                    Yoklama ekranına git
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
