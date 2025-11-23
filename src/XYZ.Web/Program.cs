@@ -1,36 +1,47 @@
 using System;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using XYZ.Web.Infrastructure;
 using XYZ.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddHttpContextAccessor();
 
-// TenantThemeFilter
 builder.Services.AddScoped<TenantThemeFilter>();
+
+builder.Services.AddTransient<ApiAuthorizationMessageHandler>();
+
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
 
 builder.Services.AddControllersWithViews(options =>
 {
-    // Tüm MVC action'larýnda theme otomatik yüklensin
     options.Filters.AddService<TenantThemeFilter>();
 });
 
-// Typed HttpClient -> ApiClient
-builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
-{
-    var baseUrl = builder.Configuration["Api:BaseUrl"];
-    if (string.IsNullOrWhiteSpace(baseUrl))
+builder.Services
+    .AddHttpClient<IApiClient, ApiClient>(client =>
     {
-        throw new InvalidOperationException("Api:BaseUrl is not configured in appsettings.json");
-    }
+        var baseUrl = builder.Configuration["Api:BaseUrl"];
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            throw new InvalidOperationException("Api:BaseUrl is not configured in appsettings.json");
+        }
 
-    client.BaseAddress = new Uri(baseUrl);
-});
+        client.BaseAddress = new Uri(baseUrl);
+    })
+    .AddHttpMessageHandler<ApiAuthorizationMessageHandler>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -42,10 +53,11 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=AdminDashboard}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

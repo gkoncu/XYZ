@@ -14,7 +14,6 @@ public class LoginRequest
 
     public bool RememberMe { get; set; }
 
-
     public string? ReturnUrl { get; set; }
 }
 
@@ -28,5 +27,11 @@ public class LoginResponse
 public sealed record LoginResultDto(
     string AccessToken,
     string RefreshToken,
-    DateTimeOffset ExpiresAtUtc
+    DateTimeOffset ExpiresAtUtc,
+
+    string UserId,
+    string Email,
+    string FullName,
+    string[] Roles,
+    string? TenantId
 );

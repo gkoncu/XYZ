@@ -1,0 +1,77 @@
+﻿@model StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Öğrenci Paneli";
+}
+
+<h2 class="mb-3">Öğrenci Paneli</h2>
+<p class="text-muted small mb-4">
+    Hoş geldin, @Model.UserDisplayName
+</p>
+
+<div class="row g-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Toplam Ders</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.TotalSessions</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Katıldığı</div>
+            <div class="fs-4 fw-semibold text-success">@Model.Stats.AttendedSessions</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Kaçırdığı</div>
+            <div class="fs-4 fw-semibold text-danger">@Model.Stats.MissedSessions</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Yaklaşan Seanslar</div>
+            <div class="fs-4 fw-semibold">@Model.Stats.UpcomingSessionsCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-3">
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Sıradaki Ders</div>
+            @if (Model.Stats.NextSessionDate.HasValue)
+            {
+                <div class="fw-semibold mt-1">
+                    @Model.Stats.NextSessionClassName
+                </div>
+                <div class="text-muted small">
+                    @Model.Stats.NextSessionDate.Value.ToString("dd.MM.yyyy")
+                    @if (Model.Stats.NextSessionStartTime.HasValue)
+                    {
+                        @(" - " + Model.Stats.NextSessionStartTime.Value.ToString("HH:mm"))
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-muted small mt-1">
+                    Planlanmış bir ders bulunmuyor.
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="text-muted small">Bekleyen Ödemeler</div>
+            <div class="d-flex justify-content-between align-items-baseline mt-1">
+                <div>
+                    <div class="fw-semibold">@Model.Stats.OutstandingPaymentsCount adet</div>
+                    <div class="text-muted small">Ödeme bekliyor</div>
+                </div>
+                <div class="fs-5 fw-semibold">
+                    @Model.Stats.OutstandingPaymentsAmount.ToString("C2")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
