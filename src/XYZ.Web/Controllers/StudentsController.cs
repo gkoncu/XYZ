@@ -2,41 +2,47 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
-using XYZ.Web.Infrastructure;
-using XYZ.Web.Models.Dashboard;
-using XYZ.Web.Models.Theming;
+
+
+
+
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Student")]
-    public class StudentDashboardController : Controller
+    [Authorize]
+    public class StudentsController : Controller
     {
         private readonly IApiClient _apiClient;
 
-        public StudentDashboardController(IApiClient apiClient)
+        public StudentsController(IApiClient apiClient)
         {
             _apiClient = apiClient;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(CancellationToken cancellationToken)
+        public async Task<IActionResult> Index(
+            string? searchTerm,
+            int pageNumber = 1,
+            int pageSize = 20,
+            CancellationToken cancellationToken = default)
         {
-            var stats = await _apiClient.GetStudentDashboardAsync(cancellationToken)
-                        ?? new StudentDashboardDto();
+            var result = await _apiClient.GetStudentsAsync(searchTerm, pageNumber, pageSize, cancellationToken);
+            ViewBag.SearchTerm = searchTerm;
 
-            var theme = TenantThemeFilter.GetThemeFromHttpContext(HttpContext)
-                        ?? new TenantThemeViewModel();
+            return View(result);
+        }
 
-            var model = new StudentDashboardViewModel
+        [HttpGet]
+        public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+        {
+            var student = await _apiClient.GetStudentAsync(id, cancellationToken);
+            if (student == null)
             {
-                Theme = theme,
-                Stats = stats,
-                UserDisplayName = User?.Identity?.Name ?? "Öğrenci"
-            };
+                return NotFound();
+            }
 
-            return View(model);
+            return View(student);
         }
     }
 }
