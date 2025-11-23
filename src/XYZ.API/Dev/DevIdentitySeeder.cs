@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Data;
 using XYZ.Domain.Entities;
+using XYZ.Domain.Enums;
 
 namespace XYZ.API.Dev;
 
@@ -304,6 +305,55 @@ internal static class DevIdentitySeeder
                 };
 
                 db.ClassEnrollments.Add(enrollment);
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+
+            var existingSession = await db.ClassSessions
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(cs =>
+                    cs.ClassId == demoClass.Id &&
+                    cs.Date == today,
+                    ct);
+
+            if (existingSession is null)
+            {
+                var session = new ClassSession
+                {
+                    ClassId = demoClass.Id,
+                    Date = today,
+                    StartTime = new TimeOnly(18, 0),
+                    EndTime = new TimeOnly(19, 30),
+                    Title = "Demo Antrenman",
+                    Description = "Geliştirme ortamı için örnek seans.",
+                    Status = SessionStatus.Scheduled,
+                    IsActive = true
+                };
+
+                db.ClassSessions.Add(session);
+                await db.SaveChangesAsync(ct);
+
+                var activeEnrollments = await db.ClassEnrollments
+                    .IgnoreQueryFilters()
+                    .Where(e => e.ClassId == demoClass.Id && e.EndDate == null)
+                    .ToListAsync(ct);
+
+                foreach (var e in activeEnrollments)
+                {
+                    var att = new Attendance
+                    {
+                        StudentId = e.StudentId,
+                        ClassSessionId = session.Id,
+                        Status = AttendanceStatus.Absent,
+                        IsActive = true
+                    };
+
+                    db.Attendances.Add(att);
+                }
+
                 await db.SaveChangesAsync(ct);
             }
         }
