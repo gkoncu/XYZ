@@ -46,7 +46,7 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard
             var upcomingQuery = attQuery
                 .Where(a =>
                     a.ClassSession.Date >= today &&
-                    a.ClassSession.Status == SessionStatus.Planned);
+                    a.ClassSession.Status == SessionStatus.Scheduled);
 
             var upcomingSessionsCount = await upcomingQuery.CountAsync(ct);
 

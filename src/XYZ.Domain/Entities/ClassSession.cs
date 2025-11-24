@@ -17,7 +17,7 @@ namespace XYZ.Domain.Entities
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Location { get; set; }
-        public SessionStatus Status { get; set; } = SessionStatus.Planned;
+        public SessionStatus Status { get; set; } = SessionStatus.Scheduled;
         public string? CoachNote { get; set; }
         public Class Class { get; set; } = null!;
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

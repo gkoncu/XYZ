@@ -50,11 +50,11 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
                     (cs, c) => cs);
 
             var todaySessionsCount = await sessionsQuery
-                .Where(cs => cs.Date == today && cs.Status == SessionStatus.Planned)
+                .Where(cs => cs.Date == today && cs.Status == SessionStatus.Scheduled)
                 .CountAsync(ct);
 
             var upcomingSessionsCount = await sessionsQuery
-                .Where(cs => cs.Date >= today && cs.Status == SessionStatus.Planned)
+                .Where(cs => cs.Date >= today && cs.Status == SessionStatus.Scheduled)
                 .CountAsync(ct);
 
             var pendingPaymentsQuery = _dataScope.Payments()

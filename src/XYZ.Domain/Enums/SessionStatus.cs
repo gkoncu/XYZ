@@ -8,7 +8,7 @@ namespace XYZ.Domain.Enums
 {
     public enum SessionStatus
     {
-        Planned = 0,
+        Scheduled = 0,
         Completed = 1,
         Cancelled = 2
     }

@@ -29,30 +29,5 @@ namespace XYZ.Application.Common.Interfaces
 
         Task EnsureStudentAccessAsync(int studentId, CancellationToken ct = default);
         Task EnsureClassAccessAsync(int classId, CancellationToken ct = default);
-
-        // --- OBSOLETE ---
-        [Obsolete("Use Students()")]
-        IQueryable<Student> GetScopedStudents();
-
-        [Obsolete("Use Classes()")]
-        IQueryable<Class> GetScopedClasses();
-
-        [Obsolete("Use Coaches()")]
-        IQueryable<Coach> GetScopedCoaches();
-
-        [Obsolete("Use Documents()")]
-        IQueryable<Document> GetScopedDocuments();
-
-        [Obsolete("Use Attendances()")]
-        IQueryable<Attendance> GetScopedAttendances();
-
-        [Obsolete("Use ProgressRecords()")]
-        IQueryable<ProgressRecord> GetScopedProgressRecords();
-
-        [Obsolete("Use Payments()")]
-        IQueryable<Payment> GetScopedPayments();
-
-        [Obsolete("Use Announcements()")]
-        IQueryable<Announcement> GetScopedAnnouncements();
     }
 }
