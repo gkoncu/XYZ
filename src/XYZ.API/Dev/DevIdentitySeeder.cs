@@ -356,7 +356,7 @@ internal static class DevIdentitySeeder
                         StudentId = e.StudentId,
                         ClassSessionId = session.Id,
                         ClassId = demoClass.Id,
-                        Status = AttendanceStatus.Absent,
+                        Status = AttendanceStatus.Unknown,
                         IsActive = true
                     };
 

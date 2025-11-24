@@ -1,115 +1,140 @@
-﻿@using XYZ.Web.Models.Attendance
-@model IList<TodaySessionViewModel>
+﻿@using System
+@model IList<XYZ.Web.Models.Attendance.TodaySessionViewModel>
 
 @{
-    ViewData["Title"] = "Seanslar";
+    ViewData["Title"] = "Yoklama - Seanslar";
 
-    var selectedDate = ViewBag.SelectedDate as string;
-    var todayStr = DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd");
-    var dateValue = !string.IsNullOrWhiteSpace(selectedDate) ? selectedDate : todayStr;
-
-    DateTime displayDate;
-    if (!DateTime.TryParse(dateValue, out displayDate))
+    var selectedDateString = ViewBag.SelectedDate as string;
+    DateOnly selectedDate;
+    if (!DateOnly.TryParse(selectedDateString, out selectedDate))
     {
-        displayDate = DateTime.UtcNow.ToLocalTime().Date;
+        selectedDate = DateOnly.FromDateTime(DateTime.Today);
     }
+
+    var prevDate = selectedDate.AddDays(-1);
+    var nextDate = selectedDate.AddDays(1);
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="h3 mb-1">Seanslar</h1>
-            <p class="text-muted mb-0">
-                Seçilen güne ait dersler ve yoklama durumları.
-            </p>
-        </div>
-        <div class="text-end">
-            <span class="badge bg-light text-secondary">
-                @displayDate.ToString("dd.MM.yyyy")
-            </span>
-        </div>
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <div>
+        <h2 class="mb-0">Yoklama Seansları</h2>
+        <small class="text-muted">
+            @selectedDate.ToString("dd.MM.yyyy") tarihindeki planlanmış dersler
+        </small>
     </div>
 
-    <form method="get" class="d-flex align-items-end gap-2 mb-3">
-        <div>
-            <label class="form-label mb-1">Tarih</label>
-            <input type="date" name="date" class="form-control" value="@dateValue" />
-        </div>
-        <div class="mb-1">
-            <button type="submit" class="btn btn-outline-primary mt-3">
-                Güncelle
-            </button>
-        </div>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <input type="date"
+               name="date"
+               class="form-control"
+               style="min-width: 180px;"
+               value="@selectedDate.ToString("yyyy-MM-dd")" />
+        <button type="submit" class="btn btn-primary">
+            Tarihi Güncelle
+        </button>
     </form>
+</div>
 
-    @if (ViewData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
-    {
-        <div class="alert alert-danger">@err</div>
-    }
+<div class="d-flex justify-content-end mb-3 gap-2">
+    <a asp-action="Index"
+       asp-route-date="@prevDate.ToString("yyyy-MM-dd")"
+       class="btn btn-outline-secondary btn-sm">
+        &laquo; Önceki Gün (@prevDate.ToString("dd.MM"))
+    </a>
 
-    @if (Model is null || !Model.Any())
-    {
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-5">
-                <h5 class="card-title mb-2">Seans bulunamadı</h5>
-                <p class="text-muted mb-0">
-                    Bu tarih için planlanmış herhangi bir ders yok.
-                </p>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="row g-3">
-            @foreach (var s in Model)
-            {
-                var statusText = s.HasAttendance ? "Yoklama alındı" : "Yoklama bekliyor";
-                var statusClass = s.HasAttendance ? "bg-success" : "bg-warning text-dark";
+    <a asp-action="Index"
+       asp-route-date="@nextDate.ToString("yyyy-MM-dd")"
+       class="btn btn-outline-secondary btn-sm">
+        Sonraki Gün (@nextDate.ToString("dd.MM")) &raquo;
+    </a>
+</div>
 
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h5 class="card-title mb-1">@s.ClassName</h5>
-                                    <small class="text-muted">
-                                        @s.Title
-                                    </small>
-                                </div>
-                                <span class="badge @statusClass">
-                                    @statusText
-                                </span>
-                            </div>
+@if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
+{
+    <div class="alert alert-danger">
+        @ViewData["ErrorMessage"]
+    </div>
+}
 
-                            <div class="mb-2">
-                                <div class="small text-muted">
+@if (Model is null || !Model.Any())
+{
+    <div class="alert alert-info">
+        Bu tarih için planlanmış herhangi bir ders yok.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var s in Model)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    @s.ClassName
+                                </h5>
+                                <small class="text-muted">
                                     @s.BranchName
-                                </div>
-                                <div class="small">
-                                    <i class="bi bi-clock"></i>
-                                    @s.StartTime.ToString("HH\\:mm") &ndash; @s.EndTime.ToString("HH\\:mm")
-                                </div>
+                                </small>
                             </div>
+                            <span class="badge bg-light text-dark border">
+                                @s.Date.ToString("dd.MM.yyyy")
+                            </span>
+                        </div>
 
-                            <div class="mt-auto pt-2">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div class="small text-muted">
-                                        Öğrenci: @s.TotalStudents<br />
-                                        Katılan: @s.PresentCount &nbsp;|&nbsp;
-                                        Katılmayan: @s.AbsentCount
+                        <p class="mb-1">
+                            <strong>Saat:</strong>
+                            @s.StartTime.ToString("hh\\:mm") - @s.EndTime.ToString("hh\\:mm")
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(s.Title))
+                        {
+                            <p class="mb-2">
+                                <strong>Başlık:</strong> @s.Title
+                            </p>
+                        }
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex flex-column">
+                                    <small class="text-muted">
+                                        Toplam: @s.TotalStudents
+                                    </small>
+                                    <div class="mt-1">
+                                        <span class="badge bg-success me-1">
+                                            Katılan: @s.PresentCount
+                                        </span>
+                                        <span class="badge bg-danger">
+                                            Katılmayan: @s.AbsentCount
+                                        </span>
                                     </div>
                                 </div>
-                                <a asp-controller="Attendance"
-                                   asp-action="Session"
-                                   asp-route-id="@s.SessionId"
-                                   class="btn btn-sm btn-primary w-100">
-                                    Yoklama ekranına git
-                                </a>
+
+                                @if (s.HasAttendance)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success">
+                                        Yoklama Alındı
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning border border-warning">
+                                        Yoklama Bekliyor
+                                    </span>
+                                }
                             </div>
+
+                            <a asp-action="Session"
+                               asp-route-id="@s.SessionId"
+                               class="btn btn-sm btn-primary w-100">
+                                Yoklama Detayı
+                            </a>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
-</div>
+            </div>
+        }
+    </div>
+}

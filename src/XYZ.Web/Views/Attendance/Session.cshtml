@@ -1,135 +1,147 @@
-﻿@using XYZ.Web.Models.Attendance
-@model SessionAttendanceViewModel
+﻿@using XYZ.Domain.Enums
+@model XYZ.Web.Models.Attendance.SessionAttendanceViewModel
 
 @{
     ViewData["Title"] = "Yoklama - " + Model.ClassName;
+
+    var presentValue = (int)AttendanceStatus.Present; // 1
+    var absentValue = (int)AttendanceStatus.Absent;   // 2
+    var excusedValue = (int)AttendanceStatus.Excused; // 3
 }
 
-<div class="container py-4">
-    <div class="mb-3">
-        <a asp-action="Index" class="btn btn-link px-0">
-            &larr; Bugünkü seanslara dön
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">@Model.ClassName</h2>
+        <small class="text-muted">
+            @Model.Date.ToString("dd.MM.yyyy") |
+            @Model.StartTime.ToString("hh\\:mm") - @Model.EndTime.ToString("hh\\:mm")
+        </small>
+        @if (!string.IsNullOrWhiteSpace(Model.Title))
+        {
+            <div class="small text-muted">
+                @Model.Title
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Location))
+        {
+            <div class="small text-muted">
+                Konum: @Model.Location
+            </div>
+        }
     </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body">
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <div>
-                    <h1 class="h4 mb-1">@Model.ClassName</h1>
-                    <div class="text-muted small">
-                        @Model.Title
-                    </div>
-                </div>
-                <div class="text-end small">
-                    <div>
-                        Tarih:
-                        <strong>@Model.Date.ToDateTime(TimeOnly.MinValue).ToString("dd.MM.yyyy")</strong>
-                    </div>
-                    <div>
-                        Saat:
-                        <strong>@Model.StartTime.ToString("HH\\:mm") - @Model.EndTime.ToString("HH\\:mm")</strong>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.Location))
-                    {
-                        <div>
-                            Lokasyon:
-                            <strong>@Model.Location</strong>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
-    {
-        <div class="alert alert-success">@ok</div>
-    }
-
-    @if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
-    {
-        <div class="alert alert-danger">@err</div>
-    }
-
-    @if (!Model.Students.Any())
-    {
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-5">
-                <h5 class="card-title mb-2">Bu seansa bağlı öğrenci bulunamadı</h5>
-                <p class="text-muted mb-0">
-                    Sınıfta aktif kayıtlı öğrenci yok veya enrollment henüz eklenmemiş.
-                </p>
-            </div>
-        </div>
-    }
-    else
-    {
-        <form asp-action="Session" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="SessionId" />
-            <input type="hidden" asp-for="ClassId" />
-
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 25%;">Öğrenci</th>
-                                    <th style="width: 15%;">Durum</th>
-                                    <th style="width: 20%;">Not</th>
-                                    <th style="width: 10%;">Puan</th>
-                                    <th style="width: 30%;">Koç Notu</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (var i = 0; i < Model.Students.Count; i++)
-                                {
-                                    <tr>
-                                        <td>
-                                            @Model.Students[i].FullName
-                                            <input type="hidden" asp-for="Students[@i].AttendanceId" />
-                                            <input type="hidden" asp-for="Students[@i].StudentId" />
-                                        </td>
-                                        <td>
-                                            <select asp-for="Students[@i].Status" class="form-select form-select-sm">
-                                                <option value="1">Katıldı</option>
-                                                <option value="0">Katılmadı</option>
-                                                <option value="2">İzinli</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input asp-for="Students[@i].Note"
-                                                   class="form-control form-control-sm"
-                                                   placeholder="Kısa not" />
-                                        </td>
-                                        <td style="max-width: 90px;">
-                                            <input asp-for="Students[@i].Score"
-                                                   type="number"
-                                                   min="0" max="100"
-                                                   class="form-control form-control-sm"
-                                                   placeholder="%" />
-                                        </td>
-                                        <td>
-                                            <textarea asp-for="Students[@i].CoachComment"
-                                                      rows="1"
-                                                      class="form-control form-control-sm"
-                                                      placeholder="Detaylı koç notu"></textarea>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            Yoklamayı Kaydet
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    }
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        &laquo; Seans Listesine Dön
+    </a>
 </div>
+
+@if (TempData["ErrorMessage"] is string error && !string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (TempData["SuccessMessage"] is string success && !string.IsNullOrWhiteSpace(success))
+{
+    <div class="alert alert-success">@success</div>
+}
+
+@if (Model.Students == null || !Model.Students.Any())
+{
+    <div class="alert alert-info">
+        Bu seans için atanmış öğrenci bulunamadı.
+    </div>
+}
+else
+{
+    <form asp-action="Session" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="SessionId" />
+        <input type="hidden" asp-for="ClassId" />
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Öğrenci Yoklama Listesi</h5>
+                <small class="text-muted">
+                    Her öğrenci için durum, puan ve notları güncelleyip kaydedin.
+                </small>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 180px;">Öğrenci</th>
+                                <th style="min-width: 260px;">Durum</th>
+                                <th style="width: 120px;">Puan</th>
+                                <th style="min-width: 180px;">Not</th>
+                                <th style="min-width: 200px;">Koç Yorumu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Students.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@Model.Students[i].FullName</strong>
+                                        <input type="hidden" asp-for="Students[@i].AttendanceId" />
+                                        <input type="hidden" asp-for="Students[@i].StudentId" />
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       asp-for="Students[@i].Status"
+                                                       value="@presentValue" />
+                                                <label class="form-check-label">Katıldı</label>
+                                            </div>
+
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       asp-for="Students[@i].Status"
+                                                       value="@excusedValue" />
+                                                <label class="form-check-label">İzinli</label>
+                                            </div>
+
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       asp-for="Students[@i].Status"
+                                                       value="@absentValue" />
+                                                <label class="form-check-label">Katılmadı</label>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input asp-for="Students[@i].Score"
+                                               class="form-control form-control-sm text-center"
+                                               type="number"
+                                               min="0"
+                                               max="100" />
+                                    </td>
+                                    <td>
+                                        <textarea asp-for="Students[@i].Note"
+                                                  class="form-control form-control-sm"
+                                                  rows="1"></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea asp-for="Students[@i].CoachComment"
+                                                  class="form-control form-control-sm"
+                                                  rows="1"></textarea>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    Yoklamayı Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+}

@@ -74,7 +74,7 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                     HasAttendance = cs.Attendances.Any(),
                     TotalStudents = cs.Attendances.Count,
                     PresentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Present),
-                    AbsentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Absent)
+                    AbsentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Absent || a.Status == AttendanceStatus.Excused)
                 })
                 .OrderBy(x => x.StartTime)
                 .ToListAsync(ct);
