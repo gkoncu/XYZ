@@ -54,6 +54,8 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                     .ThenInclude(c => c.Branch)
                 .Include(cs => cs.Attendances)
                 .Where(cs =>
+                    cs.IsActive &&
+                    cs.Status != SessionStatus.Cancelled &&
                     cs.Date == targetDate &&
                     classIds.Contains(cs.ClassId));
 
@@ -73,8 +75,11 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                     Status = cs.Status,
                     HasAttendance = cs.Attendances.Any(),
                     TotalStudents = cs.Attendances.Count,
-                    PresentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Present),
-                    AbsentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Absent || a.Status == AttendanceStatus.Excused)
+                    PresentCount = cs.Attendances.Count(a =>
+                        a.Status == AttendanceStatus.Present),
+                    AbsentCount = cs.Attendances.Count(a =>
+                        a.Status == AttendanceStatus.Absent ||
+                        a.Status == AttendanceStatus.Excused)
                 })
                 .OrderBy(x => x.StartTime)
                 .ToListAsync(ct);
