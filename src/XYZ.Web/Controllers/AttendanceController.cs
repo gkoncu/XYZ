@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,29 +9,37 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using XYZ.Web.Models.Attendance;
+using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
     [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public class AttendanceController : Controller
     {
-        private readonly HttpClient _apiClient;
+        private readonly IApiClient _apiClient;
         private readonly ILogger<AttendanceController> _logger;
 
         public AttendanceController(
-            IHttpClientFactory httpClientFactory,
+            IApiClient apiClient,
             ILogger<AttendanceController> logger)
         {
-            _apiClient = httpClientFactory.CreateClient("Api");
+            _apiClient = apiClient;
             _logger = logger;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(CancellationToken ct)
+        public async Task<IActionResult> Index(string? date, CancellationToken ct)
         {
             try
             {
-                var response = await _apiClient.GetAsync("api/Attendances/today-sessions", ct);
+                var path = "attendances/today-sessions";
+
+                if (!string.IsNullOrWhiteSpace(date))
+                {
+                    path += $"?date={WebUtility.UrlEncode(date)}";
+                }
+
+                var response = await _apiClient.GetAsync(path, ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -43,7 +50,8 @@ namespace XYZ.Web.Controllers
                 {
                     _logger.LogError("today-sessions isteği başarısız. StatusCode: {StatusCode}",
                         response.StatusCode);
-                    ViewData["ErrorMessage"] = "Bugünkü seanslar yüklenirken bir hata oluştu.";
+                    ViewData["ErrorMessage"] = "Seanslar yüklenirken bir hata oluştu.";
+                    ViewBag.SelectedDate = date;
                     return View(new List<TodaySessionViewModel>());
                 }
 
@@ -51,12 +59,14 @@ namespace XYZ.Web.Controllers
                     .ReadFromJsonAsync<IList<TodaySessionViewModel>>(cancellationToken: ct)
                     ?? new List<TodaySessionViewModel>();
 
+                ViewBag.SelectedDate = date;
                 return View(sessions);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Bugünkü seanslar alınırken beklenmeyen hata oluştu.");
-                ViewData["ErrorMessage"] = "Bugünkü seanslar yüklenirken beklenmeyen bir hata oluştu.";
+                _logger.LogError(ex, "Seanslar alınırken beklenmeyen hata oluştu.");
+                ViewData["ErrorMessage"] = "Seanslar yüklenirken beklenmeyen bir hata oluştu.";
+                ViewBag.SelectedDate = date;
                 return View(new List<TodaySessionViewModel>());
             }
         }
@@ -66,7 +76,8 @@ namespace XYZ.Web.Controllers
         {
             try
             {
-                var response = await _apiClient.GetAsync($"api/Attendances/session/{id}", ct);
+                var response = await _apiClient.GetAsync(
+                    $"attendances/session/{id}", ct);
 
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -80,7 +91,8 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Session {SessionId} için attendance yüklenemedi. StatusCode: {StatusCode}",
+                    _logger.LogError(
+                        "Session {SessionId} için attendance yüklenemedi. StatusCode: {StatusCode}",
                         id, response.StatusCode);
 
                     TempData["ErrorMessage"] = "Yoklama bilgileri yüklenirken bir hata oluştu.";
@@ -123,7 +135,10 @@ namespace XYZ.Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Session {SessionId} için attendance alınırken beklenmeyen hata.", id);
+                _logger.LogError(ex,
+                    "Session {SessionId} için attendance alınırken beklenmeyen hata.",
+                    id);
+
                 TempData["ErrorMessage"] = "Yoklama bilgileri yüklenirken beklenmeyen bir hata oluştu.";
                 return RedirectToAction(nameof(Index));
             }
@@ -154,7 +169,7 @@ namespace XYZ.Web.Controllers
             try
             {
                 var response = await _apiClient.PutAsJsonAsync(
-                    $"api/Attendances/session/{model.SessionId}",
+                    $"attendances/session/{model.SessionId}",
                     payload,
                     ct);
 

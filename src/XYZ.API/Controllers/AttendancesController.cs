@@ -31,13 +31,14 @@ namespace XYZ.API.Controllers
 
         [HttpGet("today-sessions")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        public async Task<ActionResult<IList<MyTodaySessionListItemDto>>> GetTodaySessions(
-            CancellationToken cancellationToken)
+        public async Task<ActionResult<IList<MyTodaySessionListItemDto>>> GetTodaySessions([FromQuery] DateOnly? date, CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(
-                new GetMyTodaySessionsQuery(),
-                cancellationToken);
+            var query = new GetMyTodaySessionsQuery
+            {
+                Date = date
+            };
 
+            var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }
 

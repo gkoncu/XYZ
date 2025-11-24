@@ -23,6 +23,22 @@ namespace XYZ.Web.Services
             _httpClient = httpClient;
         }
 
+        // === Generic HTTP ===
+        public Task<HttpResponseMessage> GetAsync(
+            string requestUri,
+            CancellationToken cancellationToken = default)
+        {
+            return _httpClient.GetAsync(requestUri, cancellationToken);
+        }
+
+        public Task<HttpResponseMessage> PutAsJsonAsync<T>(
+            string requestUri,
+            T payload,
+            CancellationToken cancellationToken = default)
+        {
+            return _httpClient.PutAsJsonAsync(requestUri, payload, cancellationToken);
+        }
+
         // === Auth ===
         public async Task<LoginResultDto?> LoginAsync(
             string identifier,

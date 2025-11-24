@@ -10,5 +10,6 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
     public sealed class GetMyTodaySessionsQuery
         : IRequest<IList<MyTodaySessionListItemDto>>
     {
+        public DateOnly? Date { get; set; }
     }
 }

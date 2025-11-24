@@ -2,23 +2,45 @@
 @model IList<TodaySessionViewModel>
 
 @{
-    ViewData["Title"] = "Bugünkü Seanslar";
+    ViewData["Title"] = "Seanslar";
+
+    var selectedDate = ViewBag.SelectedDate as string;
+    var todayStr = DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd");
+    var dateValue = !string.IsNullOrWhiteSpace(selectedDate) ? selectedDate : todayStr;
+
+    DateTime displayDate;
+    if (!DateTime.TryParse(dateValue, out displayDate))
+    {
+        displayDate = DateTime.UtcNow.ToLocalTime().Date;
+    }
 }
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="h3 mb-1">Bugünkü Seanslar</h1>
+            <h1 class="h3 mb-1">Seanslar</h1>
             <p class="text-muted mb-0">
-                Bugün için planlanan dersler ve yoklama durumları.
+                Seçilen güne ait dersler ve yoklama durumları.
             </p>
         </div>
         <div class="text-end">
             <span class="badge bg-light text-secondary">
-                @DateTime.UtcNow.ToLocalTime().ToString("dd.MM.yyyy")
+                @displayDate.ToString("dd.MM.yyyy")
             </span>
         </div>
     </div>
+
+    <form method="get" class="d-flex align-items-end gap-2 mb-3">
+        <div>
+            <label class="form-label mb-1">Tarih</label>
+            <input type="date" name="date" class="form-control" value="@dateValue" />
+        </div>
+        <div class="mb-1">
+            <button type="submit" class="btn btn-outline-primary mt-3">
+                Güncelle
+            </button>
+        </div>
+    </form>
 
     @if (ViewData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
     {
@@ -29,9 +51,9 @@
     {
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center py-5">
-                <h5 class="card-title mb-2">Bugün için seans bulunamadı</h5>
+                <h5 class="card-title mb-2">Seans bulunamadı</h5>
                 <p class="text-muted mb-0">
-                    Takvimde bugüne ait planlanmış herhangi bir ders yok.
+                    Bu tarih için planlanmış herhangi bir ders yok.
                 </p>
             </div>
         </div>

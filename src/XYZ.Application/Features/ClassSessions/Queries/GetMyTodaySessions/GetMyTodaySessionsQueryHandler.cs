@@ -39,7 +39,7 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                 return new List<MyTodaySessionListItemDto>();
             }
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            var targetDate = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
             var classIds = await _dataScope.Classes()
                 .Select(c => c.Id)
@@ -54,7 +54,7 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                     .ThenInclude(c => c.Branch)
                 .Include(cs => cs.Attendances)
                 .Where(cs =>
-                    cs.Date == today &&
+                    cs.Date == targetDate &&
                     classIds.Contains(cs.ClassId));
 
             var list = await query

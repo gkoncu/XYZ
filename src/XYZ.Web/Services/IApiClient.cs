@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
@@ -13,13 +14,23 @@ namespace XYZ.Web.Services
 {
     public interface IApiClient
     {
-        // Auth
+        // === Generic HTTP ===
+        Task<HttpResponseMessage> GetAsync(
+            string requestUri,
+            CancellationToken cancellationToken = default);
+
+        Task<HttpResponseMessage> PutAsJsonAsync<T>(
+            string requestUri,
+            T payload,
+            CancellationToken cancellationToken = default);
+
+        // === Auth ===
         Task<LoginResultDto?> LoginAsync(
             string identifier,
             string password,
             CancellationToken cancellationToken = default);
 
-        // Dashboard
+        // === Dashboard ===
         Task<AdminCoachDashboardDto?> GetAdminCoachDashboardAsync(
             CancellationToken cancellationToken = default);
 
@@ -29,7 +40,7 @@ namespace XYZ.Web.Services
         Task<SuperAdminDashboardDto?> GetSuperAdminDashboardAsync(
             CancellationToken cancellationToken = default);
 
-        // Students
+        // === Students ===
         Task<PaginationResult<StudentListItemDto>> GetStudentsAsync(
             string? searchTerm,
             int pageNumber,
@@ -40,7 +51,7 @@ namespace XYZ.Web.Services
             int id,
             CancellationToken cancellationToken = default);
 
-        // Tenant Theme
+        // === Tenant Theme ===
         Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
             CancellationToken cancellationToken = default);
     }
