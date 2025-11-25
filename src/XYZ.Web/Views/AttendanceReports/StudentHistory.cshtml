@@ -1,0 +1,131 @@
+﻿@model XYZ.Web.Models.Attendance.StudentAttendanceHistoryViewModel
+
+@{
+    ViewData["Title"] = "Öğrenci Yoklama Geçmişi";
+
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+}
+
+<h2 class="mb-3">
+    @Model.StudentName
+    <small class="text-muted">- Yoklama Geçmişi</small>
+</h2>
+
+<section class="mb-3">
+    <form asp-action="StudentHistory"
+          asp-controller="AttendanceReports"
+          method="get"
+          class="row g-2 align-items-end">
+        <input type="hidden" name="studentId" value="@Model.StudentId" />
+        <input type="hidden" name="studentName" value="@Model.StudentName" />
+
+        <div class="col-auto">
+            <label class="form-label mb-1">Başlangıç</label>
+            <input type="date"
+                   name="from"
+                   value="@from"
+                   class="form-control form-control-sm" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label mb-1">Bitiş</label>
+            <input type="date"
+                   name="to"
+                   value="@to"
+                   class="form-control form-control-sm" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label mb-1">&nbsp;</label>
+            <div>
+                <button type="submit"
+                        class="btn btn-primary btn-sm">
+                    Filtrele
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+<section>
+    @if (Model.Items == null || !Model.Items.Any())
+    {
+        <div class="alert alert-info">
+            Belirtilen tarih aralığında yoklama kaydı bulunamadı.
+        </div>
+    }
+    else
+    {
+        <div class="card card-surface">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-modern align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Saat</th>
+                                <th>Sınıf</th>
+                                <th>Durum</th>
+                                <th>Puan</th>
+                                <th>Not</th>
+                                <th>Koç Notu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                var statusText = item.Status.ToString();
+                                <tr>
+                                    <td>@item.Date.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        @item.StartTime.ToString("HH\\:mm")
+                                        -
+                                        @item.EndTime.ToString("HH\\:mm")
+                                    </td>
+                                    <td>@item.ClassName</td>
+                                    <td>@statusText</td>
+                                    <td>
+                                        @if (item.Score.HasValue)
+                                        {
+                                            @item.Score.Value
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.Note))
+                                        {
+                                            @item.Note
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.CoachComment))
+                                        {
+                                            @item.CoachComment
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+<div class="mt-3">
+    <a href="javascript:history.back();"
+       class="btn btn-outline-secondary btn-sm">
+        &laquo; Geri dön
+    </a>
+</div>
