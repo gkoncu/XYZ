@@ -25,7 +25,8 @@ namespace XYZ.Application.Services
                 .ToArray();
 
             if (properties.Length == 0)
-                throw new InvalidOperationException($"Tip {typeof(T).Name} için okunabilir property bulunamadı.");
+                throw new InvalidOperationException(
+                    $"Tip {typeof(T).Name} için okunabilir property bulunamadı.");
 
             for (var i = 0; i < properties.Length; i++)
             {
