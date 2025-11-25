@@ -180,5 +180,143 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> StudentHistoryExcel(
+            int studentId,
+            string? studentName,
+            DateOnly? from,
+            DateOnly? to,
+            CancellationToken ct = default)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var defaultFrom = today.AddDays(-30);
+
+            var effectiveTo = to ?? today;
+            var effectiveFrom = from ?? defaultFrom;
+
+            try
+            {
+                var path =
+                    $"reports/attendance/student-history" +
+                    $"?studentId={studentId}" +
+                    $"&from={effectiveFrom:yyyy-MM-dd}" +
+                    $"&to={effectiveTo:yyyy-MM-dd}";
+
+                var response = await _apiClient.GetAsync(path, ct);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "StudentHistoryExcel isteği başarısız. StatusCode: {StatusCode}, StudentId: {StudentId}",
+                        response.StatusCode,
+                        studentId);
+
+                    TempData["ErrorMessage"] = "Excel raporu oluşturulurken bir hata oluştu.";
+                    return RedirectToAction(nameof(StudentHistory),
+                        new { studentId, studentName, from = effectiveFrom, to = effectiveTo });
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+
+                var fromPart = effectiveFrom.ToString("yyyyMMdd");
+                var toPart = effectiveTo.ToString("yyyyMMdd");
+                var safeName = string.IsNullOrWhiteSpace(studentName)
+                    ? $"student-{studentId}"
+                    : studentName.Replace(" ", "-");
+
+                var fileName = $"{safeName}-attendance-{fromPart}-{toPart}.xlsx";
+
+                const string contentType =
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+                return File(bytes, contentType, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "StudentHistoryExcel isteğinde beklenmeyen hata. StudentId: {StudentId}",
+                    studentId);
+
+                TempData["ErrorMessage"] = "Excel raporu oluşturulurken beklenmeyen bir hata oluştu.";
+                return RedirectToAction(nameof(StudentHistory),
+                    new { studentId, studentName, from, to });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ClassOverviewExcel(
+            int classId,
+            string? className,
+            DateOnly? from,
+            DateOnly? to,
+            CancellationToken ct = default)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var defaultFrom = today.AddDays(-30);
+
+            var effectiveTo = to ?? today;
+            var effectiveFrom = from ?? defaultFrom;
+
+            try
+            {
+                var path =
+                    $"reports/attendance/class-overview" +
+                    $"?classId={classId}" +
+                    $"&from={effectiveFrom:yyyy-MM-dd}" +
+                    $"&to={effectiveTo:yyyy-MM-dd}";
+
+                var response = await _apiClient.GetAsync(path, ct);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "ClassOverviewExcel isteği başarısız. StatusCode: {StatusCode}, ClassId: {ClassId}",
+                        response.StatusCode,
+                        classId);
+
+                    TempData["ErrorMessage"] = "Excel raporu oluşturulurken bir hata oluştu.";
+                    return RedirectToAction(nameof(ClassOverview),
+                        new { classId, className, from = effectiveFrom, to = effectiveTo });
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+
+                var fromPart = effectiveFrom.ToString("yyyyMMdd");
+                var toPart = effectiveTo.ToString("yyyyMMdd");
+                var safeName = string.IsNullOrWhiteSpace(className)
+                    ? $"class-{classId}"
+                    : className.Replace(" ", "-");
+
+                var fileName = $"{safeName}-overview-{fromPart}-{toPart}.xlsx";
+
+                const string contentType =
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+                return File(bytes, contentType, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "ClassOverviewExcel isteğinde beklenmeyen hata. ClassId: {ClassId}",
+                    classId);
+
+                TempData["ErrorMessage"] = "Excel raporu oluşturulurken beklenmeyen bir hata oluştu.";
+                return RedirectToAction(nameof(ClassOverview),
+                    new { classId, className, from, to });
+            }
+        }
     }
 }

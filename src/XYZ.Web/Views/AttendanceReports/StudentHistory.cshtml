@@ -7,10 +7,21 @@
     var to = Model.To.ToString("yyyy-MM-dd");
 }
 
-<h2 class="mb-3">
-    @Model.StudentName
-    <small class="text-muted">- Yoklama Geçmişi</small>
-</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">
+        @Model.StudentName
+        <small class="text-muted">- Yoklama Geçmişi</small>
+    </h2>
+    <a asp-controller="AttendanceReports"
+       asp-action="StudentHistoryExcel"
+       asp-route-studentId="@Model.StudentId"
+       asp-route-studentName="@Model.StudentName"
+       asp-route-from="@from"
+       asp-route-to="@to"
+       class="btn btn-outline-success btn-sm">
+        Excel indir
+    </a>
+</div>
 
 <section class="mb-3">
     <form asp-action="StudentHistory"
