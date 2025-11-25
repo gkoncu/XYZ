@@ -3,19 +3,24 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Attendances.Queries.GetStudentAttendanceHistory
 {
     public class GetStudentAttendanceHistoryQueryHandler
         : IRequestHandler<GetStudentAttendanceHistoryQuery, IList<StudentAttendanceHistoryItemDto>>
     {
+        private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
 
-        public GetStudentAttendanceHistoryQueryHandler(IDataScopeService dataScope)
+        public GetStudentAttendanceHistoryQueryHandler(
+            IApplicationDbContext context,
+            IDataScopeService dataScope)
         {
+            _context = context;
             _dataScope = dataScope;
         }
 
@@ -23,26 +28,46 @@ namespace XYZ.Application.Features.Attendances.Queries.GetStudentAttendanceHisto
             GetStudentAttendanceHistoryQuery request,
             CancellationToken ct)
         {
-            await _dataScope.EnsureStudentAccessAsync(request.StudentId, ct);
+            var classesQuery = _dataScope.Classes();
 
-            var list = await _dataScope.Attendances()
-                .Where(a => a.StudentId == request.StudentId)
-                .OrderByDescending(a => a.ClassSession.Date)
-                .Select(a => new StudentAttendanceHistoryItemDto
+            var query =
+                from a in _context.Attendances
+                join cs in _context.ClassSessions on a.ClassSessionId equals cs.Id
+                join cls in classesQuery on a.ClassId equals cls.Id
+                where a.StudentId == request.StudentId
+                      && a.IsActive
+                      && cs.IsActive
+                select new { a, cs, cls };
+
+            if (request.From.HasValue)
+            {
+                var from = request.From.Value;
+                query = query.Where(x => x.cs.Date >= from);
+            }
+
+            if (request.To.HasValue)
+            {
+                var to = request.To.Value;
+                query = query.Where(x => x.cs.Date <= to);
+            }
+
+            var list = await query
+                .OrderByDescending(x => x.cs.Date)
+                .ThenByDescending(x => x.cs.StartTime)
+                .Select(x => new StudentAttendanceHistoryItemDto
                 {
-                    AttendanceId = a.Id,
-                    ClassSessionId = a.ClassSessionId,
-                    ClassId = a.ClassId,
-                    ClassName = a.Class.Name,
-                    Date = a.ClassSession.Date,
-                    StartTime = a.ClassSession.StartTime,
-                    EndTime = a.ClassSession.EndTime,
-                    Title = a.ClassSession.Title,
-                    Status = a.Status,
-                    Note = a.Note,
-                    Score = a.Score,
-                    CoachComment = a.CoachComment
+                    SessionId = x.cs.Id,
+                    ClassId = x.cls.Id,
+                    ClassName = x.cls.Name,
+                    Date = x.cs.Date,
+                    StartTime = x.cs.StartTime,
+                    EndTime = x.cs.EndTime,
+                    Status = x.a.Status,
+                    Score = x.a.Score,
+                    Note = x.a.Note,
+                    CoachComment = x.a.CoachComment
                 })
+                .AsNoTracking()
                 .ToListAsync(ct);
 
             return list;
