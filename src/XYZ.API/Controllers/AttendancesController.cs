@@ -10,6 +10,7 @@ using XYZ.Application.Features.Attendances.Commands.UpdateSessionAttendance;
 using XYZ.Application.Features.Attendances.Queries.GetSessionAttendance;
 using XYZ.Application.Features.Attendances.Queries.GetStudentAttendanceHistory;
 using XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions;
+using XYZ.Application.Features.Attendances.Queries.GetAttendanceOverview;
 
 namespace XYZ.API.Controllers
 {
@@ -98,5 +99,46 @@ namespace XYZ.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("by-student")]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetByStudent(
+            [FromQuery] int studentId,
+            [FromQuery] DateOnly? from,
+            [FromQuery] DateOnly? to,
+            CancellationToken cancellationToken)
+        {
+            var query = new GetStudentAttendanceHistoryQuery
+            {
+                StudentId = studentId,
+                From = from,
+                To = to
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("overview")]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [ProducesResponseType(typeof(AttendanceOverviewDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<AttendanceOverviewDto>> GetOverview(
+            [FromQuery] int classId,
+            [FromQuery] DateOnly from,
+            [FromQuery] DateOnly to,
+            CancellationToken cancellationToken)
+        {
+            var query = new GetAttendanceOverviewQuery
+            {
+                ClassId = classId,
+                From = from,
+                To = to
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
     }
 }
