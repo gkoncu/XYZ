@@ -22,6 +22,13 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
             RuleFor(x => x.StudentId)
                 .GreaterThan(0)
                 .When(x => x.StudentId.HasValue);
+
+            RuleFor(x => x)
+                .Must(x =>
+                    !x.FromDueDate.HasValue ||
+                    !x.ToDueDate.HasValue ||
+                    x.FromDueDate.Value <= x.ToDueDate.Value)
+                .WithMessage("FromDueDate, ToDueDate değerinden büyük olamaz.");
         }
     }
 }

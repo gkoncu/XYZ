@@ -13,11 +13,10 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
         : IRequest<PaginationResult<PaymentListItemDto>>
     {
         public int? StudentId { get; set; }
-
         public PaymentStatus? Status { get; set; }
-
+        public DateOnly? FromDueDate { get; set; }
+        public DateOnly? ToDueDate { get; set; }
         public int PageNumber { get; set; } = 1;
-
         public int PageSize { get; set; } = 20;
     }
 }

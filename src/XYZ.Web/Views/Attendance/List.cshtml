@@ -1,0 +1,251 @@
+﻿﻿@using XYZ.Application.Common.Models
+@using XYZ.Application.Features.Attendances.Queries.GetAttendanceList
+@model PaginationResult<AttendanceListItemDto>
+
+@{
+    ViewData["Title"] = "Yoklama Listesi";
+
+    var studentId = ViewBag.StudentId;
+    var classId = ViewBag.ClassId;
+    var classSessionId = ViewBag.ClassSessionId;
+    var from = ViewBag.From as string;
+    var to = ViewBag.To as string;
+    var status = ViewBag.Status as int?;
+}
+
+<section class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="h4 mb-1">Yoklama Listesi</h2>
+            <p class="text-muted small mb-0">
+                Öğrenci, sınıf, tarih aralığı ve duruma göre yoklama kayıtlarını filtreleyebilirsiniz.
+            </p>
+        </div>
+    </div>
+
+    <div class="card-surface mb-3">
+        <form asp-action="List" asp-controller="Attendance" method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-2">
+                <label class="form-label form-label-sm">Öğrenci Id</label>
+                <input type="number"
+                       name="studentId"
+                       value="@studentId"
+                       class="form-control form-control-sm"
+                       placeholder="Öğrenci Id" />
+            </div>
+
+            <div class="col-12 col-md-2">
+                <label class="form-label form-label-sm">Sınıf Id</label>
+                <input type="number"
+                       name="classId"
+                       value="@classId"
+                       class="form-control form-control-sm"
+                       placeholder="Sınıf Id" />
+            </div>
+
+            <div class="col-12 col-md-2">
+                <label class="form-label form-label-sm">Seans Id</label>
+                <input type="number"
+                       name="classSessionId"
+                       value="@classSessionId"
+                       class="form-control form-control-sm"
+                       placeholder="Seans Id" />
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label form-label-sm">Başlangıç Tarihi</label>
+                <input type="date"
+                       name="from"
+                       value="@from"
+                       class="form-control form-control-sm" />
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label form-label-sm">Bitiş Tarihi</label>
+                <input type="date"
+                       name="to"
+                       value="@to"
+                       class="form-control form-control-sm" />
+            </div>
+
+            <div class="col-12 col-md-2">
+                <label class="form-label form-label-sm">Durum</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Tümü</option>
+                    <option value="0" selected="@(status == 0 ? "selected" : "")">Bilinmiyor</option>
+                    <option value="1" selected="@(status == 1 ? "selected" : "")">Katıldı</option>
+                    <option value="2" selected="@(status == 2 ? "selected" : "")">Gelmedi</option>
+                    <option value="3" selected="@(status == 3 ? "selected" : "")">İzinli</option>
+                    <option value="4" selected="@(status == 4 ? "selected" : "")">Geç</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 mt-2 mt-md-0">
+                <button type="submit" class="btn btn-sm btn-primary w-100 mb-1">
+                    Filtrele
+                </button>
+                <a asp-action="List"
+                   asp-controller="Attendance"
+                   class="btn btn-sm btn-outline-secondary w-100">
+                    Temizle
+                </a>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="small text-muted">
+                Toplam @Model.TotalCount kayıt · Sayfa @Model.PageNumber / @Model.TotalPages
+            </div>
+        </div>
+    </div>
+
+    <div class="card-surface">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Sınıf</th>
+                        <th>Öğrenci</th>
+                        <th>Durum</th>
+                        <th>Puan</th>
+                        <th>Not</th>
+                        <th>Koç Notu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Kriterlere uygun yoklama kaydı bulunamadı.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var a in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @a.SessionDate.ToString("dd.MM.yyyy")
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@a.ClassName</div>
+                                    <div class="small text-muted">Id: @a.ClassId</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@a.StudentFullName</div>
+                                    <div class="small text-muted">Id: @a.StudentId</div>
+                                </td>
+                                <td>
+                                    @{
+                                        string statusText = a.Status switch
+                                        {
+                                            XYZ.Domain.Enums.AttendanceStatus.Present => "Katıldı",
+                                            XYZ.Domain.Enums.AttendanceStatus.Absent => "Gelmedi",
+                                            XYZ.Domain.Enums.AttendanceStatus.Excused => "İzinli",
+                                            XYZ.Domain.Enums.AttendanceStatus.Late => "Geç",
+                                            _ => "Bilinmiyor"
+                                        };
+
+                                        string statusClass = a.Status switch
+                                        {
+                                            XYZ.Domain.Enums.AttendanceStatus.Present => "badge-soft-success",
+                                            XYZ.Domain.Enums.AttendanceStatus.Absent => "badge-soft-danger",
+                                            XYZ.Domain.Enums.AttendanceStatus.Excused => "badge-soft-warning",
+                                            XYZ.Domain.Enums.AttendanceStatus.Late => "badge-soft-info",
+                                            _ => "badge-soft-muted"
+                                        };
+                                    }
+                                    <span class="badge-soft @statusClass">@statusText</span>
+                                </td>
+                                <td>
+                                    @if (a.Score.HasValue)
+                                    {
+                                        @a.Score
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(a.Note))
+                                    {
+                                        <span>@a.Note</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(a.CoachComment))
+                                    {
+                                        <span>@a.CoachComment</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination pagination-modern justify-content-end mb-0">
+                    @{
+                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+                    }
+                    <li class="page-item @prevDisabled">
+                        <a class="page-link"
+                           asp-action="List"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           asp-route-studentId="@studentId"
+                           asp-route-classId="@classId"
+                           asp-route-classSessionId="@classSessionId"
+                           asp-route-from="@from"
+                           asp-route-to="@to"
+                           asp-route-status="@status">Önceki</a>
+                    </li>
+
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        var active = i == Model.PageNumber ? "active" : "";
+                        <li class="page-item @active">
+                            <a class="page-link"
+                               asp-action="List"
+                               asp-route-pageNumber="@i"
+                               asp-route-studentId="@studentId"
+                               asp-route-classId="@classId"
+                               asp-route-classSessionId="@classSessionId"
+                               asp-route-from="@from"
+                               asp-route-to="@to"
+                               asp-route-status="@status">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @nextDisabled">
+                        <a class="page-link"
+                           asp-action="List"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           asp-route-studentId="@studentId"
+                           asp-route-classId="@classId"
+                           asp-route-classSessionId="@classSessionId"
+                           asp-route-from="@from"
+                           asp-route-to="@to"
+                           asp-route-status="@status">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</section>

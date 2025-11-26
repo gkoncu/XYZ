@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Attendances.Commands.UpdateSessionAttendance;
+using XYZ.Application.Features.Attendances.Queries.GetAttendanceList;
 using XYZ.Application.Features.Attendances.Queries.GetSessionAttendance;
 using XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions;
 
@@ -78,6 +80,17 @@ namespace XYZ.API.Controllers
                 cancellationToken);
 
             return Ok(updatedSessionId);
+        }
+
+        [HttpGet("list")]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [ProducesResponseType(typeof(PaginationResult<AttendanceListItemDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginationResult<AttendanceListItemDto>>> GetList(
+    [FromQuery] GetAttendanceListQuery query,
+    CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
         }
 
     }

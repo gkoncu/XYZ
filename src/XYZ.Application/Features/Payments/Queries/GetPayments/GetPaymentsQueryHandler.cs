@@ -39,6 +39,18 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
                 query = query.Where(p => p.Status == request.Status.Value);
             }
 
+            if (request.FromDueDate.HasValue)
+            {
+                var from = request.FromDueDate.Value.ToDateTime(TimeOnly.MinValue);
+                query = query.Where(p => p.DueDate >= from);
+            }
+
+            if (request.ToDueDate.HasValue)
+            {
+                var to = request.ToDueDate.Value.ToDateTime(TimeOnly.MaxValue);
+                query = query.Where(p => p.DueDate <= to);
+            }
+
             var totalCount = await query.CountAsync(ct);
 
             var page = request.PageNumber <= 0 ? 1 : request.PageNumber;
