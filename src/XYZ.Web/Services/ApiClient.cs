@@ -39,6 +39,21 @@ namespace XYZ.Web.Services
             return _httpClient.PutAsJsonAsync(requestUri, payload, cancellationToken);
         }
 
+        public Task<HttpResponseMessage> PostAsJsonAsync<T>(
+            string requestUri,
+            T payload,
+            CancellationToken cancellationToken = default)
+        {
+            return _httpClient.PostAsJsonAsync(requestUri, payload, cancellationToken);
+        }
+
+        public Task<HttpResponseMessage> DeleteAsync(
+            string requestUri,
+            CancellationToken cancellationToken = default)
+        {
+            return _httpClient.DeleteAsync(requestUri, cancellationToken);
+        }
+
         // === Auth ===
         public async Task<LoginResultDto?> LoginAsync(
             string identifier,
