@@ -9,8 +9,7 @@ namespace XYZ.Application.Features.Auth.Register.Commands
             "Student",
             "Coach",
             "Admin",
-            "SuperAdmin",
-            "Finance"
+            "SuperAdmin"
         };
 
         public RegisterUserCommandValidator()

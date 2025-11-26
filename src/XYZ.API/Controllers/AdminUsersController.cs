@@ -43,9 +43,8 @@ namespace XYZ.API.Controllers
 
             var callerRole = _currentUser.Role ?? string.Empty;
 
-            if (callerRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) &&
-                (request.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
-                 request.Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)))
+            if (!callerRole.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) &&
+                request.Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
             {
                 return Forbid();
             }
@@ -75,8 +74,7 @@ namespace XYZ.API.Controllers
             return role.Equals("Student", StringComparison.OrdinalIgnoreCase)
                 || role.Equals("Coach", StringComparison.OrdinalIgnoreCase)
                 || role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
-                || role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)
-                || role.Equals("Finance", StringComparison.OrdinalIgnoreCase);
+                || role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase);
         }
 
         public sealed record RegisterUserRequest(
