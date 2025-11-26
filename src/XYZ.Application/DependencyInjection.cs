@@ -55,6 +55,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ITenantService, TenantService>();
+            services.AddScoped<IExcelExporter, ExcelExporter>();
 
             return services;
         }
