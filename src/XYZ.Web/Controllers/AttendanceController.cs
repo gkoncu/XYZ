@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using XYZ.Application.Common.Models;
+using XYZ.Application.Features.Attendances.Queries.GetAttendanceList;
 using XYZ.Web.Models.Attendance;
 using XYZ.Web.Services;
 
@@ -70,6 +73,158 @@ namespace XYZ.Web.Controllers
                 return View(new List<TodaySessionViewModel>());
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> List(
+            int? studentId,
+            int? classId,
+            int? classSessionId,
+            string? from,
+            string? to,
+            int? status,
+            int pageNumber = 1,
+            int pageSize = 50,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                var path = "attendances/list";
+
+                var queryParams = new Dictionary<string, string?>();
+
+                if (studentId.HasValue)
+                {
+                    queryParams["StudentId"] = studentId.Value.ToString();
+                }
+
+                if (classId.HasValue)
+                {
+                    queryParams["ClassId"] = classId.Value.ToString();
+                }
+
+                if (classSessionId.HasValue)
+                {
+                    queryParams["ClassSessionId"] = classSessionId.Value.ToString();
+                }
+
+                if (!string.IsNullOrWhiteSpace(from))
+                {
+                    queryParams["From"] = from;
+                }
+
+                if (!string.IsNullOrWhiteSpace(to))
+                {
+                    queryParams["To"] = to;
+                }
+
+                if (status.HasValue)
+                {
+                    queryParams["Status"] = status.Value.ToString();
+                }
+
+                if (pageNumber <= 0) pageNumber = 1;
+                if (pageSize <= 0) pageSize = 50;
+
+                queryParams["PageNumber"] = pageNumber.ToString();
+                queryParams["PageSize"] = pageSize.ToString();
+
+                if (queryParams.Any())
+                {
+                    path = QueryHelpers.AddQueryString(path, queryParams!);
+                }
+
+                var response = await _apiClient.GetAsync(path, ct);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "attendances/list isteği başarısız. StatusCode: {StatusCode}",
+                        response.StatusCode);
+
+                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+
+                    ViewBag.StudentId = studentId;
+                    ViewBag.ClassId = classId;
+                    ViewBag.ClassSessionId = classSessionId;
+                    ViewBag.From = from;
+                    ViewBag.To = to;
+                    ViewBag.Status = status;
+
+                    var empty = new PaginationResult<AttendanceListItemDto>
+                    {
+                        Items = new List<AttendanceListItemDto>(),
+                        PageNumber = pageNumber,
+                        PageSize = pageSize,
+                        TotalCount = 0
+                    };
+
+                    return View(empty);
+                }
+
+                var dto = await response.Content
+                    .ReadFromJsonAsync<PaginationResult<AttendanceListItemDto>>(cancellationToken: ct);
+
+                if (dto is null)
+                {
+                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+
+                    ViewBag.StudentId = studentId;
+                    ViewBag.ClassId = classId;
+                    ViewBag.ClassSessionId = classSessionId;
+                    ViewBag.From = from;
+                    ViewBag.To = to;
+                    ViewBag.Status = status;
+
+                    var empty = new PaginationResult<AttendanceListItemDto>
+                    {
+                        Items = new List<AttendanceListItemDto>(),
+                        PageNumber = pageNumber,
+                        PageSize = pageSize,
+                        TotalCount = 0
+                    };
+
+                    return View(empty);
+                }
+
+                ViewBag.StudentId = studentId;
+                ViewBag.ClassId = classId;
+                ViewBag.ClassSessionId = classSessionId;
+                ViewBag.From = from;
+                ViewBag.To = to;
+                ViewBag.Status = status;
+
+                return View(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Yoklama listesi alınırken beklenmeyen hata oluştu.");
+
+                ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken beklenmeyen bir hata oluştu.";
+
+                ViewBag.StudentId = studentId;
+                ViewBag.ClassId = classId;
+                ViewBag.ClassSessionId = classSessionId;
+                ViewBag.From = from;
+                ViewBag.To = to;
+                ViewBag.Status = status;
+
+                var empty = new PaginationResult<AttendanceListItemDto>
+                {
+                    Items = new List<AttendanceListItemDto>(),
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                };
+
+                return View(empty);
+            }
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> Session(int id, CancellationToken ct)
