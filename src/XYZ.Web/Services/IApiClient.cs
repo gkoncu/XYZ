@@ -24,6 +24,16 @@ namespace XYZ.Web.Services
             T payload,
             CancellationToken cancellationToken = default);
 
+        Task<HttpResponseMessage> PostAsJsonAsync<T>(
+            string requestUri,
+            T payload,
+            CancellationToken cancellationToken = default);
+
+        Task<HttpResponseMessage> DeleteAsync(
+            string requestUri,
+            CancellationToken cancellationToken = default);
+
+
         // === Auth ===
         Task<LoginResultDto?> LoginAsync(
             string identifier,
