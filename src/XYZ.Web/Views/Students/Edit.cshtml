@@ -1,0 +1,167 @@
+﻿@model XYZ.Web.Models.Students.StudentEditViewModel
+@{
+    ViewData["Title"] = "Öğrenci Düzenle";
+}
+
+<section class="mb-3">
+    <a asp-action="Details" asp-route-id="@Model.Id" class="text-muted small text-decoration-none">&larr; Öğrenci detayına dön</a>
+</section>
+
+<section class="card-surface">
+    <h2 class="h5 mb-3">Öğrenci Bilgilerini Düzenle</h2>
+
+    <form asp-action="Edit" method="post" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <!-- Ad Soyad / İletişim -->
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label small"></label>
+            <input asp-for="FirstName" class="form-control form-control-sm" />
+            <span asp-validation-for="FirstName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label small"></label>
+            <input asp-for="LastName" class="form-control form-control-sm" />
+            <span asp-validation-for="LastName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small"></label>
+            <input asp-for="Email" class="form-control form-control-sm" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="PhoneNumber" class="form-label small"></label>
+            <input asp-for="PhoneNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+        </div>
+
+        <!-- Temel Bilgiler -->
+        <div class="col-md-4">
+            <label asp-for="BirthDate" class="form-label small"></label>
+            <input asp-for="BirthDate" class="form-control form-control-sm" />
+            <span asp-validation-for="BirthDate" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Gender" class="form-label small"></label>
+            <select asp-for="Gender" class="form-select form-select-sm">
+                <option value="Belirtilmedi">Belirtilmedi</option>
+                <option value="Erkek">Erkek</option>
+                <option value="Kadın">Kadın</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="BloodType" class="form-label small"></label>
+            <select asp-for="BloodType" class="form-select form-select-sm">
+                <option value="Bilinmiyor">Bilinmiyor</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="0+">0+</option>
+                <option value="0-">0-</option>
+            </select>
+            <span asp-validation-for="BloodType" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="ClassId" class="form-label small"></label>
+            <input asp-for="ClassId" class="form-control form-control-sm" />
+            <span asp-validation-for="ClassId" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="IdentityNumber" class="form-label small"></label>
+            <input asp-for="IdentityNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="IdentityNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Address" class="form-label small"></label>
+            <input asp-for="Address" class="form-control form-control-sm" />
+            <span asp-validation-for="Address" class="text-danger small"></span>
+        </div>
+
+        <!-- Veli Bilgileri -->
+        <div class="col-12">
+            <h3 class="h6 mt-3">Veli Bilgileri</h3>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent1FirstName" class="form-label small"></label>
+            <input asp-for="Parent1FirstName" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent1FirstName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent1LastName" class="form-label small"></label>
+            <input asp-for="Parent1LastName" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent1LastName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent1Email" class="form-label small"></label>
+            <input asp-for="Parent1Email" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent1Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent1PhoneNumber" class="form-label small"></label>
+            <input asp-for="Parent1PhoneNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent1PhoneNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent2FirstName" class="form-label small"></label>
+            <input asp-for="Parent2FirstName" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent2FirstName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent2LastName" class="form-label small"></label>
+            <input asp-for="Parent2LastName" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent2LastName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent2Email" class="form-label small"></label>
+            <input asp-for="Parent2Email" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent2Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="Parent2PhoneNumber" class="form-label small"></label>
+            <input asp-for="Parent2PhoneNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="Parent2PhoneNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="MedicalInformation" class="form-label small"></label>
+            <textarea asp-for="MedicalInformation" class="form-control form-control-sm" rows="3"></textarea>
+            <span asp-validation-for="MedicalInformation" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Notes" class="form-label small"></label>
+            <textarea asp-for="Notes" class="form-control form-control-sm" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end mt-3">
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-2">İptal</a>
+            <button type="submit" class="btn btn-sm btn-primary">
+                Kaydet
+            </button>
+        </div>
+    </form>
+</section>
