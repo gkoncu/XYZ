@@ -13,7 +13,15 @@
             </p>
         </div>
         <div>
-            @*Yeni Öğrenci butonu ekle*@
+            <div>
+                @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
+                {
+                    <a asp-action="Create" class="btn btn-sm btn-primary">
+                        + Yeni Öğrenci
+                    </a>
+                }
+            </div>
+
         </div>
     </div>
 
@@ -98,9 +106,28 @@
                                     }
                                 </td>
                                 <td class="text-end">
-                                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-light">
+                                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-light me-1">
                                         Detay
                                     </a>
+
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-light me-1">
+                                            Düzenle
+                                        </a>
+
+                                        <form asp-action="Delete"
+                                              asp-route-id="@s.Id"
+                                              method="post"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
+                                                Sil
+                                            </button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }
