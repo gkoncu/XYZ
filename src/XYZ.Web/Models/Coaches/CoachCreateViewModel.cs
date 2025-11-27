@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace XYZ.Web.Models.Coaches
 {
@@ -20,13 +21,27 @@ namespace XYZ.Web.Models.Coaches
         [Display(Name = "Telefon")]
         public string? PhoneNumber { get; set; }
 
-        [Display(Name = "Branş")]
-        public string? Branch { get; set; }
+        [Required]
+        [Display(Name = "Cinsiyet")]
+        public string Gender { get; set; } = "Belirtilmedi";
 
-        [Display(Name = "Hakkında / Özgeçmiş")]
-        public string? Bio { get; set; }
+        [Required]
+        [Display(Name = "Kan Grubu")]
+        public string BloodType { get; set; } = "Bilinmiyor";
 
-        [Display(Name = "Notlar")]
-        public string? Notes { get; set; }
+        [Required]
+        [DataType(DataType.Date)]
+        [Display(Name = "Doğum Tarihi")]
+        public DateTime? BirthDate { get; set; }
+
+        [Display(Name = "T.C. Kimlik No")]
+        public string? IdentityNumber { get; set; }
+
+        [Display(Name = "Lisans No")]
+        public string? LicenseNumber { get; set; }
+
+        [Required]
+        [Display(Name = "Branş Id")]
+        public int BranchId { get; set; }
     }
 }

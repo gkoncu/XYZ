@@ -59,7 +59,13 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,SuperAdmin")]
         public IActionResult Create()
         {
-            var vm = new CoachCreateViewModel();
+            var vm = new CoachCreateViewModel
+            {
+                BirthDate = DateTime.Today.AddYears(-18),
+                Gender = "Belirtilmedi",
+                BloodType = "Bilinmiyor",
+            };
+
             return View(vm);
         }
 
@@ -71,7 +77,11 @@ namespace XYZ.Web.Controllers
             CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
+                return View(model);
+
+            if (!model.BirthDate.HasValue)
             {
+                ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
                 return View(model);
             }
 
@@ -81,34 +91,17 @@ namespace XYZ.Web.Controllers
                 LastName = model.LastName,
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
-                Branch = model.Branch,
-                Bio = model.Bio,
-                Notes = model.Notes
+                Gender = model.Gender,
+                BloodType = model.BloodType,
+                BirthDate = model.BirthDate.Value,
+                IdentityNumber = model.IdentityNumber,
+                LicenseNumber = model.LicenseNumber,
+                BranchId = model.BranchId
             };
 
             var response = await _apiClient.PostAsJsonAsync("coaches", command, cancellationToken);
 
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                ModelState.AddModelError(string.Empty, "Koç kaydedilirken bir hata oluştu.");
-                return View(model);
-            }
-
-            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
-
-            if (id <= 0)
-            {
-                TempData["SuccessMessage"] = "Koç oluşturuldu.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            TempData["SuccessMessage"] = "Koç oluşturuldu.";
-            return RedirectToAction(nameof(Details), new { id });
+            return View(response);
         }
 
         [HttpGet]
@@ -117,9 +110,7 @@ namespace XYZ.Web.Controllers
         {
             var dto = await _apiClient.GetCoachAsync(id, cancellationToken);
             if (dto == null)
-            {
                 return NotFound();
-            }
 
             var fullName = dto.FullName?.Trim() ?? string.Empty;
             string firstName = fullName;
@@ -128,8 +119,8 @@ namespace XYZ.Web.Controllers
             var lastSpace = fullName.LastIndexOf(' ');
             if (lastSpace > 0)
             {
-                firstName = fullName.Substring(0, lastSpace);
-                lastName = fullName.Substring(lastSpace + 1);
+                firstName = fullName[..lastSpace];
+                lastName = fullName[(lastSpace + 1)..];
             }
 
             var vm = new CoachEditViewModel
@@ -139,9 +130,12 @@ namespace XYZ.Web.Controllers
                 LastName = lastName,
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
-                Branch = dto.Branch,
-                Bio = dto.Bio,
-                Notes = dto.Notes,
+                Gender = dto.Gender,
+                BloodType = dto.BloodType,
+                BirthDate = dto.BirthDate,
+                IdentityNumber = dto.IdentityNumber,
+                LicenseNumber = dto.LicenseNumber,
+                BranchId = dto.BranchId,
                 IsActive = dto.IsActive
             };
 
@@ -152,17 +146,19 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
-            int id,
-            CoachEditViewModel model,
-            CancellationToken cancellationToken)
+    int id,
+    CoachEditViewModel model,
+    CancellationToken cancellationToken)
         {
             if (id != model.Id)
-            {
                 return BadRequest();
-            }
 
             if (!ModelState.IsValid)
+                return View(model);
+
+            if (!model.BirthDate.HasValue)
             {
+                ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
                 return View(model);
             }
 
@@ -173,27 +169,19 @@ namespace XYZ.Web.Controllers
                 LastName = model.LastName,
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
-                Branch = model.Branch,
-                Bio = model.Bio,
-                Notes = model.Notes
+                Gender = model.Gender,
+                BloodType = model.BloodType,
+                BirthDate = model.BirthDate.Value,
+                IdentityNumber = model.IdentityNumber,
+                LicenseNumber = model.LicenseNumber,
+                BranchId = model.BranchId
             };
 
             var response = await _apiClient.PutAsJsonAsync($"coaches/{id}", command, cancellationToken);
 
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                ModelState.AddModelError(string.Empty, "Koç güncellenirken bir hata oluştu.");
-                return View(model);
-            }
-
-            TempData["SuccessMessage"] = "Koç bilgileri güncellendi.";
-            return RedirectToAction(nameof(Details), new { id });
+            return View(response);
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]

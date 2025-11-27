@@ -1,4 +1,4 @@
-﻿@using XYZ.Application.Features.Coaches.Queries.GetCoachById
+﻿@using XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 @model CoachDetailDto
 
 @{
@@ -43,8 +43,23 @@
             <dt class="col-sm-3">Telefon</dt>
             <dd class="col-sm-9">@Model.PhoneNumber</dd>
 
+            <dt class="col-sm-3">Cinsiyet</dt>
+            <dd class="col-sm-9">@Model.Gender</dd>
+
+            <dt class="col-sm-3">Kan Grubu</dt>
+            <dd class="col-sm-9">@Model.BloodType</dd>
+
+            <dt class="col-sm-3">Doğum Tarihi</dt>
+            <dd class="col-sm-9">@Model.BirthDate.ToShortDateString()</dd>
+
             <dt class="col-sm-3">Branş</dt>
-            <dd class="col-sm-9">@Model.Branch</dd>
+            <dd class="col-sm-9">@Model.BranchName</dd>
+
+            <dt class="col-sm-3">T.C. Kimlik No</dt>
+            <dd class="col-sm-9">@Model.IdentityNumber</dd>
+
+            <dt class="col-sm-3">Lisans No</dt>
+            <dd class="col-sm-9">@Model.LicenseNumber</dd>
 
             <dt class="col-sm-3">Durum</dt>
             <dd class="col-sm-9">
@@ -61,26 +76,47 @@
     </div>
 
     <div class="detail-card">
-        <h3 class="h6 mb-2">Hakkında</h3>
-        @if (!string.IsNullOrWhiteSpace(Model.Bio))
-        {
-            <p class="mb-0">@Model.Bio</p>
-        }
-        else
-        {
-            <p class="text-muted small mb-0">Koç hakkında ek bilgi girilmemiş.</p>
-        }
-    </div>
+        <h3 class="h6 mb-2">Sınıflar</h3>
 
-    <div class="detail-card">
-        <h3 class="h6 mb-2">Notlar</h3>
-        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        @if (Model.Classes == null || Model.Classes.Count == 0)
         {
-            <p class="mb-0">@Model.Notes</p>
+            <p class="text-muted small mb-0">Koça atanmış sınıf bulunmuyor.</p>
         }
         else
         {
-            <p class="text-muted small mb-0">Not bulunmuyor.</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Sınıf</th>
+                            <th>Branş</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cls in Model.Classes)
+                        {
+                            <tr>
+                                <td>@cls.Id</td>
+                                <td>@cls.FullName</td>
+                                <td>@cls.BranchName</td>
+                                <td>
+                                    @if (cls.IsActive)
+                                    {
+                                        <span class="badge-soft badge-soft-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-soft badge-soft-secondary">Pasif</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </section>
+
