@@ -1,10 +1,11 @@
-﻿using System.Net.Http;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.WebUtilities;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
@@ -159,6 +160,66 @@ namespace XYZ.Web.Services
             return await response.Content.ReadFromJsonAsync<StudentDetailDto>(
                 cancellationToken: cancellationToken);
         }
+
+        // === Coaches ===
+        public async Task<PaginationResult<CoachListItemDto>> GetCoachesAsync(
+            string? searchTerm,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                queryParams["SearchTerm"] = searchTerm;
+            }
+
+            var path = QueryHelpers.AddQueryString("coaches", queryParams!);
+
+            var response = await _httpClient.GetAsync(path, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new PaginationResult<CoachListItemDto>
+                {
+                    Items = new List<CoachListItemDto>(),
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                };
+            }
+
+            var dto = await response.Content
+                .ReadFromJsonAsync<PaginationResult<CoachListItemDto>>(cancellationToken: cancellationToken);
+
+            return dto ?? new PaginationResult<CoachListItemDto>
+            {
+                Items = new List<CoachListItemDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
+        }
+
+        public async Task<CoachDetailDto?> GetCoachAsync(
+            int coachId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"coaches/{coachId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CoachDetailDto>(cancellationToken: cancellationToken);
+        }
+
 
         // === Tenant Theme ===
         public async Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
