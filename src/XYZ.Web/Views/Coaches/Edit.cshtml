@@ -1,0 +1,66 @@
+﻿@model XYZ.Web.Models.Coaches.CoachEditViewModel
+
+<form asp-action="Edit" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="col-md-4">
+        <label asp-for="Gender" class="form-label small"></label>
+        <select asp-for="Gender" class="form-select form-select-sm">
+            <option value="Belirtilmedi">Belirtilmedi</option>
+            <option value="Erkek">Erkek</option>
+            <option value="Kadın">Kadın</option>
+        </select>
+        <span asp-validation-for="Gender" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="BloodType" class="form-label small"></label>
+        <select asp-for="BloodType" class="form-select form-select-sm">
+            <option value="Bilinmiyor">Bilinmiyor</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="0+">0+</option>
+            <option value="0-">0-</option>
+        </select>
+        <span asp-validation-for="BloodType" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="BirthDate" class="form-label small"></label>
+        <input asp-for="BirthDate" class="form-control form-control-sm" />
+        <span asp-validation-for="BirthDate" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="IdentityNumber" class="form-label small"></label>
+        <input asp-for="IdentityNumber" class="form-control form-control-sm" />
+        <span asp-validation-for="IdentityNumber" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="LicenseNumber" class="form-label small"></label>
+        <input asp-for="LicenseNumber" class="form-control form-control-sm" />
+        <span asp-validation-for="LicenseNumber" class="text-danger small"></span>
+    </div>
+
+    <select asp-for="BranchId" class="form-select form-select-sm">
+        @foreach (var b in (IEnumerable<XYZ.Application.Features.Branches.Queries.GetAllBranches.BranchListItemDto>)ViewBag.Branches)
+        {
+            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">
+                @b.Name
+            </option>
+        }
+    </select>
+    <div class="col-12 d-flex justify-content-end mt-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-2">İptal</a>
+        <button type="submit" class="btn btn-sm btn-primary">
+            Kaydet
+        </button>
+    </div>
+
+</form>

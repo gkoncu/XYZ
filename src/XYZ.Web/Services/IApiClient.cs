@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Branches.Queries.GetAllBranches;
+using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
@@ -59,6 +61,23 @@ namespace XYZ.Web.Services
 
         Task<StudentDetailDto?> GetStudentAsync(
             int id,
+            CancellationToken cancellationToken = default);
+
+        // === Coaches ===
+        Task<PaginationResult<CoachListItemDto>> GetCoachesAsync(
+            string? searchTerm,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<CoachDetailDto?> GetCoachAsync(
+            int coachId,
+            CancellationToken cancellationToken = default);
+
+        // === Branches ===
+        Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
+            int pageNumber,
+            int pageSize,
             CancellationToken cancellationToken = default);
 
         // === Tenant Theme ===
