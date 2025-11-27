@@ -57,13 +57,17 @@ namespace XYZ.Web.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,SuperAdmin")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
+            var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+
+            ViewBag.Branches = branches.Items;
+
             var vm = new CoachCreateViewModel
             {
                 BirthDate = DateTime.Today.AddYears(-18),
                 Gender = "Belirtilmedi",
-                BloodType = "Bilinmiyor",
+                BloodType = "Bilinmiyor"
             };
 
             return View(vm);
@@ -77,7 +81,12 @@ namespace XYZ.Web.Controllers
             CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
+            {
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
+
                 return View(model);
+            }
 
             if (!model.BirthDate.HasValue)
             {
@@ -112,6 +121,9 @@ namespace XYZ.Web.Controllers
             if (dto == null)
                 return NotFound();
 
+            var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+            ViewBag.Branches = branches.Items;
+
             var fullName = dto.FullName?.Trim() ?? string.Empty;
             string firstName = fullName;
             string lastName = string.Empty;
@@ -119,8 +131,8 @@ namespace XYZ.Web.Controllers
             var lastSpace = fullName.LastIndexOf(' ');
             if (lastSpace > 0)
             {
-                firstName = fullName[..lastSpace];
-                lastName = fullName[(lastSpace + 1)..];
+                firstName = fullName.Substring(0, lastSpace);
+                lastName = fullName.Substring(lastSpace + 1);
             }
 
             var vm = new CoachEditViewModel
@@ -154,7 +166,12 @@ namespace XYZ.Web.Controllers
                 return BadRequest();
 
             if (!ModelState.IsValid)
+            {
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
+
                 return View(model);
+            }
 
             if (!model.BirthDate.HasValue)
             {

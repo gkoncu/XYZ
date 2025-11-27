@@ -48,12 +48,14 @@
         <span asp-validation-for="LicenseNumber" class="text-danger small"></span>
     </div>
 
-    <div class="col-md-4">
-        <label asp-for="BranchId" class="form-label small"></label>
-        <input asp-for="BranchId" class="form-control form-control-sm" />
-        <span asp-validation-for="BranchId" class="text-danger small"></span>
-        <div class="form-text small">Geçici olarak Branch Id giriniz; ileride listeden seçilecek.</div>
-    </div>
+    <select asp-for="BranchId" class="form-select form-select-sm">
+        @foreach (var b in (IEnumerable<XYZ.Application.Features.Branches.Queries.GetAllBranches.BranchListItemDto>)ViewBag.Branches)
+        {
+            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">
+                @b.Name
+            </option>
+        }
+    </select>
     <div class="col-12 d-flex justify-content-end mt-3">
         <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-2">İptal</a>
         <button type="submit" class="btn btn-sm btn-primary">
