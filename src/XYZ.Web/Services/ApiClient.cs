@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -218,6 +219,45 @@ namespace XYZ.Web.Services
             }
 
             return await response.Content.ReadFromJsonAsync<CoachDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        // === Branches ===
+        public async Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            var path = QueryHelpers.AddQueryString("branches", queryParams);
+
+            var response = await _httpClient.GetAsync(path, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new PaginationResult<BranchListItemDto>
+                {
+                    Items = new List<BranchListItemDto>(),
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                };
+            }
+
+            var dto = await response.Content
+                .ReadFromJsonAsync<PaginationResult<BranchListItemDto>>(cancellationToken: cancellationToken);
+
+            return dto ?? new PaginationResult<BranchListItemDto>
+            {
+                Items = new List<BranchListItemDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
         }
 
 

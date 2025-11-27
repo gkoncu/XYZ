@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -71,6 +72,12 @@ namespace XYZ.Web.Services
 
         Task<CoachDetailDto?> GetCoachAsync(
             int coachId,
+            CancellationToken cancellationToken = default);
+
+        // === Branches ===
+        Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
+            int pageNumber,
+            int pageSize,
             CancellationToken cancellationToken = default);
 
         // === Tenant Theme ===
