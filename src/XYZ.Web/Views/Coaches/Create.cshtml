@@ -1,0 +1,66 @@
+﻿@model XYZ.Web.Models.Coaches.CoachCreateViewModel
+@{
+    ViewData["Title"] = "Yeni Koç";
+}
+
+<section class="mb-3">
+    <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Koç listesine dön</a>
+</section>
+
+<section class="card-surface">
+    <h2 class="h5 mb-3">Yeni Koç Kaydı</h2>
+
+    <form asp-action="Create" method="post" class="row g-3">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label small"></label>
+            <input asp-for="FirstName" class="form-control form-control-sm" />
+            <span asp-validation-for="FirstName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label small"></label>
+            <input asp-for="LastName" class="form-control form-control-sm" />
+            <span asp-validation-for="LastName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small"></label>
+            <input asp-for="Email" class="form-control form-control-sm" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="PhoneNumber" class="form-label small"></label>
+            <input asp-for="PhoneNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Branch" class="form-label small"></label>
+            <input asp-for="Branch" class="form-control form-control-sm" />
+            <span asp-validation-for="Branch" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Notes" class="form-label small"></label>
+            <input asp-for="Notes" class="form-control form-control-sm" />
+            <span asp-validation-for="Notes" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Bio" class="form-label small"></label>
+            <textarea asp-for="Bio" class="form-control form-control-sm" rows="4"></textarea>
+            <span asp-validation-for="Bio" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end mt-3">
+            <a asp-action="Index" class="btn btn-sm btn-outline-light me-2">İptal</a>
+            <button type="submit" class="btn btn-sm btn-primary">
+                Kaydet
+            </button>
+        </div>
+    </form>
+</section>
