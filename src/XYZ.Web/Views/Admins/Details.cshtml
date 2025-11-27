@@ -1,0 +1,76 @@
+﻿@using XYZ.Application.Features.Admins.Queries.GetAdminById
+@model AdminDetailDto
+
+@{
+    ViewData["Title"] = "Admin Detayı";
+}
+
+<section class="mb-3 d-flex justify-content-between align-items-center">
+    <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Admin listesine dön</a>
+
+    <div>
+        <a asp-action="Edit"
+           asp-route-id="@Model.Id"
+           class="btn btn-sm btn-outline-light">
+            Yetkileri Düzenle
+        </a>
+    </div>
+</section>
+
+<section class="detail-grid">
+    <div class="detail-card">
+        <h2 class="h5 mb-3">@Model.FullName</h2>
+
+        <dl class="row mb-0">
+            <dt class="col-sm-3">E-posta</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Telefon</dt>
+            <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+            <dt class="col-sm-3">Tenant</dt>
+            <dd class="col-sm-9">@Model.TenantName</dd>
+
+            <dt class="col-sm-3">T.C. Kimlik No</dt>
+            <dd class="col-sm-9">@Model.IdentityNumber</dd>
+
+            <dt class="col-sm-3">Durum</dt>
+            <dd class="col-sm-9">
+                @if (Model.IsActive)
+                {
+                    <span class="badge-soft badge-soft-success">Aktif</span>
+                }
+                else
+                {
+                    <span class="badge-soft badge-soft-secondary">Pasif</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Oluşturulma</dt>
+            <dd class="col-sm-9">@Model.CreatedAt</dd>
+
+            <dt class="col-sm-3">Güncellenme</dt>
+            <dd class="col-sm-9">@Model.UpdatedAt</dd>
+        </dl>
+    </div>
+
+    <div class="detail-card">
+        <h3 class="h6 mb-2">Yetkiler</h3>
+
+        <p class="mb-1">
+            <span class="badge-soft @(Model.CanManageUsers ? "badge-soft-success" : "badge-soft-secondary")">
+                Kullanıcı Yönetimi
+            </span>
+        </p>
+        <p class="mb-1">
+            <span class="badge-soft @(Model.CanManageFinance ? "badge-soft-success" : "badge-soft-secondary")">
+                Finans Yönetimi
+            </span>
+        </p>
+        <p class="mb-0">
+            <span class="badge-soft @(Model.CanManageSettings ? "badge-soft-success" : "badge-soft-secondary")">
+                Ayarlar Yönetimi
+            </span>
+        </p>
+    </div>
+</section>
