@@ -10,6 +10,8 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.Payments.Commands.CreatePayment;
+using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
@@ -104,6 +106,18 @@ namespace XYZ.Web.Services
             CancellationToken cancellationToken = default);
 
         Task<PaymentDetailDto?> GetPaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreatePaymentAsync(
+            CreatePaymentCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdatePaymentAsync(
+            UpdatePaymentCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeletePaymentAsync(
             int id,
             CancellationToken cancellationToken = default);
 

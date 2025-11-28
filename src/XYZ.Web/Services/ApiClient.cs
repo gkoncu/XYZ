@@ -12,6 +12,8 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.Payments.Commands.CreatePayment;
+using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
@@ -374,6 +376,46 @@ namespace XYZ.Web.Services
                 cancellationToken: cancellationToken);
         }
 
+        public async Task<int> CreatePaymentAsync(
+    CreatePaymentCommand command,
+    CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsJsonAsync("payments", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> UpdatePaymentAsync(
+            UpdatePaymentCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            if (command.Id <= 0)
+            {
+                throw new ArgumentException("Payment Id geçersiz.", nameof(command.Id));
+            }
+
+            var response = await _httpClient.PutAsJsonAsync($"payments/{command.Id}", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> DeletePaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.DeleteAsync($"payments/{id}", cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var deletedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return deletedId;
+        }
 
         // === Tenant Theme ===
         public async Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
