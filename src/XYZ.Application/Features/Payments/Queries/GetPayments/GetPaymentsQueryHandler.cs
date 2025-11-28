@@ -1,12 +1,12 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Payments.Queries.GetPayments
 {
@@ -57,10 +57,11 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
             var size = request.PageSize <= 0 ? 20 : request.PageSize;
 
             var items = await query
-                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(p =>
+                    p.Status == PaymentStatus.Pending
+                    || p.Status == PaymentStatus.Overdue)
+                .ThenBy(p => p.DueDate)
                 .ThenByDescending(p => p.Id)
-                .Skip((page - 1) * size)
-                .Take(size)
                 .Select(p => new PaymentListItemDto
                 {
                     Id = p.Id,
@@ -72,6 +73,8 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
                     CreatedAt = p.CreatedAt
                 })
                 .AsNoTracking()
+                .Skip((page - 1) * size)
+                .Take(size)
                 .ToListAsync(ct);
 
             return new PaginationResult<PaymentListItemDto>
