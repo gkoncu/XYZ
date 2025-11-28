@@ -48,6 +48,7 @@ namespace XYZ.Application.Data
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Branch>().HasQueryFilter(b => b.IsActive);
+            builder.Entity<PaymentPlan>().HasQueryFilter(pp => pp.IsActive);
 
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);
@@ -232,6 +233,11 @@ namespace XYZ.Application.Data
             {
                 entity.Property(p => p.Amount).HasPrecision(18, 2);
                 entity.Property(p => p.DiscountAmount).HasPrecision(18, 2);
+            });
+
+            builder.Entity<PaymentPlan>(entity =>
+            {
+                entity.Property(pp => pp.TotalAmount).HasPrecision(18, 2);
             });
 
             builder.Entity<ProgressRecord>(entity =>
