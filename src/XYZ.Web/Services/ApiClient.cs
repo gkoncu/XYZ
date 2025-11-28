@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Features.Admins.Queries.GetAdminById;
+using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
@@ -220,6 +222,73 @@ namespace XYZ.Web.Services
 
             return await response.Content.ReadFromJsonAsync<CoachDetailDto>(cancellationToken: cancellationToken);
         }
+
+        // === Admins ===
+        public async Task<PaginationResult<AdminListItemDto>> GetAdminsAsync(
+            string? searchTerm,
+            bool? isActive,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                queryParams["SearchTerm"] = searchTerm;
+            }
+
+            if (isActive.HasValue)
+            {
+                queryParams["IsActive"] = isActive.Value.ToString();
+            }
+
+            var path = QueryHelpers.AddQueryString("admins", queryParams!);
+
+            var response = await _httpClient.GetAsync(path, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new PaginationResult<AdminListItemDto>
+                {
+                    Items = new List<AdminListItemDto>(),
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                };
+            }
+
+            var dto = await response.Content
+                .ReadFromJsonAsync<PaginationResult<AdminListItemDto>>(cancellationToken: cancellationToken);
+
+            return dto ?? new PaginationResult<AdminListItemDto>
+            {
+                Items = new List<AdminListItemDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
+        }
+
+        public async Task<AdminDetailDto?> GetAdminAsync(
+            int adminId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"admins/{adminId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content
+                .ReadFromJsonAsync<AdminDetailDto>(cancellationToken: cancellationToken);
+        }
+
 
         // === Branches ===
         public async Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(

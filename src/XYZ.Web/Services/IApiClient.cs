@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Features.Admins.Queries.GetAdminById;
+using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
@@ -72,6 +74,18 @@ namespace XYZ.Web.Services
 
         Task<CoachDetailDto?> GetCoachAsync(
             int coachId,
+            CancellationToken cancellationToken = default);
+
+        // === Admins ===
+        Task<PaginationResult<AdminListItemDto>> GetAdminsAsync(
+            string? searchTerm,
+            bool? isActive,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<AdminDetailDto?> GetAdminAsync(
+            int adminId,
             CancellationToken cancellationToken = default);
 
         // === Branches ===

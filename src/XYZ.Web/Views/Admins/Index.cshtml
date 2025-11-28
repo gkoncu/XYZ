@@ -1,0 +1,205 @@
+﻿@using XYZ.Application.Common.Models
+@using XYZ.Application.Features.Admins.Queries.GetAllAdmins
+@model PaginationResult<AdminListItemDto>
+
+@{
+    ViewData["Title"] = "Adminler";
+    var searchTerm = ViewBag.SearchTerm as string;
+    bool? isActive = ViewBag.IsActive as bool?;
+}
+
+<section class="mb-3 d-flex justify-content-between align-items-center">
+    <section class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h4 mb-1">Adminler</h2>
+            <p class="text-muted small mb-0">
+                Tüm admin kullanıcıları görüntüleyebilir ve yetkilerini güncelleyebilirsiniz.
+            </p>
+        </div>
+
+        <div>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                + Yeni Admin
+            </a>
+        </div>
+    </section>
+
+</section>
+
+<section class="card-surface mb-3">
+    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label form-label-sm">Ara</label>
+            <input type="text"
+                   name="searchTerm"
+                   value="@searchTerm"
+                   class="form-control form-control-sm"
+                   placeholder="Ad, soyad, e-posta, kulüp, T.C." />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label form-label-sm">Durum</label>
+            <select name="isActive" class="form-select form-select-sm">
+
+                @if (isActive == null)
+                {
+                    <option value="" selected>Tümü</option>
+                }
+                else
+                {
+                    <option value="">Tümü</option>
+                }
+                @if (isActive == true)
+                {
+                    <option value="true" selected>Aktif</option>
+                }
+                else
+                {
+                    <option value="true">Aktif</option>
+                }
+                @if (isActive == false)
+                {
+                    <option value="false" selected>Pasif</option>
+                }
+                else
+                {
+                    <option value="false">Pasif</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label form-label-sm d-block">&nbsp;</label>
+            <button type="submit" class="btn btn-sm btn-outline-light me-2">
+                Filtrele
+            </button>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                Temizle
+            </a>
+        </div>
+
+        <div class="col-md-2 text-end">
+            <span class="small text-muted align-middle">
+                Toplam @Model.TotalCount kayıt · Sayfa @Model.PageNumber / @Model.TotalPages
+            </span>
+        </div>
+    </form>
+</section>
+
+<section class="card-surface">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Admin</th>
+                    <th>Kulüp</th>
+                    <th>E-posta</th>
+                    <th>Telefon</th>
+                    <th>Yetkiler</th>
+                    <th>Durum</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            Kriterlere uygun admin bulunamadı.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var a in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@a.FullName</div>
+                                <div class="small text-muted">UserId: @a.UserId</div>
+                            </td>
+                            <td>@a.TenantName</td>
+                            <td>@a.Email</td>
+                            <td>@a.PhoneNumber</td>
+                            <td>
+                                <div class="small">
+                                    <span class="badge-soft @(a.CanManageUsers ? "badge-soft-success" : "badge-soft-secondary")">
+                                        Kullanıcı
+                                    </span>
+                                    <span class="badge-soft @(a.CanManageFinance ? "badge-soft-success" : "badge-soft-secondary")">
+                                        Finans
+                                    </span>
+                                    <span class="badge-soft @(a.CanManageSettings ? "badge-soft-success" : "badge-soft-secondary")">
+                                        Ayarlar
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (a.IsActive)
+                                {
+                                    <span class="badge-soft badge-soft-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft badge-soft-secondary">Pasif</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Details"
+                                   asp-route-id="@a.Id"
+                                   class="btn btn-sm btn-outline-light me-1">
+                                    Detay
+                                </a>
+
+                                <a asp-action="Edit"
+                                   asp-route-id="@a.Id"
+                                   class="btn btn-sm btn-outline-light">
+                                    Yetkileri Düzenle
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-3">
+            <ul class="pagination pagination-modern justify-content-end mb-0">
+                @{
+                    var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                    var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+                }
+                <li class="page-item @prevDisabled">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageNumber - 1)"
+                       asp-route-searchTerm="@searchTerm"
+                       asp-route-isActive="@isActive">Önceki</a>
+                </li>
+
+                @for (var i = 1; i <= Model.TotalPages; i++)
+                {
+                    var activeClass = i == Model.PageNumber ? "active" : "";
+                    <li class="page-item @activeClass">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@i"
+                           asp-route-searchTerm="@searchTerm"
+                           asp-route-isActive="@isActive">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @nextDisabled">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageNumber + 1)"
+                       asp-route-searchTerm="@searchTerm"
+                       asp-route-isActive="@isActive">Sonraki</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</section>

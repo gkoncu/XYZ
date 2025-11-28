@@ -1,0 +1,94 @@
+﻿@model XYZ.Web.Models.Admins.AdminCreateViewModel
+
+@{
+    ViewData["Title"] = "Yeni Admin";
+}
+
+<section class="mb-3">
+    <a asp-action="Index" class="text-muted small text-decoration-none">
+        &larr; Admin listesine dön
+    </a>
+</section>
+
+<section class="card-surface">
+    <h2 class="h5 mb-3">Yeni Admin Oluştur</h2>
+
+    <form asp-action="Create" method="post" class="row g-3">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label small"></label>
+            <input asp-for="FirstName" class="form-control form-control-sm" />
+            <span asp-validation-for="FirstName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label small"></label>
+            <input asp-for="LastName" class="form-control form-control-sm" />
+            <span asp-validation-for="LastName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small"></label>
+            <input asp-for="Email" class="form-control form-control-sm" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="PhoneNumber" class="form-label small"></label>
+            <input asp-for="PhoneNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                <label asp-for="TenantId" class="form-label small"></label>
+                <input asp-for="TenantId" class="form-control form-control-sm" />
+                <span asp-validation-for="TenantId" class="text-danger small"></span>
+                <div class="form-text small">
+                    SuperAdmin iseniz, bu admin’in ait olacağı <strong>kulüp Id</strong> bilgisini girin.
+                </div>
+            }
+            else
+            {
+                <label class="form-label small">Kulüp</label>
+                <input class="form-control form-control-sm" value="Aktif kulüp" disabled />
+            }
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="IdentityNumber" class="form-label small"></label>
+            <input asp-for="IdentityNumber" class="form-control form-control-sm" />
+            <span asp-validation-for="IdentityNumber" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <h3 class="h6 mt-3">Yetki Alanları</h3>
+        </div>
+
+        <div class="col-md-4 form-check">
+            <input asp-for="CanManageUsers" class="form-check-input" />
+            <label asp-for="CanManageUsers" class="form-check-label small"></label>
+        </div>
+
+        <div class="col-md-4 form-check">
+            <input asp-for="CanManageFinance" class="form-check-input" />
+            <label asp-for="CanManageFinance" class="form-check-label small"></label>
+        </div>
+
+        <div class="col-md-4 form-check">
+            <input asp-for="CanManageSettings" class="form-check-input" />
+            <label asp-for="CanManageSettings" class="form-check-label small"></label>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end mt-3">
+            <a asp-action="Index" class="btn btn-sm btn-outline-light me-2">İptal</a>
+            <button type="submit" class="btn btn-sm btn-primary">
+                Kaydet
+            </button>
+        </div>
+    </form>
+</section>
