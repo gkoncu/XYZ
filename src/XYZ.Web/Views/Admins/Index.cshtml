@@ -9,12 +9,21 @@
 }
 
 <section class="mb-3 d-flex justify-content-between align-items-center">
-    <div>
-        <h2 class="h4 mb-1">Adminler</h2>
-        <p class="text-muted small mb-0">
-            Tenant bazında tüm admin kullanıcıları görüntüleyebilir ve yetkilerini güncelleyebilirsiniz.
-        </p>
-    </div>
+    <section class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h4 mb-1">Adminler</h2>
+            <p class="text-muted small mb-0">
+                Tüm admin kullanıcıları görüntüleyebilir ve yetkilerini güncelleyebilirsiniz.
+            </p>
+        </div>
+
+        <div>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                + Yeni Admin
+            </a>
+        </div>
+    </section>
+
 </section>
 
 <section class="card-surface mb-3">
@@ -25,7 +34,7 @@
                    name="searchTerm"
                    value="@searchTerm"
                    class="form-control form-control-sm"
-                   placeholder="Ad, soyad, e-posta, tenant, T.C." />
+                   placeholder="Ad, soyad, e-posta, kulüp, T.C." />
         </div>
 
         <div class="col-md-3">
@@ -83,10 +92,9 @@
             <thead>
                 <tr>
                     <th>Admin</th>
-                    <th>Tenant</th>
+                    <th>Kulüp</th>
                     <th>E-posta</th>
                     <th>Telefon</th>
-                    <th>T.C.</th>
                     <th>Yetkiler</th>
                     <th>Durum</th>
                     <th class="text-end">İşlem</th>
@@ -113,7 +121,6 @@
                             <td>@a.TenantName</td>
                             <td>@a.Email</td>
                             <td>@a.PhoneNumber</td>
-                            <td>@a.IdentityNumber</td>
                             <td>
                                 <div class="small">
                                     <span class="badge-soft @(a.CanManageUsers ? "badge-soft-success" : "badge-soft-secondary")">

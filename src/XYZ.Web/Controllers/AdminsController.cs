@@ -64,13 +64,25 @@ namespace XYZ.Web.Controllers
                 return NotFound();
             }
 
+            var fullName = dto.FullName?.Trim() ?? "";
+            string first = fullName;
+            string last = "";
+
+            var lastSpace = fullName.LastIndexOf(' ');
+            if (lastSpace > 0)
+            {
+                first = fullName[..lastSpace];
+                last = fullName[(lastSpace + 1)..];
+            }
+
             var vm = new AdminEditViewModel
             {
                 Id = dto.Id,
-                UserId = dto.UserId,
-                FullName = dto.FullName,
+                FirstName = first,
+                LastName = last,
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
+
                 TenantName = dto.TenantName,
                 IdentityNumber = dto.IdentityNumber,
                 CanManageUsers = dto.CanManageUsers,
@@ -101,6 +113,10 @@ namespace XYZ.Web.Controllers
 
             var payload = new
             {
+                model.FirstName,
+                model.LastName,
+                model.Email,
+                model.PhoneNumber,
                 model.IdentityNumber,
                 model.CanManageUsers,
                 model.CanManageFinance,
@@ -134,5 +150,98 @@ namespace XYZ.Web.Controllers
             TempData["SuccessMessage"] = "Admin yetkileri güncellendi.";
             return RedirectToAction(nameof(Details), new { id });
         }
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            var vm = new AdminCreateViewModel();
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(
+            AdminCreateViewModel model,
+            CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var payload = new
+            {
+                model.FirstName,
+                model.LastName,
+                model.Email,
+                model.PhoneNumber,
+                model.TenantId,
+                model.IdentityNumber,
+                model.CanManageUsers,
+                model.CanManageFinance,
+                model.CanManageSettings
+            };
+
+            var response = await _apiClient.PostAsJsonAsync("admins", payload, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                ModelState.AddModelError(string.Empty, "Admin oluşturma yetkiniz yok.");
+                return View(model);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                ModelState.AddModelError(string.Empty, $"Admin oluşturulurken hata oluştu: {error}");
+                return View(model);
+            }
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+
+            TempData["SuccessMessage"] = "Admin oluşturuldu.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(
+                int id,
+                CancellationToken cancellationToken)
+        {
+            var response = await _apiClient.DeleteAsync($"admins/{id}", cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                TempData["ErrorMessage"] = "Bu admin kaydını silme yetkiniz yok.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Admin silinirken bir hata oluştu.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            TempData["SuccessMessage"] = "Admin silindi.";
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

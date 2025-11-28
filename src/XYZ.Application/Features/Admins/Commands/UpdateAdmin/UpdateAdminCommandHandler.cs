@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 {
@@ -27,7 +28,9 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
             var role = _current.Role;
             var tenantId = _current.TenantId;
 
-            var q = _context.Admins.AsQueryable();
+            var q = _context.Admins
+                .Include(a => a.User)
+                .AsQueryable();
 
             switch (role)
             {
@@ -36,13 +39,9 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 
                 case "Admin":
                     if (tenantId.HasValue)
-                    {
                         q = q.Where(a => a.TenantId == tenantId.Value);
-                    }
                     else
-                    {
-                        throw new UnauthorizedAccessException("Tenant bilgisi bulunamadı.");
-                    }
+                        throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
                     break;
 
                 default:
@@ -53,9 +52,13 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
                 .FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
 
             if (admin is null)
-            {
-                throw new KeyNotFoundException($"Admin bulunamadı. Id={request.AdminId}");
-            }
+                throw new KeyNotFoundException("Admin bulunamadı.");
+
+            admin.User.FirstName = request.FirstName;
+            admin.User.LastName = request.LastName;
+            admin.User.Email = request.Email;
+            admin.User.UserName = request.Email;
+            admin.User.PhoneNumber = request.PhoneNumber;
 
             admin.IdentityNumber = request.IdentityNumber;
             admin.CanManageUsers = request.CanManageUsers;

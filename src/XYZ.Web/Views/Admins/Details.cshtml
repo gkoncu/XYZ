@@ -7,14 +7,26 @@
 
 <section class="mb-3 d-flex justify-content-between align-items-center">
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Admin listesine dön</a>
-
     <div>
         <a asp-action="Edit"
            asp-route-id="@Model.Id"
-           class="btn btn-sm btn-outline-light">
-            Yetkileri Düzenle
+           class="btn btn-sm btn-outline-light me-1">
+            Admin Düzenle
         </a>
+
+        <form asp-action="Delete"
+              asp-route-id="@Model.Id"
+              method="post"
+              class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Bu admin kaydını silmek istediğinize emin misiniz?');">
+                Sil
+            </button>
+        </form>
     </div>
+
 </section>
 
 <section class="detail-grid">
@@ -28,7 +40,7 @@
             <dt class="col-sm-3">Telefon</dt>
             <dd class="col-sm-9">@Model.PhoneNumber</dd>
 
-            <dt class="col-sm-3">Tenant</dt>
+            <dt class="col-sm-3">Kulüp</dt>
             <dd class="col-sm-9">@Model.TenantName</dd>
 
             <dt class="col-sm-3">T.C. Kimlik No</dt>

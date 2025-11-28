@@ -43,7 +43,7 @@ namespace XYZ.Application.Features.Admins.Commands.CreateAdmin
                     if (!request.TenantId.HasValue)
                     {
                         throw new InvalidOperationException(
-                            "SuperAdmin için TenantId zorunludur.");
+                            "SuperAdmin için Kulüp (TenantId) zorunludur.");
                     }
                     targetTenantId = request.TenantId.Value;
                     break;
@@ -51,7 +51,7 @@ namespace XYZ.Application.Features.Admins.Commands.CreateAdmin
                 case "Admin":
                     if (!currentTenantId.HasValue)
                     {
-                        throw new UnauthorizedAccessException("Tenant bilgisi bulunamadı.");
+                        throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
                     }
                     targetTenantId = currentTenantId.Value;
                     break;
@@ -59,6 +59,14 @@ namespace XYZ.Application.Features.Admins.Commands.CreateAdmin
                 default:
                     throw new UnauthorizedAccessException(
                         "Admin oluşturma yetkiniz yok.");
+            }
+
+            var userExists = await _context.Users
+                .AnyAsync(u => u.Id == request.UserId, cancellationToken);
+
+            if (!userExists)
+            {
+                throw new KeyNotFoundException("Belirtilen kullanıcı bulunamadı.");
             }
 
             var alreadyExists = await _context.Admins
@@ -69,16 +77,7 @@ namespace XYZ.Application.Features.Admins.Commands.CreateAdmin
             if (alreadyExists)
             {
                 throw new InvalidOperationException(
-                    "Bu kullanıcı belirtilen tenant için zaten admin olarak tanımlanmış.");
-            }
-
-            var userExists = await _context.Users
-                .AnyAsync(u => u.Id == request.UserId, cancellationToken);
-
-            if (!userExists)
-            {
-                throw new KeyNotFoundException(
-                    "Belirtilen UserId ile kullanıcı bulunamadı.");
+                    "Bu kullanıcı belirtilen kulüp için zaten admin olarak tanımlanmış.");
             }
 
             var admin = new Admin
