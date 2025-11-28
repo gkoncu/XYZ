@@ -26,7 +26,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
         [ProducesResponseType(typeof(PaginationResult<PaymentListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<PaymentListItemDto>>> GetAll(
             [FromQuery] GetPaymentsQuery query,
@@ -37,7 +37,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
         [ProducesResponseType(typeof(PaymentDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PaymentDetailDto>> GetById(
