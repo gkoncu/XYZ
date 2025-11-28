@@ -12,6 +12,8 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.Payments.Queries.GetPaymentById;
+using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Web.Models.Theming;
@@ -327,6 +329,49 @@ namespace XYZ.Web.Services
                 PageSize = pageSize,
                 TotalCount = 0
             };
+        }
+
+        // === Payments ===
+        public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
+            int? studentId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var query = new System.Collections.Generic.Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (studentId.HasValue)
+            {
+                query["StudentId"] = studentId.Value.ToString();
+            }
+
+            var url = QueryHelpers.AddQueryString("payments", query);
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<PaginationResult<PaymentListItemDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new PaginationResult<PaymentListItemDto>();
+        }
+
+        public async Task<PaymentDetailDto?> GetPaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"payments/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<PaymentDetailDto>(
+                cancellationToken: cancellationToken);
         }
 
 
