@@ -18,6 +18,7 @@ namespace XYZ.Application.Data
         public DbSet<Class> Classes => Set<Class>();
         public DbSet<Attendance> Attendances => Set<Attendance>();
         public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<PaymentPlan> PaymentPlans => Set<PaymentPlan>();
         public DbSet<Document> Documents => Set<Document>();
         public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
         public DbSet<Announcement> Announcements => Set<Announcement>();
@@ -298,6 +299,30 @@ namespace XYZ.Application.Data
                       .HasForeignKey(s => s.ClassId)
                       .IsRequired(false);
             });
+
+            builder.Entity<PaymentPlan>(entity =>
+            {
+                entity.HasOne(pp => pp.Student)
+                      .WithMany(s => s.PaymentPlans)
+                      .HasForeignKey(pp => pp.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(pp => pp.Tenant)
+                      .WithMany(t => t.PaymentPlans)
+                      .HasForeignKey(pp => pp.TenantId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.PaymentPlan)
+                      .WithMany(pp => pp.Payments)
+                      .HasForeignKey(p => p.PaymentPlanId)
+                      .OnDelete(DeleteBehavior.Restrict)
+                      .IsRequired(false);
+            });
+
+
         }
     }
 }

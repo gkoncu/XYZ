@@ -31,8 +31,13 @@
 
             <div class="mb-3">
                 <label asp-for="Status" class="form-label">Durum</label>
-                <select asp-for="Status" class="form-select"
-                        asp-items="Html.GetEnumSelectList<PaymentStatus>()">
+                <select asp-for="Status" class="form-select">
+                    @foreach (PaymentStatus s in Enum.GetValues(typeof(PaymentStatus)))
+                    {
+                        <option value="@((int)s)" selected="@(s == Model.Status ? "selected" : null)">
+                            @s.ToDisplayName()
+                        </option>
+                    }
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>

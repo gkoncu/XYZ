@@ -12,6 +12,8 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
@@ -415,6 +417,50 @@ namespace XYZ.Web.Services
 
             var deletedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
             return deletedId;
+        }
+
+        // === Payment Plans ===
+        public async Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
+            int studentId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"paymentplans/by-student/{studentId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
+                cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreatePaymentPlanAsync(
+            CreatePaymentPlanCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsJsonAsync("paymentplans", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(
+                cancellationToken: cancellationToken);
+
+            return id;
+        }
+
+        public async Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync("paymentplans/my", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
+                cancellationToken: cancellationToken);
         }
 
         // === Tenant Theme ===

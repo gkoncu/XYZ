@@ -52,7 +52,7 @@
             </dd>
 
             <dt class="col-4 text-muted">Durum</dt>
-            <dd class="col-8">@Model.Status</dd>
+            <dd class="col-8">@Model.Status.ToDisplayName()</dd>
 
             <dt class="col-4 text-muted">Kayıt Tarihi</dt>
             <dd class="col-8">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>

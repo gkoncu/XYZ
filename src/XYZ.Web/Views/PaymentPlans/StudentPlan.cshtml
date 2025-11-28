@@ -1,0 +1,168 @@
+﻿@model StudentPaymentPlanDto
+@{
+    var studentId = (int?)ViewBag.StudentId ?? (Model?.StudentId ?? 0);
+    ViewData["Title"] = "Öğrenci Ödeme Planı";
+}
+
+<section class="mb-3 d-flex justify-content-between align-items-center">
+    <a asp-controller="Students"
+       asp-action="Details"
+       asp-route-id="@studentId"
+       class="text-muted small text-decoration-none">&larr; Öğrenci detayına dön</a>
+
+    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+    {
+        <a asp-controller="PaymentPlans"
+           asp-action="Create"
+           asp-route-studentId="@studentId"
+           class="btn btn-sm btn-primary">
+            Ödeme Planı Oluştur
+        </a>
+    }
+</section>
+
+@if (Model == null)
+{
+    <section class="card-surface">
+        <div class="card-body text-center">
+            <h2 class="h5 mb-2">Bu öğrenci için kayıtlı bir ödeme planı bulunmuyor.</h2>
+            <p class="text-muted small mb-3">
+                Öğrencinin toplam ücretini ve taksit sayılarını belirleyerek yeni bir ödeme planı oluşturabilirsiniz.
+            </p>
+
+            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            {
+                <a asp-controller="PaymentPlans"
+                   asp-action="Create"
+                   asp-route-studentId="@studentId"
+                   class="btn btn-primary">
+                    Yeni Ödeme Planı Oluştur
+                </a>
+            }
+        </div>
+    </section>
+}
+else
+{
+    var today = DateTime.Today;
+
+    var hasOverdue = Model.Installments.Any(i =>
+        (i.Status == PaymentStatus.Pending && i.DueDate.Date < today) ||
+        i.Status == PaymentStatus.Overdue);
+
+    if (hasOverdue)
+    {
+        <div class="alert alert-danger small mb-3">
+            Ödeme vadesi geçmiş borçlarınız bulunmaktadır. Lütfen ödeme planınızı kontrol edin.
+        </div>
+    }
+
+
+    <section class="detail-grid mb-3">
+        <div class="card-surface">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Ödeme Planı Özeti</h2>
+
+                <dl class="row small mb-0">
+                    <dt class="col-4 text-muted">Öğrenci</dt>
+                    <dd class="col-8">@Model.StudentFullName (ID: @Model.StudentId)</dd>
+
+                    <dt class="col-4 text-muted">Toplam Tutar</dt>
+                    <dd class="col-8">@Model.TotalAmount.ToString("C2")</dd>
+
+                    <dt class="col-4 text-muted">Taksit Sayısı</dt>
+                    <dd class="col-8">@Model.TotalInstallments</dd>
+
+                    <dt class="col-4 text-muted">İlk Taksit Tarihi</dt>
+                    <dd class="col-8">@Model.FirstDueDate.ToString("dd.MM.yyyy")</dd>
+
+                    <dt class="col-4 text-muted">Plan Tipi</dt>
+                    <dd class="col-8">
+                        @(Model.TotalInstallments > 1 ? "Aylık Taksitli" : "Peşin")
+                    </dd>
+
+                    <dt class="col-4 text-muted">Ödenen</dt>
+                    <dd class="col-8 text-success fw-semibold">
+                        @Model.TotalPaid.ToString("C2")
+                    </dd>
+
+                    <dt class="col-4 text-muted">Kalan</dt>
+                    <dd class="col-8 text-danger fw-semibold">
+                        @Model.TotalRemaining.ToString("C2")
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <section class="card-surface">
+        <div class="card-body">
+            <h3 class="h6 mb-3">Taksitler</h3>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th class="text-end">Tutar</th>
+                            <th class="text-end">İndirim</th>
+                            <th class="text-end">Net</th>
+                            <th>Vade</th>
+                            <th>Durum</th>
+                            <th>Ödenme Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Installments.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">
+                                    Taksit kaydı bulunamadı.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var i in Model.Installments)
+                            {
+                                var netAmount = i.Amount - (i.DiscountAmount ?? 0m);
+                                string statusClass = i.Status switch
+                                {
+                                    PaymentStatus.Pending => "badge bg-warning text-dark",
+                                    PaymentStatus.Overdue => "badge bg-danger",
+                                    PaymentStatus.Paid => "badge bg-success",
+                                    PaymentStatus.Cancelled => "badge bg-secondary",
+                                    _ => "badge bg-secondary"
+                                };
+
+                                <tr>
+                                    <td>@i.InstallmentNumber</td>
+                                    <td class="text-end">@i.Amount.ToString("C2")</td>
+                                    <td class="text-end">
+                                        @(i.DiscountAmount.HasValue
+                                            ? i.DiscountAmount.Value.ToString("C2")
+                                            : "-")
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        @netAmount.ToString("C2")
+                                    </td>
+                                    <td>@i.DueDate.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <span class="@statusClass">
+                                            @i.Status.ToDisplayName()
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @(i.PaidDate.HasValue
+                                            ? i.PaidDate.Value.ToString("dd.MM.yyyy")
+                                            : "-")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}

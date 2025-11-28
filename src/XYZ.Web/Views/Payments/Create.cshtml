@@ -17,7 +17,6 @@
 
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            @* StudentId sabit geliyorsa hidden; yoksa editlenebilir bir alan *@
             @if (Model.StudentId > 0)
             {
                 <input type="hidden" asp-for="StudentId" />
@@ -48,6 +47,13 @@
                 <label asp-for="DiscountAmount" class="form-label">İndirim Tutarı</label>
                 <input asp-for="DiscountAmount" class="form-control" />
                 <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DueDate" class="form-label">Vade Tarihi</label>
+                <input asp-for="DueDate" class="form-control" type="date"
+                       value="@(Model.DueDate == default ? DateTime.Today.ToString("yyyy-MM-dd") : Model.DueDate.ToString("yyyy-MM-dd"))" />
+                <span asp-validation-for="DueDate" class="text-danger"></span>
             </div>
 
             <div class="mt-3 d-flex justify-content-between">

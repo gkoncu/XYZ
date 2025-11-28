@@ -53,6 +53,7 @@ namespace XYZ.Application.Features.Payments.Commands.CreatePayment
                 TenantId = tenantId,
                 StudentId = student.Id,
                 Amount = request.Amount,
+                DueDate = request.DueDate,
                 DiscountAmount = request.DiscountAmount,
                 Status = request.Status,
                 IsActive = true,

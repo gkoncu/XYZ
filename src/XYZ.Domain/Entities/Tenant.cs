@@ -30,6 +30,7 @@ namespace XYZ.Domain.Entities
         public ICollection<Class> Classes { get; set; } = new List<Class>();
         public ICollection<Branch> Branches { get; set; } = new List<Branch>();
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+        public ICollection<PaymentPlan> PaymentPlans { get; set; } = new List<PaymentPlan>();
         public ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
     }
 }
