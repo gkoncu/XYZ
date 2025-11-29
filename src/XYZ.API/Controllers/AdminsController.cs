@@ -107,7 +107,7 @@ namespace XYZ.API.Controllers
             string LastName,
             string Email,
             string? PhoneNumber,
-            string IdentityNumber,
+            string? IdentityNumber,
             bool CanManageUsers,
             bool CanManageFinance,
             bool CanManageSettings);
@@ -225,7 +225,7 @@ namespace XYZ.API.Controllers
             string Email,
             string? PhoneNumber,
             int? TenantId,
-            string IdentityNumber,
+            string? IdentityNumber,
             bool CanManageUsers,
             bool CanManageFinance,
             bool CanManageSettings);
