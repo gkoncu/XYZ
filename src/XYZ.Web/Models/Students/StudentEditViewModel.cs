@@ -41,6 +41,7 @@ namespace XYZ.Web.Models.Students
         public int? ClassId { get; set; }
 
         [Display(Name = "T.C. Kimlik No")]
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
         public string? IdentityNumber { get; set; }
 
         [Display(Name = "Adres")]

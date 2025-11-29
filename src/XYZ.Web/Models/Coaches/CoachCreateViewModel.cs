@@ -35,6 +35,7 @@ namespace XYZ.Web.Models.Coaches
         public DateTime? BirthDate { get; set; }
 
         [Display(Name = "T.C. Kimlik No")]
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
         public string? IdentityNumber { get; set; }
 
         [Display(Name = "Lisans No")]
