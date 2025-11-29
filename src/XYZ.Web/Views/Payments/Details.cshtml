@@ -1,0 +1,67 @@
+﻿@model PaymentDetailDto
+@{
+    ViewData["Title"] = "Ödeme Detayı";
+
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+}
+
+<section class="mb-3 d-flex justify-content-between align-items-center">
+    <a asp-action="Index"
+       asp-route-studentId="@Model.StudentId"
+       class="text-muted small text-decoration-none">&larr; Ödeme listesine dön</a>
+
+    @if (isAdmin)
+    {
+        <div class="btn-group btn-group-sm">
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">
+                Düzenle
+            </a>
+
+            <form asp-action="Delete" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="studentId" value="@Model.StudentId" />
+                <button type="submit"
+                        class="btn btn-outline-danger"
+                        onclick="return confirm('Bu ödemeyi silmek istediğinize emin misiniz?');">
+                    Sil
+                </button>
+            </form>
+        </div>
+    }
+</section>
+
+<section class="detail-grid">
+    <div class="card-surface">
+        <h2 class="h5 mb-3">Ödeme Bilgileri</h2>
+
+        <dl class="row small mb-0">
+            <dt class="col-4 text-muted">Öğrenci</dt>
+            <dd class="col-8">@Model.StudentFullName (ID: @Model.StudentId)</dd>
+
+            <dt class="col-4 text-muted">Tutar</dt>
+            <dd class="col-8">@Model.Amount.ToString("C2")</dd>
+
+            <dt class="col-4 text-muted">İndirim</dt>
+            <dd class="col-8">
+                @(Model.DiscountAmount.HasValue
+                                ? Model.DiscountAmount.Value.ToString("C2")
+                                : "-")
+            </dd>
+
+            <dt class="col-4 text-muted">Durum</dt>
+            <dd class="col-8">@Model.Status.ToDisplayName()</dd>
+
+            <dt class="col-4 text-muted">Kayıt Tarihi</dt>
+            <dd class="col-8">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+
+            @if (Model.UpdatedAt.HasValue)
+            {
+                <dt class="col-4 text-muted">Son Güncelleme</dt>
+                <dd class="col-8">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
+            }
+        </dl>
+    </div>
+</section>

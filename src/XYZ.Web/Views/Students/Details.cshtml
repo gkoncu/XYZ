@@ -143,6 +143,33 @@
                 <dd class="col-7">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
             }
         </dl>
+        <section class="mt-4">
+            <div class="card-surface">
+                <h2 class="h6 mb-2">Ödemeler</h2>
+                <p class="small text-muted mb-3">
+                    Bu öğrencinin tüm ödeme kayıtlarını görüntüleyebilir ve yeni ödeme ekleyebilirsiniz.
+                </p>
+
+                <div class="d-flex gap-2">
+                    <a asp-controller="Payments"
+                       asp-action="Index"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        Ödemeleri Gör
+                    </a>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                    {
+                        <a asp-controller="Payments"
+                           asp-action="Create"
+                           asp-route-studentId="@Model.Id"
+                           class="btn btn-sm btn-primary">
+                            Yeni Ödeme
+                        </a>
+                    }
+                </div>
+            </div>
+        </section>
 
         @* TODO: yoklama özeti, ilerleme grafiği, ödeme durumu gibi widget'lar *@
     </div>

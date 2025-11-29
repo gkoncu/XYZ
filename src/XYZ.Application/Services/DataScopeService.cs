@@ -24,6 +24,7 @@ public class DataScopeService : IDataScopeService
     public IQueryable<ProgressRecord> ProgressRecords() => ApplyProgressScope(_context.ProgressRecords);
     public IQueryable<Payment> Payments() => ApplyPaymentScope(_context.Payments);
     public IQueryable<Announcement> Announcements() => ApplyAnnouncementScope(_context.Announcements);
+    public IQueryable<PaymentPlan> PaymentPlans() => ApplyPaymentPlanScope(_context.PaymentPlans);
 
     // -------- Composition Helpers --------
     public IQueryable<Student> TenantStudents(int tenantId)
@@ -37,6 +38,9 @@ public class DataScopeService : IDataScopeService
 
     public IQueryable<Class> CoachClasses(int coachId)
         => Classes().Where(c => c.Coaches.Any(co => co.Id == coachId));
+
+    public IQueryable<PaymentPlan> StudentPaymentPlans(int studentId)
+        => PaymentPlans().Where(pp => pp.StudentId == studentId);
 
     // -------- Guard / CanAccess --------
     public async Task<bool> CanAccessStudentAsync(int studentId, CancellationToken ct = default)
@@ -316,6 +320,39 @@ public class DataScopeService : IDataScopeService
             case "Student":
                 return studentId.HasValue
                     ? q.Where(a => a.ClassId == null || a.Class.Students.Any(s => s.Id == studentId.Value))
+                    : q.Where(_ => false);
+
+            default:
+                return q.Where(_ => false);
+        }
+    }
+    private IQueryable<PaymentPlan> ApplyPaymentPlanScope(IQueryable<PaymentPlan> q)
+    {
+        var role = _current.Role;
+        var tenantId = _current.TenantId;
+        var coachId = _current.CoachId;
+        var studentId = _current.StudentId;
+
+        switch (role)
+        {
+            case "SuperAdmin":
+                return q;
+
+            case "Admin":
+                return tenantId.HasValue
+                    ? q.Where(pp => pp.Student.TenantId == tenantId.Value)
+                    : q.Where(_ => false);
+
+            case "Coach":
+                return (tenantId.HasValue && coachId.HasValue)
+                    ? q.Where(pp => pp.Student.TenantId == tenantId.Value
+                                    && pp.Student.Class != null
+                                    && pp.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
+                    : q.Where(_ => false);
+
+            case "Student":
+                return studentId.HasValue
+                    ? q.Where(pp => pp.StudentId == studentId.Value)
                     : q.Where(_ => false);
 
             default:

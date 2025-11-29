@@ -1,0 +1,34 @@
+﻿<section class="mt-4">
+    <div class="card-surface">
+        <h2 class="h6 mb-2">Ödemeler ve Ödeme Planı</h2>
+        <p class="small text-muted mb-3">
+            Bu öğrencinin ödeme planını ve ödeme kayıtlarını görüntüleyebilirsiniz.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="PaymentPlans"
+               asp-action="Student"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Ödeme Planını Gör
+            </a>
+
+            <a asp-controller="Payments"
+               asp-action="Index"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-secondary">
+                Ödeme Kayıtlarını Gör
+            </a>
+
+            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            {
+                <a asp-controller="PaymentPlans"
+                   asp-action="Create"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-sm btn-primary">
+                    Yeni Ödeme Planı Oluştur
+                </a>
+            }
+        </div>
+    </div>
+</section>

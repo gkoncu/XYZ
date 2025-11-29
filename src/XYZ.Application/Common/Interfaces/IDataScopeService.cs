@@ -16,6 +16,8 @@ namespace XYZ.Application.Common.Interfaces
         IQueryable<Attendance> Attendances();
         IQueryable<ProgressRecord> ProgressRecords();
         IQueryable<Payment> Payments();
+        IQueryable<PaymentPlan> PaymentPlans();
+        IQueryable<PaymentPlan> StudentPaymentPlans(int studentId);
         IQueryable<Announcement> Announcements();
 
         IQueryable<Student> TenantStudents(int tenantId);

@@ -12,6 +12,12 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
+using XYZ.Application.Features.Payments.Commands.CreatePayment;
+using XYZ.Application.Features.Payments.Commands.UpdatePayment;
+using XYZ.Application.Features.Payments.Queries.GetPaymentById;
+using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Web.Models.Theming;
@@ -329,6 +335,133 @@ namespace XYZ.Web.Services
             };
         }
 
+        // === Payments ===
+        public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
+            int? studentId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var query = new System.Collections.Generic.Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (studentId.HasValue)
+            {
+                query["StudentId"] = studentId.Value.ToString();
+            }
+
+            var url = QueryHelpers.AddQueryString("payments", query);
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<PaginationResult<PaymentListItemDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new PaginationResult<PaymentListItemDto>();
+        }
+
+        public async Task<PaymentDetailDto?> GetPaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"payments/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<PaymentDetailDto>(
+                cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreatePaymentAsync(
+    CreatePaymentCommand command,
+    CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsJsonAsync("payments", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> UpdatePaymentAsync(
+            UpdatePaymentCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            if (command.Id <= 0)
+            {
+                throw new ArgumentException("Payment Id geçersiz.", nameof(command.Id));
+            }
+
+            var response = await _httpClient.PutAsJsonAsync($"payments/{command.Id}", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> DeletePaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.DeleteAsync($"payments/{id}", cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var deletedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return deletedId;
+        }
+
+        // === Payment Plans ===
+        public async Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
+            int studentId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"paymentplans/by-student/{studentId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
+                cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreatePaymentPlanAsync(
+            CreatePaymentPlanCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsJsonAsync("paymentplans", command, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(
+                cancellationToken: cancellationToken);
+
+            return id;
+        }
+
+        public async Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync("paymentplans/my", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
+                cancellationToken: cancellationToken);
+        }
 
         // === Tenant Theme ===
         public async Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(

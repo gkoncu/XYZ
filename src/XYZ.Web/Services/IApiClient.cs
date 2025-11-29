@@ -10,6 +10,12 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
+using XYZ.Application.Features.Payments.Commands.CreatePayment;
+using XYZ.Application.Features.Payments.Commands.UpdatePayment;
+using XYZ.Application.Features.Payments.Queries.GetPaymentById;
+using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Web.Models.Theming;
@@ -93,6 +99,42 @@ namespace XYZ.Web.Services
             int pageNumber,
             int pageSize,
             CancellationToken cancellationToken = default);
+
+        // === Payments ===
+        Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
+            int? studentId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<PaymentDetailDto?> GetPaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreatePaymentAsync(
+            CreatePaymentCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdatePaymentAsync(
+            UpdatePaymentCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeletePaymentAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
+        // === Payment Plans ===
+        Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
+            int studentId,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreatePaymentPlanAsync(
+            CreatePaymentPlanCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
+            CancellationToken cancellationToken = default);
+
 
         // === Tenant Theme ===
         Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(

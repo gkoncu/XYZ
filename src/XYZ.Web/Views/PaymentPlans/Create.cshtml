@@ -1,0 +1,95 @@
+﻿@model CreatePaymentPlanCommand
+@{
+    ViewData["Title"] = "Ödeme Planı Oluştur";
+}
+
+<section class="mb-3">
+    <a asp-controller="PaymentPlans"
+       asp-action="Student"
+       asp-route-studentId="@Model.StudentId"
+       class="text-muted small text-decoration-none">&larr; Ödeme planına dön</a>
+</section>
+
+<section class="card-surface">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Öğrenci İçin Ödeme Planı Oluştur</h2>
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="StudentId" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Öğrenci</label>
+                <p class="form-control-plaintext">
+                    Öğrenci ID: @Model.StudentId
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TotalAmount" class="form-label">Toplam Tutar</label>
+                <input asp-for="TotalAmount" class="form-control" />
+                <span asp-validation-for="TotalAmount" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ödeme Tipi</label>
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="radio"
+                           id="plan-peşin"
+                           name="IsInstallment"
+                           value="false"
+                           @(Model.IsInstallment ? null : "checked") />
+                    <label class="form-check-label" for="plan-peşin">
+                        Peşin (tek ödeme)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="radio"
+                           id="plan-taksit"
+                           name="IsInstallment"
+                           value="true"
+                           @(Model.IsInstallment ? "checked" : null) />
+                    <label class="form-check-label" for="plan-taksit">
+                        Aylık taksitli
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TotalInstallments" class="form-label">Taksit Sayısı</label>
+                <input asp-for="TotalInstallments" class="form-control" />
+                <div class="form-text">
+                    Peşin ödemede 1 yazın. Aylık taksitli planda taksit sayısını girin (ör: 4, 6 vb.).
+                </div>
+                <span asp-validation-for="TotalInstallments" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FirstDueDate" class="form-label">İlk Taksit Tarihi</label>
+                <input asp-for="FirstDueDate"
+                       class="form-control"
+                       type="date"
+                       value="@(Model.FirstDueDate == default ? DateTime.Today.ToString("yyyy-MM-dd") : Model.FirstDueDate.ToString("yyyy-MM-dd"))" />
+                <span asp-validation-for="FirstDueDate" class="text-danger"></span>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    Kaydet
+                </button>
+
+                <a asp-controller="PaymentPlans"
+                   asp-action="Student"
+                   asp-route-studentId="@Model.StudentId"
+                   class="btn btn-outline-secondary">
+                    Vazgeç
+                </a>
+            </div>
+        </form>
+    </div>
+</section>

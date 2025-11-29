@@ -36,5 +36,6 @@ namespace XYZ.Domain.Entities
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
         public ICollection<ProgressRecord> ProgressRecords { get; set; } = new List<ProgressRecord>();
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+        public ICollection<PaymentPlan> PaymentPlans { get; set; } = new List<PaymentPlan>();
     }
 }
