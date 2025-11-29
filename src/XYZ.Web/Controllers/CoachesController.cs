@@ -76,21 +76,20 @@ namespace XYZ.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            CoachCreateViewModel model,
-            CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(CoachCreateViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
                 var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
                 ViewBag.Branches = branches.Items;
-
                 return View(model);
             }
 
             if (!model.BirthDate.HasValue)
             {
                 ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
                 return View(model);
             }
 
@@ -110,7 +109,26 @@ namespace XYZ.Web.Controllers
 
             var response = await _apiClient.PostAsJsonAsync("coaches", command, cancellationToken);
 
-            return View(response);
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
+
+                return View(model);
+            }
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+
+            TempData["SuccessMessage"] = "Koç oluşturuldu.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpGet]
@@ -157,10 +175,7 @@ namespace XYZ.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-    int id,
-    CoachEditViewModel model,
-    CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(int id,CoachEditViewModel model,CancellationToken cancellationToken)
         {
             if (id != model.Id)
                 return BadRequest();
@@ -169,13 +184,14 @@ namespace XYZ.Web.Controllers
             {
                 var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
                 ViewBag.Branches = branches.Items;
-
                 return View(model);
             }
 
             if (!model.BirthDate.HasValue)
             {
                 ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
                 return View(model);
             }
 
@@ -196,7 +212,29 @@ namespace XYZ.Web.Controllers
 
             var response = await _apiClient.PutAsJsonAsync($"coaches/{id}", command, cancellationToken);
 
-            return View(response);
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+
+                var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
+                ViewBag.Branches = branches.Items;
+
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Koç bilgileri güncellendi.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
 
