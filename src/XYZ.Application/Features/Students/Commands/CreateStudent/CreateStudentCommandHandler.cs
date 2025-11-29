@@ -96,7 +96,7 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
                 TenantId = tenantId,
                 ClassId = request.ClassId,
 
-                IdentityNumber = request.IdentityNumber,
+                IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null: request.IdentityNumber.Trim(),
                 Address = request.Address,
 
                 Parent1FirstName = request.Parent1FirstName,
