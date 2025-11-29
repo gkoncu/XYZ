@@ -62,8 +62,8 @@ namespace XYZ.Web.Controllers
             var vm = new StudentCreateViewModel
             {
                 BirthDate = DateTime.Today.AddYears(-8),
-                Gender = "Belirtilmedi",
-                BloodType = "Bilinmiyor"
+                Gender = "PreferNotToSay",
+                BloodType = "Unknown"
             };
 
             return View(vm);
@@ -120,7 +120,8 @@ namespace XYZ.Web.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError(string.Empty, "Öğrenci kaydedilirken bir hata oluştu.");
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
                 return View(model);
             }
 
@@ -199,16 +200,17 @@ namespace XYZ.Web.Controllers
                 return BadRequest();
             }
 
+
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            if (!model.BirthDate.HasValue)
-            {
-                ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
-                return View(model);
-            }
+            //if (!model.BirthDate.HasValue)
+            //{
+            //    ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+            //    return View(model);
+            //}
 
             var command = new UpdateStudentCommand
             {
@@ -244,7 +246,8 @@ namespace XYZ.Web.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError(string.Empty, "Öğrenci güncellenirken bir hata oluştu.");
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
                 return View(model);
             }
 
