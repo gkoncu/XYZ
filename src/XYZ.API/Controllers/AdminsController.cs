@@ -118,6 +118,20 @@ namespace XYZ.API.Controllers
     [FromBody] CreateAdminRequest request,
     CancellationToken cancellationToken)
         {
+            int? currentTenantId = null;
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (!string.IsNullOrWhiteSpace(tenantClaim) && int.TryParse(tenantClaim, out var parsedTenantId))
+            {
+                currentTenantId = parsedTenantId;
+            }
+
+            var targetTenantId = request.TenantId ?? currentTenantId;
+
+            if (targetTenantId is null)
+            {
+                return BadRequest("Tenant bilgisi bulunamadı. Lütfen TenantId gönderin veya geçerli bir tenant ile giriş yapın.");
+            }
+
             var emailNormalized = request.Email.Trim().ToLower();
             var user = await _userManager.FindByEmailAsync(request.Email);
 
@@ -129,7 +143,8 @@ namespace XYZ.API.Controllers
                     Email = request.Email,
                     PhoneNumber = request.PhoneNumber,
                     FirstName = request.FirstName,
-                    LastName = request.LastName
+                    LastName = request.LastName,
+                    TenantId = targetTenantId.Value
                 };
 
                 var password = "Admin123!";
@@ -139,6 +154,24 @@ namespace XYZ.API.Controllers
                 {
                     var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
                     return BadRequest($"Kullanıcı oluşturulamadı: {errors}");
+                }
+            }
+            else
+            {
+                var tenantIdProp = user.GetType().GetProperty("TenantId");
+                if (tenantIdProp?.GetValue(user) is null or 0)
+                {
+                    tenantIdProp.SetValue(user, targetTenantId.Value);
+                    var updateResult = await _userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
+                        return BadRequest($"Kullanıcı tenant bilgisi güncellenemedi: {errors}");
+                    }
+                }
+                else if ((int)tenantIdProp.GetValue(user)! != targetTenantId.Value)
+                {
+                    return BadRequest("Bu e-posta adresi farklı bir tenant'a bağlı. Bu kullanıcı için bu kulüpte admin oluşturulamaz.");
                 }
             }
 
@@ -160,7 +193,7 @@ namespace XYZ.API.Controllers
             var command = new CreateAdminCommand
             {
                 UserId = user.Id,
-                TenantId = request.TenantId,
+                TenantId = targetTenantId,
                 IdentityNumber = request.IdentityNumber,
                 CanManageUsers = request.CanManageUsers,
                 CanManageFinance = request.CanManageFinance,
@@ -185,6 +218,7 @@ namespace XYZ.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
         public sealed record CreateAdminRequest(
             string FirstName,
             string LastName,
