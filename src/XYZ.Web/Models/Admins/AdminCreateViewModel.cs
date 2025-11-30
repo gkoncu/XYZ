@@ -27,8 +27,8 @@ namespace XYZ.Web.Models.Admins
         public int? TenantId { get; set; }
 
         [Display(Name = "T.C. Kimlik No")]
-        [StringLength(11, MinimumLength = 8)]
-        public string IdentityNumber { get; set; } = string.Empty;
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
+        public string? IdentityNumber { get; set; }
 
         [Display(Name = "Kullanıcı Yönetimi Yetkisi")]
         public bool CanManageUsers { get; set; } = true;

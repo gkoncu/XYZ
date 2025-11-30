@@ -143,9 +143,13 @@ namespace XYZ.Web.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError(string.Empty, "Admin güncellenirken bir hata oluştu.");
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+
                 return View(model);
             }
+
 
             TempData["SuccessMessage"] = "Admin yetkileri güncellendi.";
             return RedirectToAction(nameof(Details), new { id });
@@ -198,10 +202,13 @@ namespace XYZ.Web.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                ModelState.AddModelError(string.Empty, $"Admin oluşturulurken hata oluştu: {error}");
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+
                 return View(model);
             }
+
 
             var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
 

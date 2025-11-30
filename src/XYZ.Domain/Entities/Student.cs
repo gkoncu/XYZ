@@ -13,7 +13,7 @@ namespace XYZ.Domain.Entities
         public string UserId { get; set; } = null!;
         public int TenantId { get; set; }
         public int? ClassId { get; set; }
-        public string IdentityNumber { get; set; } = string.Empty;
+        public string? IdentityNumber { get; set; }
         public string? Address { get; set; }
 
         public string? Parent1FirstName { get; set; }

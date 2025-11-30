@@ -1,10 +1,8 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
@@ -17,22 +15,18 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly UserManager<ApplicationUser> _userManager;
 
         public UpdateStudentCommandHandler(
             IApplicationDbContext context,
-            IDataScopeService dataScope,
-            UserManager<ApplicationUser> userManager)
+            IDataScopeService dataScope)
         {
             _context = context;
             _dataScope = dataScope;
-            _userManager = userManager;
         }
 
         public async Task<int> Handle(UpdateStudentCommand request, CancellationToken ct)
         {
-            var role = (_dataScope as dynamic)?._current?.Role as string;
-
+            // 1) Scope + yetki kontrolü: sadece scope içindeki öğrenciyi görebilelim
             var student = await _dataScope.Students()
                 .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
@@ -40,66 +34,95 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
             if (student is null)
                 throw new NotFoundException("Student", request.StudentId);
 
+            // Sınıf değişiyorsa, o sınıfa erişim yetkisi var mı kontrol et
             if (request.ClassId.HasValue && request.ClassId != student.ClassId)
                 await _dataScope.EnsureClassAccessAsync(request.ClassId.Value, ct);
 
-            var user = student.User;
+            var user = student.User ?? throw new InvalidOperationException("Öğrencinin bağlı kullanıcısı bulunamadı.");
 
-            if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+            // 2) E-posta değişmişse, UserName ve normalized alanları ile birlikte güncelle
+            if (!string.IsNullOrWhiteSpace(request.Email) &&
+                !string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
             {
-                var setEmail = await _userManager.SetEmailAsync(user, request.Email);
-                if (!setEmail.Succeeded)
-                {
-                    var msg = string.Join("; ", setEmail.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                    throw new InvalidOperationException($"E-posta güncellenemedi: {msg}");
-                }
+                var normalized = request.Email.ToUpperInvariant();
 
-                var setUserName = await _userManager.SetUserNameAsync(user, request.Email);
-                if (!setUserName.Succeeded)
-                {
-                    var msg = string.Join("; ", setUserName.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                    throw new InvalidOperationException($"Kullanıcı adı güncellenemedi: {msg}");
-                }
+                // Aynı tenant içinde e-posta çakışmasını engelle
+                var emailInTenant = await _context.Users
+                    .AnyAsync(u => u.TenantId == user.TenantId &&
+                                   u.Id != user.Id &&
+                                   u.NormalizedEmail == normalized, ct);
+
+                if (emailInTenant)
+                    throw new InvalidOperationException("Bu e-posta adresi bu tenant içinde zaten kullanılıyor.");
+
+                user.Email = request.Email;
+                user.UserName = request.Email;
+                user.NormalizedEmail = normalized;
+                user.NormalizedUserName = normalized;
             }
 
-            if (user.PhoneNumber != request.PhoneNumber)
+            // 3) Telefon değişmişse güncelle
+            if (!string.Equals(user.PhoneNumber, request.PhoneNumber, StringComparison.Ordinal))
             {
-                var setPhone = await _userManager.SetPhoneNumberAsync(user, request.PhoneNumber ?? string.Empty);
-                if (!setPhone.Succeeded)
-                {
-                    var msg = string.Join("; ", setPhone.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                    throw new InvalidOperationException($"Telefon güncellenemedi: {msg}");
-                }
+                user.PhoneNumber = request.PhoneNumber;
             }
 
+            // 4) User alanları (IdentityUser’daki ekstra alanlar)
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.BirthDate = request.BirthDate;
             user.Gender = Enum.Parse<Gender>(request.Gender, true);
             user.BloodType = Enum.Parse<BloodType>(request.BloodType, true);
 
-            var userUpdate = await _userManager.UpdateAsync(user);
-            if (!userUpdate.Succeeded)
-            {
-                var msg = string.Join("; ", userUpdate.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                throw new InvalidOperationException($"Kullanıcı güncellenemedi: {msg}");
-            }
+            // 5) Student alanları
+            student.ClassId = request.ClassId;
+            student.IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
+                ? null
+                : request.IdentityNumber.Trim();
 
-            student.IdentityNumber = request.IdentityNumber;
-            student.Address = request.Address;
+            student.Address = string.IsNullOrWhiteSpace(request.Address)
+                ? null
+                : request.Address.Trim();
 
-            student.Parent1FirstName = request.Parent1FirstName;
-            student.Parent1LastName = request.Parent1LastName;
-            student.Parent1Email = request.Parent1Email;
-            student.Parent1PhoneNumber = request.Parent1PhoneNumber;
+            student.Parent1FirstName = string.IsNullOrWhiteSpace(request.Parent1FirstName)
+                ? null
+                : request.Parent1FirstName.Trim();
 
-            student.Parent2FirstName = request.Parent2FirstName;
-            student.Parent2LastName = request.Parent2LastName;
-            student.Parent2Email = request.Parent2Email;
-            student.Parent2PhoneNumber = request.Parent2PhoneNumber;
+            student.Parent1LastName = string.IsNullOrWhiteSpace(request.Parent1LastName)
+                ? null
+                : request.Parent1LastName.Trim();
 
-            student.Notes = request.Notes;
-            student.MedicalInformation = request.MedicalInformation;
+            student.Parent1Email = string.IsNullOrWhiteSpace(request.Parent1Email)
+                ? null
+                : request.Parent1Email.Trim();
+
+            student.Parent1PhoneNumber = string.IsNullOrWhiteSpace(request.Parent1PhoneNumber)
+                ? null
+                : request.Parent1PhoneNumber.Trim();
+
+            student.Parent2FirstName = string.IsNullOrWhiteSpace(request.Parent2FirstName)
+                ? null
+                : request.Parent2FirstName.Trim();
+
+            student.Parent2LastName = string.IsNullOrWhiteSpace(request.Parent2LastName)
+                ? null
+                : request.Parent2LastName.Trim();
+
+            student.Parent2Email = string.IsNullOrWhiteSpace(request.Parent2Email)
+                ? null
+                : request.Parent2Email.Trim();
+
+            student.Parent2PhoneNumber = string.IsNullOrWhiteSpace(request.Parent2PhoneNumber)
+                ? null
+                : request.Parent2PhoneNumber.Trim();
+
+            student.Notes = string.IsNullOrWhiteSpace(request.Notes)
+                ? null
+                : request.Notes.Trim();
+
+            student.MedicalInformation = string.IsNullOrWhiteSpace(request.MedicalInformation)
+                ? null
+                : request.MedicalInformation.Trim();
 
             await _context.SaveChangesAsync(ct);
 

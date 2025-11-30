@@ -31,16 +31,17 @@ namespace XYZ.Web.Models.Students
 
         [Required]
         [Display(Name = "Cinsiyet")]
-        public string Gender { get; set; } = "Belirtilmedi";
+        public string Gender { get; set; } = "PreferNotToSay";
 
         [Required]
         [Display(Name = "Kan Grubu")]
-        public string BloodType { get; set; } = "Bilinmiyor";
+        public string BloodType { get; set; } = "Unknown";
 
         [Display(Name = "Sınıf")]
         public int? ClassId { get; set; }
 
         [Display(Name = "T.C. Kimlik No")]
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
         public string? IdentityNumber { get; set; }
 
         [Display(Name = "Adres")]

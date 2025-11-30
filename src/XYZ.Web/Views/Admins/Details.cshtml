@@ -14,19 +14,20 @@
             Admin Düzenle
         </a>
 
-        <form asp-action="Delete"
-              asp-route-id="@Model.Id"
-              method="post"
-              class="d-inline">
-            @Html.AntiForgeryToken()
-            <button type="submit"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Bu admin kaydını silmek istediğinize emin misiniz?');">
-                Sil
-            </button>
-        </form>
+        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+        {
+            <form asp-action="Delete"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  class="d-inline"
+                  onsubmit="return confirm('Bu admin kaydını silmek istediğinize emin misiniz?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-danger">
+                    Admini Sil
+                </button>
+            </form>
+        }
     </div>
-
 </section>
 
 <section class="detail-grid">

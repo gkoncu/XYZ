@@ -9,7 +9,7 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
-        public string IdentityNumber { get; set; } = string.Empty;
+        public string? IdentityNumber { get; set; }
 
         public bool CanManageUsers { get; set; }
         public bool CanManageFinance { get; set; }

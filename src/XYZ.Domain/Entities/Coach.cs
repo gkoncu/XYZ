@@ -12,8 +12,8 @@ namespace XYZ.Domain.Entities
     {
         public string UserId { get; set; } = null!;
         public int TenantId { get; set; }
-        public string IdentityNumber { get; set; } = string.Empty;
-        public string LicenseNumber { get; set; } = string.Empty;
+        public string? IdentityNumber { get; set; }
+        public string? LicenseNumber { get; set; }
 
         public ApplicationUser User { get; set; } = null!;
         public Tenant Tenant { get; set; } = null!;
