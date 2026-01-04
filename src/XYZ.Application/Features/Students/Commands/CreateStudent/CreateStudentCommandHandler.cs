@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
@@ -62,61 +61,78 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
                     throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
             }
 
-            var user = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                BirthDate = request.BirthDate,
-                Gender = Enum.Parse<Gender>(request.Gender, true),
-                BloodType = Enum.Parse<BloodType>(request.BloodType, true),
-                TenantId = tenantId,
-                IsActive = true
-            };
+            if (_context is not DbContext dbContext)
+                throw new InvalidOperationException("ApplicationDbContext transaction erişimi sağlanamadı.");
 
-            var createResult = await _userManager.CreateAsync(user);
-            if (!createResult.Succeeded)
+            await using var tx = await dbContext.Database.BeginTransactionAsync(ct);
+
+            try
             {
-                var msg = string.Join("; ", createResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {msg}");
+                var user = new ApplicationUser
+                {
+                    UserName = request.Email,
+                    Email = request.Email,
+                    PhoneNumber = request.PhoneNumber,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    BirthDate = request.BirthDate,
+                    Gender = Enum.Parse<Gender>(request.Gender, true),
+                    BloodType = Enum.Parse<BloodType>(request.BloodType, true),
+                    TenantId = tenantId,
+                    IsActive = true
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                {
+                    var msg = string.Join("; ", createResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                    throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {msg}");
+                }
+
+                var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+                if (!roleResult.Succeeded)
+                {
+                    var msg = string.Join("; ", roleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                    throw new InvalidOperationException($"Rol atanamadı (Student): {msg}");
+                }
+
+                var student = new Student
+                {
+                    UserId = user.Id,
+                    TenantId = tenantId,
+                    ClassId = request.ClassId,
+
+                    IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
+                        ? null
+                        : request.IdentityNumber.Trim(),
+                    Address = request.Address,
+
+                    Parent1FirstName = request.Parent1FirstName,
+                    Parent1LastName = request.Parent1LastName,
+                    Parent1Email = request.Parent1Email,
+                    Parent1PhoneNumber = request.Parent1PhoneNumber,
+
+                    Parent2FirstName = request.Parent2FirstName,
+                    Parent2LastName = request.Parent2LastName,
+                    Parent2Email = request.Parent2Email,
+                    Parent2PhoneNumber = request.Parent2PhoneNumber,
+
+                    MedicalInformation = request.MedicalInformation,
+                    Notes = request.Notes
+                };
+
+                await _context.Students.AddAsync(student, ct);
+                await _context.SaveChangesAsync(ct);
+
+                await tx.CommitAsync(ct);
+
+                return student.Id;
             }
-
-            var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-            if (!roleResult.Succeeded)
+            catch
             {
-                var msg = string.Join("; ", roleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                throw new InvalidOperationException($"Rol atanamadı (Student): {msg}");
+                await tx.RollbackAsync(ct);
+                throw;
             }
-
-            var student = new Student
-            {
-                UserId = user.Id,
-                TenantId = tenantId,
-                ClassId = request.ClassId,
-
-                IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null: request.IdentityNumber.Trim(),
-                Address = request.Address,
-
-                Parent1FirstName = request.Parent1FirstName,
-                Parent1LastName = request.Parent1LastName,
-                Parent1Email = request.Parent1Email,
-                Parent1PhoneNumber = request.Parent1PhoneNumber,
-
-                Parent2FirstName = request.Parent2FirstName,
-                Parent2LastName = request.Parent2LastName,
-                Parent2Email = request.Parent2Email,
-                Parent2PhoneNumber = request.Parent2PhoneNumber,
-
-                MedicalInformation = request.MedicalInformation,
-                Notes = request.Notes
-            };
-
-            await _context.Students.AddAsync(student, ct);
-            await _context.SaveChangesAsync(ct);
-
-            return student.Id;
         }
     }
 }

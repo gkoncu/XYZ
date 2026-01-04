@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
@@ -33,7 +32,6 @@ namespace XYZ.Application.Features.Students.Commands.DeleteStudent
 
         public async Task<int> Handle(DeleteStudentCommand request, CancellationToken ct)
         {
-            // ---- ROLE GUARD ----
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
                 throw new UnauthorizedAccessException("Öğrenci silme yetkiniz yok.");
@@ -45,16 +43,8 @@ namespace XYZ.Application.Features.Students.Commands.DeleteStudent
             if (student is null)
                 throw new NotFoundException("Student", request.StudentId);
 
-            var hasDocuments = await _context.Documents.AnyAsync(d => d.StudentId == student.Id, ct);
-            var hasAttendance = await _context.Attendances.AnyAsync(a => a.StudentId == student.Id, ct);
-            var hasPayments = await _context.Payments.AnyAsync(p => p.StudentId == student.Id, ct);
-            var hasProgress = await _context.ProgressRecords.AnyAsync(pr => pr.StudentId == student.Id, ct);
-
-            if (hasDocuments || hasAttendance || hasPayments || hasProgress)
-                throw new InvalidOperationException("Öğrenciye ait ilişkili kayıtlar mevcut (yoklama/ödeme/ilerleme/doküman). Lütfen önce pasifleştirin veya ilişkili kayıtları temizleyin.");
-
-            _context.Students.Remove(student);
-            await _context.SaveChangesAsync(ct);
+            student.IsActive = false;
+            student.UpdatedAt = DateTime.UtcNow;
 
             var user = student.User;
             if (user is not null)
@@ -75,14 +65,12 @@ namespace XYZ.Application.Features.Students.Commands.DeleteStudent
 
                 if (!hasCoachProfile && !hasAdminProfile)
                 {
-                    var delUser = await _userManager.DeleteAsync(user);
-                    if (!delUser.Succeeded)
-                    {
-                        var msg = string.Join("; ", delUser.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                        throw new InvalidOperationException($"Kullanıcı silinemedi: {msg}");
-                    }
+                    user.IsActive = false;
+                    user.UpdatedAt = DateTime.UtcNow;
                 }
             }
+
+            await _context.SaveChangesAsync(ct);
 
             return request.StudentId;
         }
