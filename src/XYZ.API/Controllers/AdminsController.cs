@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Data;
 using XYZ.Application.Features.Admins.Commands.CreateAdmin;
 using XYZ.Application.Features.Admins.Commands.DeleteAdmin;
 using XYZ.Application.Features.Admins.Commands.UpdateAdmin;
@@ -23,15 +25,19 @@ namespace XYZ.API.Controllers
         private readonly IMediator _mediator;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<ApplicationUser> _currentUserManager;
+        private readonly ApplicationDbContext _dbContext;
 
         public AdminsController(
             IMediator mediator,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            ApplicationDbContext dbContext)
         {
             _mediator = mediator;
             _userManager = userManager;
             _roleManager = roleManager;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
@@ -115,8 +121,8 @@ namespace XYZ.API.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         public async Task<ActionResult<int>> Create(
-    [FromBody] CreateAdminRequest request,
-    CancellationToken cancellationToken)
+            [FromBody] CreateAdminRequest request,
+            CancellationToken cancellationToken)
         {
             int? currentTenantId = null;
             var tenantClaim = User.FindFirst("TenantId")?.Value;
@@ -132,89 +138,112 @@ namespace XYZ.API.Controllers
                 return BadRequest("Tenant bilgisi bulunamadı. Lütfen TenantId gönderin veya geçerli bir tenant ile giriş yapın.");
             }
 
-            var emailNormalized = request.Email.Trim().ToLower();
-            var user = await _userManager.FindByEmailAsync(request.Email);
-
-            if (user == null)
+            var email = request.Email?.Trim();
+            if (string.IsNullOrWhiteSpace(email))
             {
-                user = new ApplicationUser
-                {
-                    UserName = request.Email,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    TenantId = targetTenantId.Value
-                };
-
-                var password = "Admin123!";
-
-                var createResult = await _userManager.CreateAsync(user, password);
-                if (!createResult.Succeeded)
-                {
-                    var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                    return BadRequest($"Kullanıcı oluşturulamadı: {errors}");
-                }
-            }
-            else
-            {
-                var tenantIdProp = user.GetType().GetProperty("TenantId");
-                if (tenantIdProp?.GetValue(user) is null or 0)
-                {
-                    tenantIdProp.SetValue(user, targetTenantId.Value);
-                    var updateResult = await _userManager.UpdateAsync(user);
-                    if (!updateResult.Succeeded)
-                    {
-                        var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
-                        return BadRequest($"Kullanıcı tenant bilgisi güncellenemedi: {errors}");
-                    }
-                }
-                else if ((int)tenantIdProp.GetValue(user)! != targetTenantId.Value)
-                {
-                    return BadRequest("Bu e-posta adresi farklı bir tenant'a bağlı. Bu kullanıcı için bu kulüpte admin oluşturulamaz.");
-                }
+                return BadRequest("Email zorunludur.");
             }
 
-            if (!await _roleManager.RoleExistsAsync("Admin"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("Admin"));
-            }
-
-            if (!await _userManager.IsInRoleAsync(user, "Admin"))
-            {
-                var roleResult = await _userManager.AddToRoleAsync(user, "Admin");
-                if (!roleResult.Succeeded)
-                {
-                    var errors = string.Join("; ", roleResult.Errors.Select(e => e.Description));
-                    return BadRequest($"Kullanıcı Admin rolüne eklenemedi: {errors}");
-                }
-            }
-
-            var command = new CreateAdminCommand
-            {
-                UserId = user.Id,
-                TenantId = targetTenantId,
-                IdentityNumber = request.IdentityNumber,
-                CanManageUsers = request.CanManageUsers,
-                CanManageFinance = request.CanManageFinance,
-                CanManageSettings = request.CanManageSettings
-            };
+            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
             try
             {
+                var user = await _userManager.FindByEmailAsync(email);
+
+                if (user == null)
+                {
+                    user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        PhoneNumber = request.PhoneNumber,
+                        FirstName = request.FirstName,
+                        LastName = request.LastName,
+                        TenantId = targetTenantId.Value,
+                        IsActive = true
+                    };
+
+                    const string password = "Admin123!";
+
+                    var createResult = await _userManager.CreateAsync(user, password);
+                    if (!createResult.Succeeded)
+                    {
+                        var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                        await tx.RollbackAsync(cancellationToken);
+                        return BadRequest($"Kullanıcı oluşturulamadı: {errors}");
+                    }
+                }
+                else
+                {
+                    if (user.TenantId == 0)
+                    {
+                        user.TenantId = targetTenantId.Value;
+
+                        var updateResult = await _userManager.UpdateAsync(user);
+                        if (!updateResult.Succeeded)
+                        {
+                            var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
+                            await tx.RollbackAsync(cancellationToken);
+                            return BadRequest($"Kullanıcı tenant bilgisi güncellenemedi: {errors}");
+                        }
+                    }
+                    else if (user.TenantId != targetTenantId.Value)
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return BadRequest("Bu e-posta adresi farklı bir tenant'a bağlı. Bu kullanıcı için bu kulüpte admin oluşturulamaz.");
+                    }
+                }
+
+                if (!await _roleManager.RoleExistsAsync("Admin"))
+                {
+                    var roleCreate = await _roleManager.CreateAsync(new IdentityRole("Admin"));
+                    if (!roleCreate.Succeeded)
+                    {
+                        var errors = string.Join("; ", roleCreate.Errors.Select(e => e.Description));
+                        await tx.RollbackAsync(cancellationToken);
+                        return BadRequest($"Admin rolü oluşturulamadı: {errors}");
+                    }
+                }
+
+                if (!await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    var roleResult = await _userManager.AddToRoleAsync(user, "Admin");
+                    if (!roleResult.Succeeded)
+                    {
+                        var errors = string.Join("; ", roleResult.Errors.Select(e => e.Description));
+                        await tx.RollbackAsync(cancellationToken);
+                        return BadRequest($"Kullanıcı Admin rolüne eklenemedi: {errors}");
+                    }
+                }
+
+                var command = new CreateAdminCommand
+                {
+                    UserId = user.Id,
+                    TenantId = targetTenantId,
+                    IdentityNumber = request.IdentityNumber,
+                    CanManageUsers = request.CanManageUsers,
+                    CanManageFinance = request.CanManageFinance,
+                    CanManageSettings = request.CanManageSettings
+                };
+
                 var id = await _mediator.Send(command, cancellationToken);
+
+                await tx.CommitAsync(cancellationToken);
                 return CreatedAtAction(nameof(GetById), new { id }, id);
             }
             catch (UnauthorizedAccessException)
             {
+                await tx.RollbackAsync(cancellationToken);
                 return Forbid();
             }
             catch (KeyNotFoundException ex)
             {
+                await tx.RollbackAsync(cancellationToken);
                 return BadRequest(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
+                await tx.RollbackAsync(cancellationToken);
                 return BadRequest(ex.Message);
             }
         }
