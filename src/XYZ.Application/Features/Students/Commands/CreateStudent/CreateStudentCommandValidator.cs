@@ -12,31 +12,31 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
     {
         public CreateStudentCommandValidator()
         {
-            RuleFor(x => x.FirstName).NotEmpty().MinimumLength(2).MaximumLength(100);
-            RuleFor(x => x.LastName).NotEmpty().MinimumLength(2).MaximumLength(100);
+            //RuleFor(x => x.FirstName).NotEmpty().MinimumLength(2).MaximumLength(100);
+            //RuleFor(x => x.LastName).NotEmpty().MinimumLength(2).MaximumLength(100);
 
-            RuleFor(x => x.Email)
-                .NotEmpty()
-                .MaximumLength(256)
-                .EmailAddress();
+            //RuleFor(x => x.Email)
+            //    .NotEmpty()
+            //    .MaximumLength(256)
+            //    .EmailAddress();
 
-            RuleFor(x => x.PhoneNumber)
-                .MaximumLength(32)
-                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
+            //RuleFor(x => x.PhoneNumber)
+            //    .MaximumLength(32)
+            //    .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
 
-            RuleFor(x => x.BirthDate)
-                .LessThan(DateTime.UtcNow.Date)
-                .GreaterThan(new DateTime(1900, 1, 1));
+            //RuleFor(x => x.BirthDate)
+            //    .LessThan(DateTime.UtcNow.Date)
+            //    .GreaterThan(new DateTime(1900, 1, 1));
 
-            RuleFor(x => x.Gender)
-                .NotEmpty()
-                .Must(v => Enum.TryParse<Gender>(v, true, out _))
-                .WithMessage("Geçerli bir cinsiyet değeri giriniz.");
+            //RuleFor(x => x.Gender)
+            //    .NotEmpty()
+            //    .Must(v => Enum.TryParse<Gender>(v, true, out _))
+            //    .WithMessage("Geçerli bir cinsiyet değeri giriniz.");
 
-            RuleFor(x => x.BloodType)
-                .NotEmpty()
-                .Must(v => Enum.TryParse<BloodType>(v, true, out _))
-                .WithMessage("Geçerli bir kan grubu değeri giriniz.");
+            //RuleFor(x => x.BloodType)
+            //    .NotEmpty()
+            //    .Must(v => Enum.TryParse<BloodType>(v, true, out _))
+            //    .WithMessage("Geçerli bir kan grubu değeri giriniz.");
 
             RuleFor(x => x.ClassId)
                 .GreaterThan(0).When(x => x.ClassId.HasValue);

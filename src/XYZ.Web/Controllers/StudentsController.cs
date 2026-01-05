@@ -87,7 +87,7 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
 
-            var command = new CreateStudentCommand
+            var request = new CreateStudentRequestDTO
             {
                 FirstName = model.FirstName,
                 LastName = model.LastName,
@@ -111,7 +111,7 @@ namespace XYZ.Web.Controllers
                 MedicalInformation = model.MedicalInformation
             };
 
-            var response = await _apiClient.PostAsJsonAsync("students", command, cancellationToken);
+            var response = await _apiClient.PostAsJsonAsync("students", request, cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -200,17 +200,16 @@ namespace XYZ.Web.Controllers
                 return BadRequest();
             }
 
-
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            //if (!model.BirthDate.HasValue)
-            //{
-            //    ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
-            //    return View(model);
-            //}
+            if (!model.BirthDate.HasValue)
+            {
+                ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+                return View(model);
+            }
 
             var command = new UpdateStudentCommand
             {

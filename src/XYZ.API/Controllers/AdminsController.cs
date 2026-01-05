@@ -25,7 +25,6 @@ namespace XYZ.API.Controllers
         private readonly IMediator _mediator;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _currentUserManager;
         private readonly ApplicationDbContext _dbContext;
 
         public AdminsController(

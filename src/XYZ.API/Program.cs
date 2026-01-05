@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using XYZ.API.Dev;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
@@ -22,6 +22,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+builder.Services.AddScoped<IApplicationDbContext>(sp =>
+    sp.GetRequiredService<ApplicationDbContext>());
 
 // Identity
 builder.Services
@@ -85,7 +88,6 @@ builder.Services.AddScoped<IUserLookup, UserLookupService>();
 builder.Services.AddScoped<IPasswordSignIn, PasswordSignInService>();
 builder.Services.AddScoped<IJwtFactory, JwtFactory>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
-builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 builder.Services.AddScoped<IRoleAssignmentService, RoleAssignmentService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddControllers();
@@ -135,7 +137,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    await DevIdentitySeeder.RunAsync(app.Services);
+    //await DevIdentitySeeder.RunAsync(app.Services);
 }
 
 app.UseAuthentication();
