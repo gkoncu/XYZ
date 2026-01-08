@@ -5,12 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
-using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 {
-    public sealed class UpdateAdminCommandHandler
-        : IRequestHandler<UpdateAdminCommand, int>
+    public sealed class UpdateAdminCommandHandler : IRequestHandler<UpdateAdminCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _current;
@@ -25,7 +23,7 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 
         public async Task<int> Handle(UpdateAdminCommand request, CancellationToken cancellationToken)
         {
-            var role = _current.Role;
+            var role = _current.Role ?? string.Empty;
             var tenantId = _current.TenantId;
 
             var q = _context.Admins
@@ -38,8 +36,8 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
                     break;
 
                 case "Admin":
-                    if (tenantId.HasValue)
-                        q = q.Where(a => a.TenantId == tenantId.Value);
+                    if (tenantId > 0)
+                        q = q.Where(a => a.TenantId == tenantId);
                     else
                         throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
                     break;
@@ -48,19 +46,40 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
                     throw new UnauthorizedAccessException("Bu işlemi yapmaya yetkiniz yok.");
             }
 
-            var admin = await q
-                .FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
-
+            var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
             if (admin is null)
                 throw new KeyNotFoundException("Admin bulunamadı.");
 
-            admin.User.FirstName = request.FirstName;
-            admin.User.LastName = request.LastName;
-            admin.User.Email = request.Email;
-            admin.User.UserName = request.Email;
-            admin.User.PhoneNumber = request.PhoneNumber;
+            var email = (request.Email ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(email))
+                throw new InvalidOperationException("Email zorunludur.");
 
-            admin.IdentityNumber = request.IdentityNumber;
+            var identityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
+                ? null
+                : request.IdentityNumber.Trim();
+
+            if (!string.IsNullOrWhiteSpace(identityNumber))
+            {
+                var dup = await _context.Admins.AnyAsync(
+                    a => a.TenantId == admin.TenantId
+                         && a.Id != admin.Id
+                         && a.IdentityNumber == identityNumber,
+                    cancellationToken);
+
+                if (dup)
+                    throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
+            }
+
+            admin.User.FirstName = (request.FirstName ?? string.Empty).Trim();
+            admin.User.LastName = (request.LastName ?? string.Empty).Trim();
+            admin.User.Email = email;
+            admin.User.UserName = email;
+            admin.User.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+
+            admin.User.NormalizedEmail = email.ToUpperInvariant();
+            admin.User.NormalizedUserName = email.ToUpperInvariant();
+
+            admin.IdentityNumber = identityNumber;
             admin.CanManageUsers = request.CanManageUsers;
             admin.CanManageFinance = request.CanManageFinance;
             admin.CanManageSettings = request.CanManageSettings;

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
-using XYZ.Application.Features.Coaches.Commands.CreateCoach;
 using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
@@ -26,24 +25,15 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(
-            string? searchTerm,
-            int pageNumber = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        public async Task<IActionResult> Index(string searchTerm, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            var result = await _apiClient.GetCoachesAsync(
-                searchTerm,
-                pageNumber,
-                pageSize,
-                cancellationToken);
-
-            ViewBag.SearchTerm = searchTerm;
-
+            var result = await _apiClient.GetCoachesAsync(searchTerm, pageNumber, pageSize, cancellationToken);
             return View(result);
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
             var coach = await _apiClient.GetCoachAsync(id, cancellationToken);
@@ -66,8 +56,8 @@ namespace XYZ.Web.Controllers
             var vm = new CoachCreateViewModel
             {
                 BirthDate = DateTime.Today.AddYears(-18),
-                Gender = "Belirtilmedi",
-                BloodType = "Bilinmiyor"
+                Gender = "PreferNotToSay",
+                BloodType = "Unknown"
             };
 
             return View(vm);
@@ -93,21 +83,21 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
 
-            var command = new CreateCoachCommand
+            var request = new CreateCoachRequestDto
             {
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
+                BirthDate = model.BirthDate.Value,
                 Gender = model.Gender,
                 BloodType = model.BloodType,
-                BirthDate = model.BirthDate.Value,
+                BranchId = model.BranchId,
                 IdentityNumber = model.IdentityNumber,
-                LicenseNumber = model.LicenseNumber,
-                BranchId = model.BranchId
+                LicenseNumber = model.LicenseNumber
             };
 
-            var response = await _apiClient.PostAsJsonAsync("coaches", command, cancellationToken);
+            var response = await _apiClient.PostAsJsonAsync("coaches", request, cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -165,8 +155,7 @@ namespace XYZ.Web.Controllers
                 BirthDate = dto.BirthDate,
                 IdentityNumber = dto.IdentityNumber,
                 LicenseNumber = dto.LicenseNumber,
-                BranchId = dto.BranchId,
-                IsActive = dto.IsActive
+                BranchId = dto.BranchId
             };
 
             return View(vm);
@@ -175,7 +164,7 @@ namespace XYZ.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,CoachEditViewModel model,CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(int id, CoachEditViewModel model, CancellationToken cancellationToken)
         {
             if (id != model.Id)
                 return BadRequest();
@@ -202,9 +191,9 @@ namespace XYZ.Web.Controllers
                 LastName = model.LastName,
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
+                BirthDate = model.BirthDate.Value,
                 Gender = model.Gender,
                 BloodType = model.BloodType,
-                BirthDate = model.BirthDate.Value,
                 IdentityNumber = model.IdentityNumber,
                 LicenseNumber = model.LicenseNumber,
                 BranchId = model.BranchId
@@ -213,14 +202,7 @@ namespace XYZ.Web.Controllers
             var response = await _apiClient.PutAsJsonAsync($"coaches/{id}", command, cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
                 return RedirectToAction("Login", "Account");
-            }
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
 
             if (!response.IsSuccessStatusCode)
             {
@@ -237,7 +219,6 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
@@ -246,13 +227,12 @@ namespace XYZ.Web.Controllers
             var response = await _apiClient.DeleteAsync($"coaches/{id}", cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
                 return RedirectToAction("Login", "Account");
-            }
 
             if (!response.IsSuccessStatusCode)
             {
-                TempData["ErrorMessage"] = "Koç silinirken bir hata oluştu.";
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                TempData["ErrorMessage"] = $"API Hatası: {errorBody}";
                 return RedirectToAction(nameof(Details), new { id });
             }
 

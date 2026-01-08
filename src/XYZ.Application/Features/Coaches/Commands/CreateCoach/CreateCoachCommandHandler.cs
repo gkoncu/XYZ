@@ -1,77 +1,82 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
-using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Coaches.Commands.CreateCoach
+namespace XYZ.Application.Features.Coaches.Commands.CreateCoach;
+
+public sealed class CreateCoachCommandHandler(
+    IApplicationDbContext context,
+    IDataScopeService dataScope,
+    ICurrentUserService currentUser) : IRequestHandler<CreateCoachCommand, int>
 {
-    public class CreateCoachCommandHandler : IRequestHandler<CreateCoachCommand, int>
+    public async Task<int> Handle(CreateCoachCommand request, CancellationToken ct)
     {
-        private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
+        if (currentUser.Role is not ("Admin" or "SuperAdmin"))
+            throw new UnauthorizedAccessException("Bu işlem için yetkiniz yok.");
 
-        public CreateCoachCommandHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && u.IsActive, ct);
+
+        if (user is null)
+            throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+
+        var effectiveTenantId = currentUser.TenantId != 0 ? currentUser.TenantId : user.TenantId;
+
+        if (effectiveTenantId <= 0)
+            throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
+
+        if (currentUser.Role == "Admin" && user.TenantId != effectiveTenantId)
+            throw new UnauthorizedAccessException("Bu kullanıcı bu kulübe ait değil.");
+
+        var branchOk = await context.Branches
+            .AsNoTracking()
+            .AnyAsync(b => b.Id == request.BranchId
+                           && b.TenantId == effectiveTenantId
+                           && b.IsActive, ct);
+
+        if (!branchOk)
+            throw new InvalidOperationException("Branş bulunamadı veya bu kulübe ait değil.");
+
+        var identityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
+            ? null
+            : request.IdentityNumber.Trim();
+
+        if (!string.IsNullOrWhiteSpace(identityNumber))
         {
-            _context = context;
-            _currentUser = currentUser;
-        }
-
-        public async Task<int> Handle(CreateCoachCommand request, CancellationToken cancellationToken)
-        {
-            var tenantId = _currentUser.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
-
-            var branch = await _context.Branches
+            var identityExists = await dataScope.Coaches()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b =>
-                    b.Id == request.BranchId &&
-                    b.TenantId == tenantId,
-                    cancellationToken);
+                .AnyAsync(c => c.IdentityNumber == identityNumber, ct);
 
-            if (branch is null)
-                throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
-
-            var gender = Enum.Parse<Gender>(request.Gender, ignoreCase: true);
-            var bloodType = Enum.Parse<BloodType>(request.BloodType, ignoreCase: true);
-
-            var appUser = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Gender = gender,
-                BloodType = bloodType,
-                BirthDate = request.BirthDate,
-                TenantId = tenantId,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var coach = new Coach
-            {
-                TenantId = tenantId,
-                BranchId = request.BranchId,
-                IdentityNumber = request.IdentityNumber ?? string.Empty,
-                LicenseNumber = request.LicenseNumber ?? string.Empty,
-                User = appUser,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Coaches.Add(coach);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return coach.Id;
+            if (identityExists)
+                throw new InvalidOperationException("Bu T.C. Kimlik No başka bir koçta kullanılıyor.");
         }
+
+        var coachExistsForUser = await context.Coaches
+            .AsNoTracking()
+            .AnyAsync(c => c.UserId == request.UserId
+                           && c.TenantId == effectiveTenantId
+                           && c.IsActive, ct);
+
+        if (coachExistsForUser)
+            throw new InvalidOperationException("Bu kullanıcı için zaten aktif bir koç kaydı var.");
+
+        var coach = new Coach
+        {
+            TenantId = effectiveTenantId ?? throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı."),
+            UserId = request.UserId,
+            BranchId = request.BranchId,
+            IdentityNumber = identityNumber,
+            LicenseNumber = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber.Trim(),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        context.Coaches.Add(coach);
+        await context.SaveChangesAsync(ct);
+
+        return coach.Id;
     }
 }

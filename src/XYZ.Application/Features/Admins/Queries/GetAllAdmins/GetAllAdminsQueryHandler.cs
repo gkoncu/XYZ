@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace XYZ.Application.Features.Admins.Queries.GetAllAdmins
             GetAllAdminsQuery request,
             CancellationToken cancellationToken)
         {
-            var role = _current.Role;
+            var role = _current.Role ?? string.Empty;
             var tenantId = _current.TenantId;
 
             var q = _context.Admins
@@ -41,14 +40,10 @@ namespace XYZ.Application.Features.Admins.Queries.GetAllAdmins
                     break;
 
                 case "Admin":
-                    if (tenantId.HasValue)
-                    {
-                        q = q.Where(a => a.TenantId == tenantId.Value);
-                    }
+                    if (tenantId > 0)
+                        q = q.Where(a => a.TenantId == tenantId);
                     else
-                    {
                         q = q.Where(_ => false);
-                    }
                     break;
 
                 default:
@@ -63,8 +58,8 @@ namespace XYZ.Application.Features.Admins.Queries.GetAllAdmins
                 q = q.Where(a =>
                     a.User.FirstName.ToLower().Contains(term)
                     || a.User.LastName.ToLower().Contains(term)
-                    || a.User.Email!.ToLower().Contains(term)
-                    || a.IdentityNumber.ToLower().Contains(term)
+                    || (a.User.Email ?? "").ToLower().Contains(term)
+                    || (a.IdentityNumber ?? "").ToLower().Contains(term)
                     || a.Tenant.Name.ToLower().Contains(term));
             }
 

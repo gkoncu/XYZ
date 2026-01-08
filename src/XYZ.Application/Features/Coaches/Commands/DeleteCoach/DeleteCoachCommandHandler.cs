@@ -1,54 +1,87 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Coaches.Commands.DeleteCoach
 {
     public class DeleteCoachCommandHandler : IRequestHandler<DeleteCoachCommand, int>
     {
-        private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
+        private readonly IApplicationDbContext _context;
+        private readonly ICurrentUserService _current;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public DeleteCoachCommandHandler(
+            IDataScopeService dataScope,
             IApplicationDbContext context,
-            IDataScopeService dataScope)
+            ICurrentUserService currentUser,
+            UserManager<ApplicationUser> userManager)
         {
-            _context = context;
             _dataScope = dataScope;
+            _context = context;
+            _current = currentUser;
+            _userManager = userManager;
         }
 
-        public async Task<int> Handle(DeleteCoachCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(DeleteCoachCommand request, CancellationToken ct)
         {
+            var role = _current.Role;
+            if (role is null || (role != "Admin" && role != "SuperAdmin"))
+                throw new UnauthorizedAccessException("Koç silme yetkiniz yok.");
+
             var coach = await _dataScope.Coaches()
-                .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.Id == request.CoachId, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Id == request.CoachId, ct);
 
             if (coach is null)
                 throw new NotFoundException("Coach", request.CoachId);
 
-            var hasActiveClasses = await _dataScope.Classes()
-                .AnyAsync(c =>
-                    c.IsActive &&
-                    c.Coaches.Any(co => co.Id == coach.Id),
-                    cancellationToken);
+            var userId = coach.UserId;
 
-            if (hasActiveClasses)
-                throw new InvalidOperationException("Bu koça atanmış aktif sınıflar olduğu için silinemez. Önce sınıf-koç ilişkilerini kaldırın.");
+            _context.Coaches.Remove(coach);
+            await _context.SaveChangesAsync(ct);
 
-            coach.IsActive = false;
-            coach.UpdatedAt = DateTime.UtcNow;
-            coach.User.IsActive = false;
-            coach.User.UpdatedAt = DateTime.UtcNow;
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user is not null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles.Contains("Coach"))
+                    {
+                        var rmRole = await _userManager.RemoveFromRoleAsync(user, "Coach");
+                        if (!rmRole.Succeeded)
+                        {
+                            var msg = string.Join("; ", rmRole.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                            throw new InvalidOperationException($"Kullanıcı rolü kaldırılamadı (Coach): {msg}");
+                        }
+                    }
 
-            await _context.SaveChangesAsync(cancellationToken);
+                    var hasStudentProfile = await _context.Students.AnyAsync(s => s.UserId == user.Id, ct);
+                    var hasAdminProfile = await _context.Admins.AnyAsync(a => a.UserId == user.Id, ct);
 
-            return coach.Id;
+                    if (!hasStudentProfile && !hasAdminProfile)
+                    {
+                        var del = await _userManager.DeleteAsync(user);
+                        if (!del.Succeeded)
+                        {
+                            var msg = string.Join("; ", del.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                            throw new InvalidOperationException($"Kullanıcı silinemedi: {msg}");
+                        }
+                    }
+                    else
+                    {
+                    }
+                }
+            }
+
+            return request.CoachId;
         }
     }
 }

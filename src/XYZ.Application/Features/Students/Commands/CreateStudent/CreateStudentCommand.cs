@@ -2,15 +2,9 @@
 
 namespace XYZ.Application.Features.Students.Commands.CreateStudent
 {
-    public class CreateStudentCommand : IRequest<int>
+    public sealed class CreateStudentCommand : IRequest<int>
     {
-        public string FirstName { get; set; } = null!;
-        public string LastName { get; set; } = null!;
-        public string Email { get; set; } = null!;
-        public string? PhoneNumber { get; set; }
-        public DateTime BirthDate { get; set; }
-        public string Gender { get; set; } = null!;
-        public string BloodType { get; set; } = null!;
+        public string UserId { get; set; } = string.Empty;
 
         public int? ClassId { get; set; }
         public string? IdentityNumber { get; set; }
@@ -26,7 +20,7 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
         public string? Parent2Email { get; set; }
         public string? Parent2PhoneNumber { get; set; }
 
-        public string? Notes { get; set; }
         public string? MedicalInformation { get; set; }
+        public string? Notes { get; set; }
     }
 }

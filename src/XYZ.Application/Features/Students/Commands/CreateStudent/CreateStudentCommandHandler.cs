@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
@@ -12,46 +11,35 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Students.Commands.CreateStudent
 {
-    public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, int>
+    public sealed class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _currentUser;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ICurrentUserService _current;
 
         public CreateStudentCommandHandler(
             IApplicationDbContext context,
             IDataScopeService dataScope,
-            ICurrentUserService currentUser,
-            UserManager<ApplicationUser> userManager)
+            ICurrentUserService currentUser)
         {
             _context = context;
             _dataScope = dataScope;
-            _currentUser = currentUser;
-            _userManager = userManager;
+            _current = currentUser;
         }
 
         public async Task<int> Handle(CreateStudentCommand request, CancellationToken ct)
         {
-            var role = _currentUser.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Öğrenci oluşturma yetkiniz yok.");
+            if (string.IsNullOrWhiteSpace(request.UserId))
+                throw new InvalidOperationException("UserId zorunludur.");
 
-            var tenantId = _currentUser.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
+            var tenantId = _current.TenantId ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
             if (request.ClassId.HasValue)
                 await _dataScope.EnsureClassAccessAsync(request.ClassId.Value, ct);
 
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                var normalized = _userManager.NormalizeEmail(request.Email);
-                var emailInTenant = await _context.Users
-                    .AnyAsync(u => u.TenantId == tenantId && u.NormalizedEmail == normalized, ct);
-
-                if (emailInTenant)
-                    throw new InvalidOperationException("Bu e-posta adresi bu tenant içinde zaten kullanılıyor.");
-            }
+            var exists = await _context.Students.AnyAsync(s => s.UserId == request.UserId, ct);
+            if (exists)
+                throw new InvalidOperationException("Bu kullanıcı için zaten Student profili oluşturulmuş.");
 
             if (!string.IsNullOrWhiteSpace(request.IdentityNumber))
             {
@@ -62,41 +50,13 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
                     throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
             }
 
-            var user = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                BirthDate = request.BirthDate,
-                Gender = Enum.Parse<Gender>(request.Gender, true),
-                BloodType = Enum.Parse<BloodType>(request.BloodType, true),
-                TenantId = tenantId,
-                IsActive = true
-            };
-
-            var createResult = await _userManager.CreateAsync(user);
-            if (!createResult.Succeeded)
-            {
-                var msg = string.Join("; ", createResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {msg}");
-            }
-
-            var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-            if (!roleResult.Succeeded)
-            {
-                var msg = string.Join("; ", roleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                throw new InvalidOperationException($"Rol atanamadı (Student): {msg}");
-            }
-
             var student = new Student
             {
-                UserId = user.Id,
+                UserId = request.UserId,
                 TenantId = tenantId,
                 ClassId = request.ClassId,
 
-                IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null: request.IdentityNumber.Trim(),
+                IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null : request.IdentityNumber.Trim(),
                 Address = request.Address,
 
                 Parent1FirstName = request.Parent1FirstName,
@@ -110,7 +70,9 @@ namespace XYZ.Application.Features.Students.Commands.CreateStudent
                 Parent2PhoneNumber = request.Parent2PhoneNumber,
 
                 MedicalInformation = request.MedicalInformation,
-                Notes = request.Notes
+                Notes = request.Notes,
+
+                IsActive = true
             };
 
             await _context.Students.AddAsync(student, ct);

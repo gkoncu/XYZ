@@ -23,11 +23,11 @@ namespace XYZ.Web.Models.Coaches
 
         [Required]
         [Display(Name = "Cinsiyet")]
-        public string Gender { get; set; } = "Belirtilmedi";
+        public string Gender { get; set; } = "PreferNotToSay";
 
         [Required]
         [Display(Name = "Kan Grubu")]
-        public string BloodType { get; set; } = "Bilinmiyor";
+        public string BloodType { get; set; } = "Unknown";
 
         [Required]
         [DataType(DataType.Date)]

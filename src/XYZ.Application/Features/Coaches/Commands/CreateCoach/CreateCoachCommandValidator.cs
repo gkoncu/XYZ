@@ -1,53 +1,30 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Coaches.Commands.CreateCoach
 {
-    public class CreateCoachCommandValidator : AbstractValidator<CreateCoachCommand>
+    public sealed class CreateCoachCommandValidator : AbstractValidator<CreateCoachCommand>
     {
         public CreateCoachCommandValidator()
         {
-            RuleFor(x => x.FirstName)
-                .NotEmpty()
-                .MaximumLength(100);
-
-            RuleFor(x => x.LastName)
-                .NotEmpty()
-                .MaximumLength(100);
-
-            RuleFor(x => x.Email)
-                .NotEmpty()
-                .EmailAddress()
-                .MaximumLength(256);
-
-            RuleFor(x => x.PhoneNumber)
-                .MaximumLength(20)
-                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
-
-            RuleFor(x => x.Gender)
+            RuleFor(x => x.UserId)
                 .NotEmpty();
-
-            RuleFor(x => x.BloodType)
-                .NotEmpty();
-
-            RuleFor(x => x.BirthDate)
-                .LessThan(DateTime.UtcNow.AddYears(-3));
-
-            RuleFor(x => x.IdentityNumber)
-                .Length(11)
-                .Matches("^[0-9]+$")
-                .When(x => !string.IsNullOrWhiteSpace(x.IdentityNumber));
-
-            RuleFor(x => x.LicenseNumber)
-                .MaximumLength(50)
-                .When(x => !string.IsNullOrWhiteSpace(x.LicenseNumber));
 
             RuleFor(x => x.BranchId)
                 .GreaterThan(0);
+
+            When(x => !string.IsNullOrWhiteSpace(x.IdentityNumber), () =>
+            {
+                RuleFor(x => x.IdentityNumber!)
+                    .Length(11)
+                    .Matches("^[0-9]{11}$")
+                    .WithMessage("T.C. Kimlik No 11 haneli ve sadece rakam olmalıdır.");
+            });
+
+            When(x => !string.IsNullOrWhiteSpace(x.LicenseNumber), () =>
+            {
+                RuleFor(x => x.LicenseNumber!)
+                    .MaximumLength(50);
+            });
         }
     }
 }
