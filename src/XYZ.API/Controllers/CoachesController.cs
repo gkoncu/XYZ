@@ -1,85 +1,179 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using XYZ.Application.Common.Models;
+using XYZ.Application.Data;
 using XYZ.Application.Features.Coaches.Commands.CreateCoach;
 using XYZ.Application.Features.Coaches.Commands.DeleteCoach;
 using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
+using XYZ.Domain.Entities;
+using XYZ.Domain.Enums;
 
-namespace XYZ.API.Controllers
+namespace XYZ.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public sealed class CoachesController(
+    IMediator mediator,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    ApplicationDbContext db) : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class CoachesController : ControllerBase
+    [HttpGet]
+    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    public async Task<IActionResult> GetAll([FromQuery] GetAllCoachesQuery query, CancellationToken ct)
+        => Ok(await mediator.Send(query, ct));
+
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    public async Task<IActionResult> GetById(int id, CancellationToken ct)
     {
-        private readonly IMediator _mediator;
+        var dto = await mediator.Send(new GetCoachByIdQuery { CoachId = id }, ct);
+        return dto is null ? NotFound() : Ok(dto);
+    }
 
-        public CoachesController(IMediator mediator)
+    [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+    public async Task<ActionResult<int>> Create([FromBody] CreateCoachRequestDTO request, CancellationToken ct)
+    {
+        int? currentTenantId = null;
+        var tenantClaim = User.FindFirst("TenantId")?.Value;
+        if (!string.IsNullOrWhiteSpace(tenantClaim) && int.TryParse(tenantClaim, out var parsedTenantId))
+            currentTenantId = parsedTenantId;
+
+        var targetTenantId = request.TenantId ?? currentTenantId;
+        if (targetTenantId is null)
+            return BadRequest("Tenant bilgisi bulunamadı. Lütfen TenantId gönderin veya geçerli bir tenant ile giriş yapın.");
+
+        var email = (request.Email ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest("Email zorunludur.");
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+
+        try
         {
-            _mediator = mediator;
-        }
+            var user = await userManager.FindByEmailAsync(email);
 
-        [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        public async Task<ActionResult<PaginationResult<CoachListItemDto>>> GetAll(
-            [FromQuery] GetAllCoachesQuery query,
-            CancellationToken cancellationToken)
-        {
-            var result = await _mediator.Send(query, cancellationToken);
-            return Ok(result);
-        }
+            if (user is null)
+            {
+                if (!Enum.TryParse<Gender>(request.Gender, true, out var gender))
+                    return BadRequest("Gender değeri geçersiz.");
 
-        [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        public async Task<ActionResult<CoachDetailDto>> GetById(
-            int id,
-            CancellationToken cancellationToken)
-        {
-            var result = await _mediator.Send(
-                new GetCoachByIdQuery { CoachId = id },
-                cancellationToken);
+                if (!Enum.TryParse<BloodType>(request.BloodType, true, out var bloodType))
+                    return BadRequest("BloodType değeri geçersiz.");
 
-            return Ok(result);
-        }
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
+                    FirstName = (request.FirstName ?? string.Empty).Trim(),
+                    LastName = (request.LastName ?? string.Empty).Trim(),
+                    TenantId = targetTenantId.Value,
+                    BirthDate = request.BirthDate,
+                    Gender = gender,
+                    BloodType = bloodType,
+                    IsActive = true
+                };
 
-        [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<ActionResult<int>> Create(
-            [FromBody] CreateCoachCommand command,
-            CancellationToken cancellationToken)
-        {
-            var id = await _mediator.Send(command, cancellationToken);
+                const string password = "Coach123!";
+                var createResult = await userManager.CreateAsync(user, password);
+                if (!createResult.Succeeded)
+                {
+                    var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                    await tx.RollbackAsync(ct);
+                    return BadRequest($"Kullanıcı oluşturulamadı: {errors}");
+                }
+            }
+            else
+            {
+                if (user.TenantId != 0 && user.TenantId != targetTenantId.Value)
+                {
+                    await tx.RollbackAsync(ct);
+                    return BadRequest("Bu e-posta adresi farklı bir tenant'a bağlı. Bu kullanıcı için bu kulüpte koç oluşturulamaz.");
+                }
+
+                if (user.TenantId == 0)
+                {
+                    user.TenantId = targetTenantId.Value;
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
+                        await tx.RollbackAsync(ct);
+                        return BadRequest($"Kullanıcı tenant bilgisi güncellenemedi: {errors}");
+                    }
+                }
+            }
+
+            const string coachRole = "Coach";
+            if (!await roleManager.RoleExistsAsync(coachRole))
+                await roleManager.CreateAsync(new IdentityRole(coachRole));
+
+            if (!await userManager.IsInRoleAsync(user, coachRole))
+            {
+                var roleResult = await userManager.AddToRoleAsync(user, coachRole);
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join("; ", roleResult.Errors.Select(e => e.Description));
+                    await tx.RollbackAsync(ct);
+                    return BadRequest($"Kullanıcı Coach rolüne eklenemedi: {errors}");
+                }
+            }
+
+            var command = new CreateCoachCommand
+            {
+                UserId = user.Id,
+                BranchId = request.BranchId,
+                IdentityNumber = request.IdentityNumber,
+                LicenseNumber = request.LicenseNumber
+            };
+
+            var id = await mediator.Send(command, ct);
+
+            await tx.CommitAsync(ct);
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
-
-        [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<ActionResult<int>> Update(
-            int id,
-            [FromBody] UpdateCoachCommand command,
-            CancellationToken cancellationToken)
+        catch (UnauthorizedAccessException)
         {
-            command.CoachId = id;
-
-            var updatedId = await _mediator.Send(command, cancellationToken);
-            return Ok(updatedId);
+            await tx.RollbackAsync(ct);
+            return Forbid();
         }
-
-        [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<ActionResult<int>> Delete(
-            int id,
-            CancellationToken cancellationToken)
+        catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
         {
-            var deletedId = await _mediator.Send(
-                new DeleteCoachCommand { CoachId = id },
-                cancellationToken);
-
-            return Ok(deletedId);
+            await tx.RollbackAsync(ct);
+            return BadRequest(ex.Message);
         }
     }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateCoachCommand command, CancellationToken ct)
+    {
+        if (id != command.CoachId) return BadRequest("Id uyuşmuyor.");
+        return Ok(await mediator.Send(command, ct));
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+        => Ok(await mediator.Send(new DeleteCoachCommand { CoachId = id }, ct));
+
+    public sealed record CreateCoachRequestDTO(
+        string FirstName,
+        string LastName,
+        string Email,
+        string? PhoneNumber,
+        DateTime BirthDate,
+        string Gender,
+        string BloodType,
+        int BranchId,
+        string? IdentityNumber,
+        string? LicenseNumber,
+        int? TenantId);
 }

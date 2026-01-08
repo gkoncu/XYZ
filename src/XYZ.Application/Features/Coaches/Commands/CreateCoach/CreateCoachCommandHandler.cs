@@ -1,119 +1,82 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
-using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Coaches.Commands.CreateCoach
+namespace XYZ.Application.Features.Coaches.Commands.CreateCoach;
+
+public sealed class CreateCoachCommandHandler(
+    IApplicationDbContext context,
+    IDataScopeService dataScope,
+    ICurrentUserService currentUser) : IRequestHandler<CreateCoachCommand, int>
 {
-    public class CreateCoachCommandHandler : IRequestHandler<CreateCoachCommand, int>
+    public async Task<int> Handle(CreateCoachCommand request, CancellationToken ct)
     {
-        private readonly IApplicationDbContext _context;
-        private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _current;
-        private readonly UserManager<ApplicationUser> _userManager;
+        if (currentUser.Role is not ("Admin" or "SuperAdmin"))
+            throw new UnauthorizedAccessException("Bu işlem için yetkiniz yok.");
 
-        public CreateCoachCommandHandler(
-            IApplicationDbContext context,
-            IDataScopeService dataScope,
-            ICurrentUserService currentUser,
-            UserManager<ApplicationUser> userManager)
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && u.IsActive, ct);
+
+        if (user is null)
+            throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+
+        var effectiveTenantId = currentUser.TenantId != 0 ? currentUser.TenantId : user.TenantId;
+
+        if (effectiveTenantId <= 0)
+            throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
+
+        if (currentUser.Role == "Admin" && user.TenantId != effectiveTenantId)
+            throw new UnauthorizedAccessException("Bu kullanıcı bu kulübe ait değil.");
+
+        var branchOk = await context.Branches
+            .AsNoTracking()
+            .AnyAsync(b => b.Id == request.BranchId
+                           && b.TenantId == effectiveTenantId
+                           && b.IsActive, ct);
+
+        if (!branchOk)
+            throw new InvalidOperationException("Branş bulunamadı veya bu kulübe ait değil.");
+
+        var identityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
+            ? null
+            : request.IdentityNumber.Trim();
+
+        if (!string.IsNullOrWhiteSpace(identityNumber))
         {
-            _context = context;
-            _dataScope = dataScope;
-            _current = currentUser;
-            _userManager = userManager;
+            var identityExists = await dataScope.Coaches()
+                .AsNoTracking()
+                .AnyAsync(c => c.IdentityNumber == identityNumber, ct);
+
+            if (identityExists)
+                throw new InvalidOperationException("Bu T.C. Kimlik No başka bir koçta kullanılıyor.");
         }
 
-        public async Task<int> Handle(CreateCoachCommand request, CancellationToken ct)
+        var coachExistsForUser = await context.Coaches
+            .AsNoTracking()
+            .AnyAsync(c => c.UserId == request.UserId
+                           && c.TenantId == effectiveTenantId
+                           && c.IsActive, ct);
+
+        if (coachExistsForUser)
+            throw new InvalidOperationException("Bu kullanıcı için zaten aktif bir koç kaydı var.");
+
+        var coach = new Coach
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Koç oluşturma yetkiniz yok.");
+            TenantId = effectiveTenantId ?? throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı."),
+            UserId = request.UserId,
+            BranchId = request.BranchId,
+            IdentityNumber = identityNumber,
+            LicenseNumber = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber.Trim(),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
-            var tenantId = _current.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
+        context.Coaches.Add(coach);
+        await context.SaveChangesAsync(ct);
 
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                var normalized = _userManager.NormalizeEmail(request.Email);
-                var emailInTenant = await _context.Users
-                    .AnyAsync(u => u.TenantId == tenantId && u.NormalizedEmail == normalized, ct);
-
-                if (emailInTenant)
-                    throw new InvalidOperationException("Bu e-posta adresi bu tenant içinde zaten kullanılıyor.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.IdentityNumber))
-            {
-                var identityInTenant = await _context.Coaches
-                    .AnyAsync(c => c.TenantId == tenantId && c.IdentityNumber == request.IdentityNumber, ct);
-
-                if (identityInTenant)
-                    throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
-            }
-
-            if (_context is not DbContext dbContext)
-                throw new InvalidOperationException("ApplicationDbContext transaction erişimi sağlanamadı.");
-
-            await using var tx = await dbContext.Database.BeginTransactionAsync(ct);
-
-            try
-            {
-                var user = new ApplicationUser
-                {
-                    UserName = request.Email,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    BirthDate = request.BirthDate,
-                    Gender = Enum.Parse<Gender>(request.Gender, true),
-                    BloodType = Enum.Parse<BloodType>(request.BloodType, true),
-                    TenantId = tenantId,
-                    IsActive = true
-                };
-
-                var createResult = await _userManager.CreateAsync(user);
-                if (!createResult.Succeeded)
-                {
-                    var msg = string.Join("; ", createResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                    throw new InvalidOperationException($"Kullanıcı oluşturulamadı: {msg}");
-                }
-
-                var roleResult = await _userManager.AddToRoleAsync(user, "Coach");
-                if (!roleResult.Succeeded)
-                {
-                    var msg = string.Join("; ", roleResult.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                    throw new InvalidOperationException($"Rol atanamadı (Coach): {msg}");
-                }
-
-                var coach = new Coach
-                {
-                    UserId = user.Id,
-                    TenantId = tenantId,
-
-                    BranchId = request.BranchId,
-                    IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null : request.IdentityNumber.Trim(),
-                    LicenseNumber = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber.Trim(),
-                };
-
-                await _context.Coaches.AddAsync(coach, ct);
-                await _context.SaveChangesAsync(ct);
-
-                await tx.CommitAsync(ct);
-                return coach.Id;
-            }
-            catch
-            {
-                await tx.RollbackAsync(ct);
-                throw;
-            }
-        }
+        return coach.Id;
     }
 }

@@ -88,11 +88,6 @@
         <span asp-validation-for="BranchId" class="text-danger small"></span>
     </div>
 
-    <div class="col-md-4 form-check mt-2">
-        <input asp-for="IsActive" class="form-check-input" />
-        <label asp-for="IsActive" class="form-check-label small"></label>
-    </div>
-
     <div class="col-12 d-flex justify-content-end mt-3">
         <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-2">İptal</a>
         <button type="submit" class="btn btn-sm btn-primary">
