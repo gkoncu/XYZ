@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
@@ -105,6 +104,10 @@ namespace XYZ.API.Controllers
             {
                 return NotFound();
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         public sealed record UpdateAdminRequest(
@@ -143,6 +146,10 @@ namespace XYZ.API.Controllers
                 return BadRequest("Email zorunludur.");
             }
 
+            var firstName = (request.FirstName ?? string.Empty).Trim();
+            var lastName = (request.LastName ?? string.Empty).Trim();
+            var phone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+
             await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
             try
@@ -155,9 +162,9 @@ namespace XYZ.API.Controllers
                     {
                         UserName = email,
                         Email = email,
-                        PhoneNumber = request.PhoneNumber,
-                        FirstName = request.FirstName,
-                        LastName = request.LastName,
+                        PhoneNumber = phone,
+                        FirstName = firstName,
+                        LastName = lastName,
                         TenantId = targetTenantId.Value,
                         IsActive = true
                     };
@@ -266,23 +273,32 @@ namespace XYZ.API.Controllers
             int id,
             CancellationToken cancellationToken)
         {
+            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
             try
             {
                 var deletedId = await _mediator.Send(
                     new DeleteAdminCommand { AdminId = id },
                     cancellationToken);
 
+                await tx.CommitAsync(cancellationToken);
                 return Ok(deletedId);
             }
             catch (UnauthorizedAccessException)
             {
+                await tx.RollbackAsync(cancellationToken);
                 return Forbid();
             }
             catch (KeyNotFoundException)
             {
+                await tx.RollbackAsync(cancellationToken);
                 return NotFound();
             }
+            catch (InvalidOperationException ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                return BadRequest(ex.Message);
+            }
         }
-
     }
 }

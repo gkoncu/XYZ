@@ -11,7 +11,7 @@ using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
 {
-    public class DeleteAdminCommandHandler : IRequestHandler<DeleteAdminCommand, int>
+    public sealed class DeleteAdminCommandHandler : IRequestHandler<DeleteAdminCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _current;
@@ -29,8 +29,8 @@ namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
 
         public async Task<int> Handle(DeleteAdminCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "SuperAdmin"))
+            var role = _current.Role ?? string.Empty;
+            if (role != "Admin" && role != "SuperAdmin")
                 throw new UnauthorizedAccessException("Admin silme yetkiniz yok.");
 
             var tenantId = _current.TenantId;
@@ -39,16 +39,14 @@ namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
 
             if (role == "Admin")
             {
-                if (!tenantId.HasValue)
+                if (tenantId <= 0)
                     throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
-                q = q.Where(a => a.TenantId == tenantId.Value);
-            }
+                q = q.Where(a => a.TenantId == tenantId);
 
-            if (role == "Admin" && tenantId.HasValue)
-            {
-                var activeAdminCount = await _context.Admins
-                    .CountAsync(a => a.TenantId == tenantId.Value && a.IsActive, ct);
+                var activeAdminCount = await _context.Admins.CountAsync(
+                    a => a.TenantId == tenantId && a.IsActive,
+                    ct);
 
                 if (activeAdminCount <= 1)
                     throw new InvalidOperationException("Tenant içinde son admin silinemez.");

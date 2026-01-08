@@ -25,7 +25,7 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
             GetAdminByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var role = _current.Role;
+            var role = _current.Role ?? string.Empty;
             var tenantId = _current.TenantId;
 
             var q = _context.Admins
@@ -39,28 +39,18 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
                     break;
 
                 case "Admin":
-                    if (tenantId.HasValue)
-                    {
-                        q = q.Where(a => a.TenantId == tenantId.Value);
-                    }
+                    if (tenantId > 0)
+                        q = q.Where(a => a.TenantId == tenantId);
                     else
-                    {
                         return null;
-                    }
                     break;
 
                 default:
                     return null;
             }
 
-            var admin = await q
-                .Where(a => a.Id == request.AdminId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (admin is null)
-            {
-                return null;
-            }
+            var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
+            if (admin is null) return null;
 
             return new AdminDetailDto
             {
