@@ -70,6 +70,9 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
                     Amount = p.Amount,
                     DiscountAmount = p.DiscountAmount,
                     Status = p.Status,
+
+                    DueDate = p.DueDate,
+
                     CreatedAt = p.CreatedAt
                 })
                 .AsNoTracking()
