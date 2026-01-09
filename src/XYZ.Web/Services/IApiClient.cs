@@ -18,6 +18,7 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
 
 namespace XYZ.Web.Services
@@ -103,6 +104,9 @@ namespace XYZ.Web.Services
         // === Payments ===
         Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
             int? studentId,
+            DateOnly? fromDueDate,
+            DateOnly? toDueDate,
+            PaymentStatus? status,
             int pageNumber,
             int pageSize,
             CancellationToken cancellationToken = default);

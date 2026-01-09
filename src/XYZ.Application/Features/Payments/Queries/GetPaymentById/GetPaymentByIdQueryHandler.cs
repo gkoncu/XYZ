@@ -1,49 +1,45 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 
-namespace XYZ.Application.Features.Payments.Queries.GetPaymentById
+namespace XYZ.Application.Features.Payments.Queries.GetPaymentById;
+
+public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, PaymentDetailDto>
 {
-    public class GetPaymentByIdQueryHandler
-        : IRequestHandler<GetPaymentByIdQuery, PaymentDetailDto>
+    private readonly IDataScopeService _dataScope;
+
+    public GetPaymentByIdQueryHandler(IDataScopeService dataScope)
     {
-        private readonly IDataScopeService _dataScope;
+        _dataScope = dataScope;
+    }
 
-        public GetPaymentByIdQueryHandler(IDataScopeService dataScope)
-        {
-            _dataScope = dataScope;
-        }
-
-        public async Task<PaymentDetailDto> Handle(
-            GetPaymentByIdQuery request,
-            CancellationToken ct)
-        {
-            var payment = await _dataScope.Payments()
-                .Include(p => p.Student)
-                    .ThenInclude(s => s.User)
-                .FirstOrDefaultAsync(p => p.Id == request.Id, ct);
-
-            if (payment is null)
-                throw new NotFoundException("Payment", request.Id);
-
-            return new PaymentDetailDto
+    public async Task<PaymentDetailDto> Handle(GetPaymentByIdQuery request, CancellationToken ct)
+    {
+        var dto = await _dataScope.Payments()
+            .Include(p => p.Student)
+                .ThenInclude(s => s.User)
+            .AsNoTracking()
+            .Where(p => p.Id == request.Id)
+            .Select(p => new PaymentDetailDto
             {
-                Id = payment.Id,
-                TenantId = payment.TenantId,
-                StudentId = payment.StudentId,
-                StudentFullName = payment.Student.User.FullName,
-                Amount = payment.Amount,
-                DiscountAmount = payment.DiscountAmount,
-                Status = payment.Status,
-                CreatedAt = payment.CreatedAt,
-                UpdatedAt = payment.UpdatedAt
-            };
-        }
+                Id = p.Id,
+                StudentId = p.StudentId,
+                StudentFullName = p.Student.User.FullName,
+                Amount = p.Amount,
+                DiscountAmount = p.DiscountAmount,
+                Status = p.Status,
+                DueDate = p.DueDate,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (dto is null)
+            throw new KeyNotFoundException("Ödeme bulunamadı.");
+
+        return dto;
     }
 }
