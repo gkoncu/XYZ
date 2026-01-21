@@ -1,0 +1,85 @@
+﻿@model XYZ.Web.Models.Tenants.TenantEditViewModel
+@{
+    ViewData["Title"] = "Tenant Düzenle";
+}
+
+<h2 class="h4 mb-3">Tenant Düzenle</h2>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label small"></label>
+        <input asp-for="Name" class="form-control form-control-sm" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Subdomain" class="form-label small"></label>
+        <input asp-for="Subdomain" class="form-control form-control-sm" />
+        <span asp-validation-for="Subdomain" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label small"></label>
+        <input asp-for="Email" class="form-control form-control-sm" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Phone" class="form-label small"></label>
+        <input asp-for="Phone" class="form-control form-control-sm" />
+        <span asp-validation-for="Phone" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Address" class="form-label small"></label>
+        <input asp-for="Address" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="LogoUrl" class="form-label small"></label>
+        <input asp-for="LogoUrl" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="PrimaryColor" class="form-label small"></label>
+        <input asp-for="PrimaryColor" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="SecondaryColor" class="form-label small"></label>
+        <input asp-for="SecondaryColor" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="SubscriptionPlan" class="form-label small"></label>
+        <input asp-for="SubscriptionPlan" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="SubscriptionStartDate" class="form-label small"></label>
+        <input asp-for="SubscriptionStartDate" type="date" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="SubscriptionEndDate" class="form-label small"></label>
+        <input asp-for="SubscriptionEndDate" type="date" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="IsActive" class="form-label small"></label>
+        <select asp-for="IsActive" class="form-select form-select-sm">
+            <option value="true">Aktif</option>
+            <option value="false">Pasif</option>
+        </select>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end mt-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-2">İptal</a>
+        <button type="submit" class="btn btn-sm btn-primary">Kaydet</button>
+    </div>
+</form>
