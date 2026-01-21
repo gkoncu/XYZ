@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using XYZ.API.HostedServices;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
@@ -90,6 +91,11 @@ builder.Services.AddScoped<IJwtFactory, JwtFactory>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<IRoleAssignmentService, RoleAssignmentService>();
 builder.Services.AddScoped<IFileService, FileService>();
+
+// Payments: scheduled overdue marker
+builder.Services.AddScoped<IOverduePaymentService, OverduePaymentService>();
+builder.Services.AddHostedService<OverduePaymentsHostedService>();
+
 builder.Services.AddControllers();
 
 // --- Swagger Dev---

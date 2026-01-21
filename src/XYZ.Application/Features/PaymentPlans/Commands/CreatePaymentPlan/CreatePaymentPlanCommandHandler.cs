@@ -32,6 +32,10 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
             CreatePaymentPlanCommand request,
             CancellationToken ct)
         {
+            var role = _current.Role;
+            if (role is null || (role != "Admin" && role != "SuperAdmin"))
+                throw new UnauthorizedAccessException("Ödeme planı oluşturma yetkiniz yok.");
+
             var student = await _dataScope.Students()
                 .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
@@ -72,7 +76,6 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
             };
 
             await _context.PaymentPlans.AddAsync(plan, ct);
-            await _context.SaveChangesAsync(ct);
 
             var baseInstallmentAmount =
                 Math.Floor((request.TotalAmount / totalInstallments) * 100) / 100m;
@@ -108,7 +111,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
                         TotalInstallments = totalInstallments,
                         IsInstallment = totalInstallments > 1,
                         InstallmentPlan = plan.Name,
-                        PaymentPlanId = plan.Id,
+                        PaymentPlan = plan,
                         CreatedAt = now,
                         IsActive = true
                     };

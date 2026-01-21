@@ -20,6 +20,7 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
 
 namespace XYZ.Web.Services
@@ -337,30 +338,29 @@ namespace XYZ.Web.Services
 
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
-            int? studentId,
-            int pageNumber,
-            int pageSize,
-            CancellationToken cancellationToken = default)
+       int? studentId,
+       DateOnly? fromDueDate,
+       DateOnly? toDueDate,
+       PaymentStatus? status,
+       int pageNumber,
+       int pageSize,
+       CancellationToken cancellationToken = default)
         {
-            var query = new System.Collections.Generic.Dictionary<string, string?>
+            var url = "payments";
+
+            var query = new Dictionary<string, string?>()
             {
-                ["PageNumber"] = pageNumber.ToString(),
-                ["PageSize"] = pageSize.ToString()
+                ["studentId"] = studentId?.ToString(),
+                ["fromDueDate"] = fromDueDate?.ToString("yyyy-MM-dd"),
+                ["toDueDate"] = toDueDate?.ToString("yyyy-MM-dd"),
+                ["status"] = status?.ToString(),
+                ["pageNumber"] = pageNumber.ToString(),
+                ["pageSize"] = pageSize.ToString()
             };
 
-            if (studentId.HasValue)
-            {
-                query["StudentId"] = studentId.Value.ToString();
-            }
+            var finalUrl = QueryHelpers.AddQueryString(url, query);
 
-            var url = QueryHelpers.AddQueryString("payments", query);
-
-            var response = await _httpClient.GetAsync(url, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<PaginationResult<PaymentListItemDto>>(
-                cancellationToken: cancellationToken);
-
+            var result = await _httpClient.GetFromJsonAsync<PaginationResult<PaymentListItemDto>>(finalUrl, cancellationToken);
             return result ?? new PaginationResult<PaymentListItemDto>();
         }
 

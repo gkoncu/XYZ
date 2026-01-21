@@ -45,14 +45,13 @@
             <dd class="col-8">@Model.Amount.ToString("C2")</dd>
 
             <dt class="col-4 text-muted">İndirim</dt>
-            <dd class="col-8">
-                @(Model.DiscountAmount.HasValue
-                                ? Model.DiscountAmount.Value.ToString("C2")
-                                : "-")
-            </dd>
+            <dd class="col-8">@(Model.DiscountAmount.HasValue? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
 
             <dt class="col-4 text-muted">Durum</dt>
             <dd class="col-8">@Model.Status.ToDisplayName()</dd>
+
+            <dt class="col-4 text-muted">Vade</dt>
+            <dd class="col-8">@Model.DueDate.ToString("dd.MM.yyyy")</dd>
 
             <dt class="col-4 text-muted">Kayıt Tarihi</dt>
             <dd class="col-8">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
