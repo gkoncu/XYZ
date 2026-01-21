@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Data;
 using XYZ.Domain.Entities;
@@ -23,19 +24,14 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
         bool GenerateAttendance = true
     ) : IRequest<int>;
 
-    public sealed class CreateClassSessionCommandHandler
-        : IRequestHandler<CreateClassSessionCommand, int>
+    public sealed class CreateClassSessionCommandHandler(
+        ApplicationDbContext db,
+        IDataScopeService dataScope
+    ) : IRequestHandler<CreateClassSessionCommand, int>
     {
-        private readonly ApplicationDbContext _db;
-
-        public CreateClassSessionCommandHandler(ApplicationDbContext db)
-        {
-            _db = db;
-        }
-
         public async Task<int> Handle(CreateClassSessionCommand request, CancellationToken cancellationToken)
         {
-            var @class = await _db.Classes
+            var @class = await dataScope.Classes()
                 .FirstOrDefaultAsync(c => c.Id == request.ClassId, cancellationToken);
 
             if (@class is null)
@@ -57,7 +53,7 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
 
             if (request.GenerateAttendance)
             {
-                var activeEnrollments = await _db.ClassEnrollments
+                var activeEnrollments = await db.ClassEnrollments
                     .Where(e => e.ClassId == request.ClassId &&
                                 e.StartDate <= request.Date &&
                                (e.EndDate == null || e.EndDate >= request.Date))
@@ -77,9 +73,9 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
                 }
             }
 
-            _db.ClassSessions.Add(session);
+            db.ClassSessions.Add(session);
 
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
 
             return session.Id;
         }
