@@ -1,0 +1,23 @@
+﻿@model XYZ.Web.Models.Branches.BranchCreateViewModel
+
+@{
+    ViewData["Title"] = "Şube Oluştur";
+}
+
+<h2 class="h4 mb-3">Yeni Şube</h2>
+
+<form asp-action="Create" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label small"></label>
+        <input asp-for="Name" class="form-control form-control-sm" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end mt-3">
+        <a asp-action="Index" class="btn btn-sm btn-outline-light me-2">İptal</a>
+        <button type="submit" class="btn btn-sm btn-primary">Kaydet</button>
+    </div>
+</form>

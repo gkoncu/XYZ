@@ -5,7 +5,10 @@ using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Branches.Commands.CreateBranch;
+using XYZ.Application.Features.Branches.Commands.UpdateBranch;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
+using XYZ.Application.Features.Branches.Queries.GetBranchById;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -102,6 +105,23 @@ namespace XYZ.Web.Services
             int pageNumber,
             int pageSize,
             CancellationToken cancellationToken = default);
+
+        Task<BranchDetailDto?> GetBranchAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreateBranchAsync(
+            CreateBranchCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdateBranchAsync(
+            UpdateBranchCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeleteBranchAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
 
         // === Payments ===
         Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(

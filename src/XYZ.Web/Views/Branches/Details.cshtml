@@ -1,0 +1,71 @@
+﻿@using XYZ.Application.Features.Branches.Queries.GetBranchById
+@model BranchDetailDto
+
+@{
+    ViewData["Title"] = "Şube Detay";
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">@Model.Name</h2>
+        <div class="text-muted small">Şube Id: @Model.Id</div>
+    </div>
+    <div>
+        @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-1">Düzenle</a>
+
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Şube silinsin mi?');">
+                    Sil
+                </button>
+            </form>
+        }
+
+        <a asp-action="Index" class="btn btn-sm btn-outline-light ms-1">Liste</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="fw-semibold mb-2">Bilgiler</div>
+            <div class="small text-muted">Sınıf Sayısı: @Model.ClassCount</div>
+            <div class="small text-muted">Oluşturma: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+            <div class="mt-2">
+                @if (Model.IsActive)
+                {
+                    <span class="badge-soft badge-soft-success">Aktif</span>
+                }
+                else
+                {
+                    <span class="badge-soft badge-soft-muted">Pasif</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (isSuperAdmin)
+    {
+        <div class="col-md-6">
+            <div class="card-surface p-3">
+                <div class="fw-semibold mb-2">Kulüp</div>
+                <div class="small text-muted">@Model.TenantName</div>
+                <div class="small text-muted">Kulüp Id: @Model.TenantId</div>
+            </div>
+        </div>
+    }
+</div>
