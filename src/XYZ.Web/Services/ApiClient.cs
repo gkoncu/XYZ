@@ -7,7 +7,10 @@ using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Application.Features.Branches.Commands.CreateBranch;
+using XYZ.Application.Features.Branches.Commands.UpdateBranch;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
+using XYZ.Application.Features.Branches.Queries.GetBranchById;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -298,46 +301,6 @@ namespace XYZ.Web.Services
                 .ReadFromJsonAsync<AdminDetailDto>(cancellationToken: cancellationToken);
         }
 
-
-        // === Branches ===
-        public async Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
-            int pageNumber,
-            int pageSize,
-            CancellationToken cancellationToken = default)
-        {
-            var queryParams = new Dictionary<string, string?>
-            {
-                ["PageNumber"] = pageNumber.ToString(),
-                ["PageSize"] = pageSize.ToString()
-            };
-
-            var path = QueryHelpers.AddQueryString("branches", queryParams);
-
-            var response = await _httpClient.GetAsync(path, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return new PaginationResult<BranchListItemDto>
-                {
-                    Items = new List<BranchListItemDto>(),
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
-                    TotalCount = 0
-                };
-            }
-
-            var dto = await response.Content
-                .ReadFromJsonAsync<PaginationResult<BranchListItemDto>>(cancellationToken: cancellationToken);
-
-            return dto ?? new PaginationResult<BranchListItemDto>
-            {
-                Items = new List<BranchListItemDto>(),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = 0
-            };
-        }
-
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
        int? studentId,
@@ -415,6 +378,91 @@ namespace XYZ.Web.Services
         {
             var response = await _httpClient.DeleteAsync($"payments/{id}", cancellationToken);
 
+            response.EnsureSuccessStatusCode();
+
+            var deletedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return deletedId;
+        }
+
+        // === Branches ===
+        public async Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            var path = QueryHelpers.AddQueryString("branches", queryParams);
+
+            var response = await _httpClient.GetAsync(path, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new PaginationResult<BranchListItemDto>
+                {
+                    Items = new List<BranchListItemDto>(),
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                };
+            }
+
+            var dto = await response.Content
+                .ReadFromJsonAsync<PaginationResult<BranchListItemDto>>(cancellationToken: cancellationToken);
+
+            return dto ?? new PaginationResult<BranchListItemDto>
+            {
+                Items = new List<BranchListItemDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
+        }
+
+        public async Task<BranchDetailDto?> GetBranchAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"branches/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<BranchDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreateBranchAsync(
+            CreateBranchCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsJsonAsync("branches", command, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> UpdateBranchAsync(
+            UpdateBranchCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"branches/{command.BranchId}", command, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> DeleteBranchAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.DeleteAsync($"branches/{id}", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var deletedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);

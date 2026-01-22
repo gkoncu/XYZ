@@ -51,6 +51,12 @@
                                 <a class="nav-link" asp-controller="Tenants" asp-action="Index">Tenants</a>
                             </li>
                         }
+                        @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Branches" asp-action="Index">Şubeler</a>
+                            </li>
+                        }
                         @* Navlinkler *@
                     </ul>
                     <div class="d-flex align-items-center gap-3">

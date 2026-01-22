@@ -1,0 +1,107 @@
+﻿@using XYZ.Application.Common.Models
+@using XYZ.Application.Features.Branches.Queries.GetAllBranches
+@model PaginationResult<BranchListItemDto>
+
+@{
+    ViewData["Title"] = "Şubeler";
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+}
+
+<section class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h2 class="h4 mb-1">Şubeler</h2>
+            <p class="text-muted small mb-0">Kulübünüzdeki şubeleri görüntüleyin ve yönetin.</p>
+        </div>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+        {
+            <div>
+                <a asp-action="Create" class="btn btn-sm btn-primary">+ Yeni Şube</a>
+            </div>
+        }
+    </div>
+
+    <div class="card-surface">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Şube</th>
+                        @if (isSuperAdmin)
+                        {
+                            <th>Kulüp</th>
+                        }
+                        <th>Sınıf Sayısı</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan=@(isSuperAdmin ? 4 : 3) class="text-center text-muted py-4">
+                                Şube kaydı bulunamadı.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@b.Name</div>
+                                    <div class="small text-muted">Id: @b.Id</div>
+                                </td>
+
+                                @if (isSuperAdmin)
+                                {
+                                    <td>@b.TenantName</td>
+                                }
+
+                                <td>@b.ClassCount</td>
+
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@b.Id" class="btn btn-sm btn-outline-light me-1">Detay</a>
+
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-light">Düzenle</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination pagination-modern justify-content-end mb-0">
+                    @{
+                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+                    }
+                    <li class="page-item @prevDisabled">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageNumber - 1)">Önceki</a>
+                    </li>
+
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        var active = i == Model.PageNumber ? "active" : "";
+                        <li class="page-item @active">
+                            <a class="page-link" asp-action="Index" asp-route-pageNumber="@i">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @nextDisabled">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageNumber + 1)">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</section>
