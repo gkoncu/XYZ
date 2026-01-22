@@ -16,6 +16,7 @@ using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
 using XYZ.Application.Features.Classes.Commands.CreateClass;
 using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
+using XYZ.Application.Features.Classes.Commands.UpdateClass;
 using XYZ.Application.Features.Classes.Queries.GetAllClasses;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
@@ -349,6 +350,15 @@ namespace XYZ.Web.Services
             resp.EnsureSuccessStatusCode();
 
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UpdateClassAsync(int id, UpdateClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"classes/{id}", command, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var updatedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return updatedId;
         }
 
         public async Task<int> DeleteClassAsync(int id, CancellationToken cancellationToken = default)

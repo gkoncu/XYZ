@@ -23,8 +23,13 @@ namespace XYZ.Application.Features.Classes.Queries.GetAllClasses
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int? AgeGroupMin { get; set; }
+        public int? AgeGroupMax { get; set; }
+        public int MaxCapacity { get; set; }
 
         public int TenantId { get; set; }
+        public string? TenantName { get; set; }
 
         public int BranchId { get; set; }
         public string BranchName { get; set; } = string.Empty;
@@ -45,6 +50,7 @@ namespace XYZ.Application.Features.Classes.Queries.GetAllClasses
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string BranchName { get; set; } = string.Empty;
+        public string? TenantName { get; set; }
         public int StudentsCount { get; set; }
         public int CoachesCount { get; set; }
         public bool IsActive { get; set; }

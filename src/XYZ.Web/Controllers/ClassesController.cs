@@ -6,6 +6,7 @@ using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
 using XYZ.Application.Features.Classes.Commands.CreateClass;
 using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
+using XYZ.Application.Features.Classes.Commands.UpdateClass;
 using XYZ.Web.Models.Classes;
 using XYZ.Web.Services;
 
@@ -50,8 +51,8 @@ namespace XYZ.Web.Controllers
             var dto = await _api.GetClassAsync(id, ct);
             if (dto is null) return NotFound();
 
-            var students = await _api.GetStudentsAsync(null, 1, 2000, ct);
-            var coaches = await _api.GetCoachesAsync(null, 1, 2000, ct);
+            var students = await _api.GetStudentsAsync(null, 1, 20, ct);
+            var coaches = await _api.GetCoachesAsync(null, 1, 20, ct);
 
             var assignedStudentIds = dto.Students.Select(s => s.Id).ToHashSet();
             var assignedCoachIds = dto.Coaches.Select(c => c.Id).ToHashSet();
@@ -105,6 +106,66 @@ namespace XYZ.Web.Controllers
             TempData["SuccessMessage"] = "Sınıf oluşturuldu.";
             return RedirectToAction(nameof(Details), new { id });
         }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> Edit(int id, CancellationToken ct = default)
+        {
+            var dto = await _api.GetClassAsync(id, ct);
+            if (dto is null) return NotFound();
+
+            await FillBranchesSelectList(ct, dto.BranchId);
+
+            var vm = new ClassEditViewModel
+            {
+                Id = dto.Id,
+                Name = dto.Name,
+                Description = dto.Description,
+                AgeGroupMin = dto.AgeGroupMin,
+                AgeGroupMax = dto.AgeGroupMax,
+                MaxCapacity = dto.MaxCapacity,
+                BranchId = dto.BranchId,
+                IsActive = dto.IsActive
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> Edit(int id, ClassEditViewModel model, CancellationToken ct = default)
+        {
+            if (id != model.Id) return BadRequest();
+
+            if (!ModelState.IsValid)
+            {
+                await FillBranchesSelectList(ct, model.BranchId);
+                return View(model);
+            }
+
+            if (model.AgeGroupMin.HasValue && model.AgeGroupMax.HasValue && model.AgeGroupMin > model.AgeGroupMax)
+            {
+                ModelState.AddModelError(string.Empty, "Yaş Min, Yaş Max değerinden büyük olamaz.");
+                await FillBranchesSelectList(ct, model.BranchId);
+                return View(model);
+            }
+
+            await _api.UpdateClassAsync(id, new UpdateClassCommand
+            {
+                ClassId = id,
+                Name = model.Name.Trim(),
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+                AgeGroupMin = model.AgeGroupMin,
+                AgeGroupMax = model.AgeGroupMax,
+                MaxCapacity = model.MaxCapacity,
+                BranchId = model.BranchId
+            }, ct);
+
+            TempData["SuccessMessage"] = "Sınıf güncellendi.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -178,10 +239,19 @@ namespace XYZ.Web.Controllers
 
         private async Task FillBranchesSelectList(CancellationToken ct, int? selectedBranchId = null)
         {
-            var branches = await _api.GetBranchesAsync(1, 500, ct);
-            ViewBag.BranchesSelectList = branches.Items
-                .Select(b => new SelectListItem(b.Name, b.Id.ToString(), selectedBranchId == b.Id))
+            var branchesResult = await _api.GetBranchesAsync(pageNumber: 1, pageSize: 20, ct);
+
+            var items = branchesResult.Items
+                .OrderBy(x => x.Name)
+                .Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = x.Name,
+                    Selected = selectedBranchId.HasValue && x.Id == selectedBranchId.Value
+                })
                 .ToList();
+
+            ViewBag.BranchesSelectList = items;
         }
     }
 }

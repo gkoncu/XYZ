@@ -82,6 +82,7 @@ namespace XYZ.Application.Features.Classes.Queries.GetAllClasses
                     Id = c.Id,
                     Name = c.Name,
                     BranchName = c.Branch.Name,
+                    TenantName = c.Tenant.Name,
                     StudentsCount = c.Students.Count,
                     CoachesCount = c.Coaches.Count,
                     IsActive = c.IsActive
