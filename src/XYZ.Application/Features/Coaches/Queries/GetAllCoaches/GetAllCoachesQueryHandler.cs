@@ -1,9 +1,8 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
@@ -42,7 +41,10 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                     (c.User.Email != null && EF.Functions.Like(c.User.Email, term)) ||
                     (c.IdentityNumber != null && EF.Functions.Like(c.IdentityNumber, term)) ||
                     (c.LicenseNumber != null && EF.Functions.Like(c.LicenseNumber, term)) ||
-                    (c.Branch != null && EF.Functions.Like(c.Branch.Name, term)));
+                    (c.Branch != null && EF.Functions.Like(c.Branch.Name, term)) ||
+
+                    EF.Functions.Like(c.Tenant.Name, term)
+                );
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
@@ -99,6 +101,10 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                     FullName = c.User.FirstName + " " + c.User.LastName,
                     Email = c.User.Email ?? string.Empty,
                     PhoneNumber = c.User.PhoneNumber,
+
+                    TenantId = c.TenantId,
+                    TenantName = c.Tenant.Name,
+
                     BranchName = c.Branch.Name,
                     ClassesCount = c.Classes.Count,
                     IsActive = c.IsActive && c.User.IsActive

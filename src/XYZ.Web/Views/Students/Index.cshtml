@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Students";
     var searchTerm = ViewBag.SearchTerm as string;
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
 }
 
 <section class="mb-3">
@@ -31,7 +32,7 @@
                    name="searchTerm"
                    value="@searchTerm"
                    class="form-control form-control-sm me-2"
-                   placeholder="İsim, sınıf veya veli bilgisi ile ara..." />
+                   placeholder="İsim, sınıf veya veli bilgisi@(isSuperAdmin ? ", kulüp" : "") ile ara..." />
             <button type="submit" class="btn btn-sm btn-outline-light">
                 Ara
             </button>
@@ -47,6 +48,10 @@
                 <thead>
                     <tr>
                         <th>Öğrenci</th>
+                        @if (isSuperAdmin)
+                        {
+                            <th>Kulüp</th>
+                        }
                         <th>Sınıf</th>
                         <th>Şube</th>
                         <th>Durum</th>
@@ -57,7 +62,7 @@
                     @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
+                            <td colspan=@(isSuperAdmin ? 6 : 5) class="text-center text-muted py-4">
                                 Kriterlere uygun öğrenci bulunamadı.
                             </td>
                         </tr>
@@ -75,6 +80,12 @@
                                         <div class="small text-muted">@s.PhoneNumber</div>
                                     }
                                 </td>
+
+                                @if (isSuperAdmin)
+                                {
+                                    <td>@s.TenantName</td>
+                                }
+
                                 <td>
                                     @if (s.ClassId.HasValue)
                                     {
