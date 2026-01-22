@@ -1,0 +1,232 @@
+﻿@using XYZ.Application.Common.Models
+@using XYZ.Application.Features.Classes.Queries.GetAllClasses
+@model PaginationResult<ClassListItemDto>
+
+@{
+    ViewData["Title"] = "Sınıflar";
+
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var canCreate = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+
+    string? searchTerm = ViewBag.SearchTerm as string;
+    int? branchId = ViewBag.BranchId as int?;
+    bool? isActive = ViewBag.IsActive as bool?;
+
+    var branches = ViewBag.BranchesSelectList as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<section class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h2 class="h4 mb-1">Sınıflar</h2>
+            <p class="text-muted small mb-0">Sınıfları görüntüleyin ve yönetin.</p>
+        </div>
+
+        @if (canCreate)
+        {
+            <div>
+                <a asp-action="Create" class="btn btn-sm btn-primary">+ Yeni Sınıf</a>
+            </div>
+        }
+    </div>
+
+    <div class="card-surface mb-3">
+        <form asp-action="Index" method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Ara</label>
+                <input type="text"
+                       name="searchTerm"
+                       value="@searchTerm"
+                       class="form-control form-control-sm"
+                       placeholder="Sınıf adı@(isSuperAdmin ? ", kulüp" : ""), şube" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Şube</label>
+                <select name="branchId" class="form-select form-select-sm">
+                    <option value="">Tümü</option>
+                    @foreach (var b in branches)
+                    {
+                        var selected = (branchId.HasValue && b.Value == branchId.Value.ToString()) ? "selected" : null;
+                        <option value="@b.Value" selected="@selected">@b.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Durum</label>
+                <select name="isActive" class="form-select form-select-sm">
+                    @if (isActive == null)
+                    {
+                        <option value="" selected>Tümü</option>
+                    }
+                    else
+                    {
+                        <option value="">Tümü</option>
+                    }
+
+                    @if (isActive == true)
+                    {
+                        <option value="true" selected>Aktif</option>
+                    }
+                    else
+                    {
+                        <option value="true">Aktif</option>
+                    }
+
+                    @if (isActive == false)
+                    {
+                        <option value="false" selected>Pasif</option>
+                    }
+                    else
+                    {
+                        <option value="false">Pasif</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex justify-content-end">
+                <button type="submit" class="btn btn-sm btn-outline-light me-2">Filtrele</button>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Temizle</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-surface">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Sınıf</th>
+                        <th>Şube</th>
+                        @if (isSuperAdmin)
+                        {
+                            <th>Kulüp</th>
+                        }
+                        <th>Öğrenci</th>
+                        <th>Koç</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan=@(isSuperAdmin ? 7 : 6) class="text-center text-muted py-4">
+                                Kriterlere uygun sınıf bulunamadı.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var c in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@c.Name</div>
+                                    <div class="small text-muted">Id: @c.Id</div>
+                                </td>
+                                <td>@c.BranchName</td>
+
+                                @if (isSuperAdmin)
+                                {
+                                    <td>@c.TenantName</td>
+                                }
+
+                                <td>@c.StudentsCount</td>
+                                <td>@c.CoachesCount</td>
+
+                                <td>
+                                    @if (c.IsActive)
+                                    {
+                                        <span class="badge-soft badge-soft-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-soft badge-soft-muted">Pasif</span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+                                    <a asp-action="Details"
+                                       asp-route-id="@c.Id"
+                                       class="btn btn-sm btn-outline-light me-1">
+                                        Detay
+                                    </a>
+
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <a asp-action="Edit"
+                                           asp-route-id="@c.Id"
+                                           class="btn btn-sm btn-outline-light me-1">
+                                            Düzenle
+                                        </a>
+
+                                        <form asp-action="Delete"
+                                              asp-route-id="@c.Id"
+                                              method="post"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Sınıf silinsin mi?');">
+                                                Sil
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination pagination-modern justify-content-end mb-0">
+                    @{
+                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+                    }
+
+                    <li class="page-item @prevDisabled">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-searchTerm="@searchTerm"
+                           asp-route-branchId="@branchId"
+                           asp-route-isActive="@isActive">Önceki</a>
+                    </li>
+
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        var active = i == Model.PageNumber ? "active" : "";
+                        <li class="page-item @active">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@i"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-searchTerm="@searchTerm"
+                               asp-route-branchId="@branchId"
+                               asp-route-isActive="@isActive">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @nextDisabled">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-searchTerm="@searchTerm"
+                           asp-route-branchId="@branchId"
+                           asp-route-isActive="@isActive">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</section>

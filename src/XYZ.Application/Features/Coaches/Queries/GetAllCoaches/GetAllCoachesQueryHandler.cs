@@ -105,6 +105,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
                     TenantId = c.TenantId,
                     TenantName = c.Tenant.Name,
 
+                    BranchId = c.BranchId,
                     BranchName = c.Branch.Name,
                     ClassesCount = c.Classes.Count,
                     IsActive = c.IsActive && c.User.IsActive

@@ -53,6 +53,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
         public int TenantId { get; set; }
         public string? TenantName { get; set; }
 
+        public int BranchId { get; set; }
         public string BranchName { get; set; } = string.Empty;
         public int ClassesCount { get; set; }
         public bool IsActive { get; set; }

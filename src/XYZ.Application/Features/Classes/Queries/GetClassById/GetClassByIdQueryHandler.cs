@@ -31,7 +31,14 @@ namespace XYZ.Application.Features.Classes.Queries.GetClassById
                 {
                     Id = c.Id,
                     Name = c.Name,
+
+                    Description = c.Description,
+                    AgeGroupMin = c.AgeGroupMin,
+                    AgeGroupMax = c.AgeGroupMax,
+                    MaxCapacity = c.MaxCapacity,
+
                     TenantId = c.TenantId,
+                    TenantName = c.Tenant.Name,
 
                     BranchId = c.BranchId,
                     BranchName = c.Branch.Name,
@@ -44,21 +51,21 @@ namespace XYZ.Application.Features.Classes.Queries.GetClassById
                     CoachesCount = c.Coaches.Count,
 
                     Coaches = c.Coaches
-                        .Select(co => new ClassCoachItemDto
-                        {
-                            Id = co.Id,
-                            FullName = co.User.FirstName + " " + co.User.LastName
-                        })
-                        .ToList(),
+        .Select(co => new ClassCoachItemDto
+        {
+            Id = co.Id,
+            FullName = co.User.FirstName + " " + co.User.LastName
+        })
+        .ToList(),
 
                     Students = c.Students
-                        .Select(s => new ClassStudentItemDto
-                        {
-                            Id = s.Id,
-                            FullName = s.User.FirstName + " " + s.User.LastName,
-                            IsActive = s.IsActive && s.User.IsActive
-                        })
-                        .ToList()
+        .Select(s => new ClassStudentItemDto
+        {
+            Id = s.Id,
+            FullName = s.User.FirstName + " " + s.User.LastName,
+            IsActive = s.IsActive && s.User.IsActive
+        })
+        .ToList()
                 })
                 .AsNoTracking()
                 .SingleOrDefaultAsync(ct);

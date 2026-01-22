@@ -11,6 +11,13 @@ using XYZ.Application.Features.Branches.Commands.CreateBranch;
 using XYZ.Application.Features.Branches.Commands.UpdateBranch;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Branches.Queries.GetBranchById;
+using XYZ.Application.Features.Classes.Commands.AssignCoachToClass;
+using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
+using XYZ.Application.Features.Classes.Commands.CreateClass;
+using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
+using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
+using XYZ.Application.Features.Classes.Commands.UpdateClass;
+using XYZ.Application.Features.Classes.Queries.GetAllClasses;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -299,6 +306,99 @@ namespace XYZ.Web.Services
 
             return await response.Content
                 .ReadFromJsonAsync<AdminDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        // === Classes ===
+        public async Task<PaginationResult<ClassListItemDto>> GetClassesAsync(
+            string? searchTerm,
+            int? branchId,
+            bool? isActive,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var query = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm)) query["SearchTerm"] = searchTerm;
+            if (branchId.HasValue) query["BranchId"] = branchId.Value.ToString();
+            if (isActive.HasValue) query["IsActive"] = isActive.Value.ToString();
+
+            var url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("classes", query);
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<PaginationResult<ClassListItemDto>>(cancellationToken: cancellationToken)
+                   ?? new PaginationResult<ClassListItemDto>();
+        }
+
+        public async Task<ClassDetailDto?> GetClassAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"classes/{id}", cancellationToken);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            return await resp.Content.ReadFromJsonAsync<ClassDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreateClassAsync(CreateClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("classes", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UpdateClassAsync(int id, UpdateClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"classes/{id}", command, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var updatedId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return updatedId;
+        }
+
+        public async Task<int> DeleteClassAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"classes/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> AssignStudentToClassAsync(int classId, AssignStudentToClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync($"classes/{classId}/assign-student", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UnassignStudentFromClassAsync(int classId, UnassignStudentFromClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync($"classes/{classId}/unassign-student", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> AssignCoachToClassAsync(int classId, AssignCoachToClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync($"classes/{classId}/assign-coach", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UnassignCoachFromClassAsync(int classId, UnassignCoachFromClassCommand command, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync($"classes/{classId}/unassign-coach", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
         }
 
         // === Payments ===
