@@ -67,6 +67,7 @@ namespace XYZ.Web.Controllers
 
                 AvailableCoaches = coaches.Items
                     .Where(c => !assignedCoachIds.Contains(c.Id))
+                    .Where(c => c.BranchId == dto.BranchId)
                     .Select(c => new SelectListItem($"{c.FullName}", c.Id.ToString()))
                     .ToList()
             };
@@ -212,13 +213,19 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> AssignCoach(int id, int coachId, CancellationToken ct = default)
         {
-            await _api.AssignCoachToClassAsync(id, new AssignCoachToClassCommand
+            try
             {
-                ClassId = id,
-                CoachId = coachId
-            }, ct);
-
-            TempData["SuccessMessage"] = "Koç sınıfa atandı.";
+                await _api.AssignCoachToClassAsync(id, new AssignCoachToClassCommand
+                {
+                    ClassId = id,
+                    CoachId = coachId
+                }, ct);
+                TempData["SuccessMessage"] = "Koç sınıfa atandı.";
+            }
+            catch (HttpRequestException)
+            {
+                TempData["ErrorMessage"] = "Koç atanamadı. Seçtiğiniz koç bu branşa ait değil";
+            }
             return RedirectToAction(nameof(Details), new { id });
         }
 
