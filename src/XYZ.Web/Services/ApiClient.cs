@@ -20,6 +20,8 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
+using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
 
@@ -462,6 +464,50 @@ namespace XYZ.Web.Services
             return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
                 cancellationToken: cancellationToken);
         }
+
+        // === Tenants (SuperAdmin) ===
+        public async Task<PaginationResult<TenantListItemDto>> GetTenantsAsync(
+            string? searchTerm,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var query = new Dictionary<string, string?>
+            {
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query["SearchTerm"] = searchTerm;
+            }
+
+            var url = QueryHelpers.AddQueryString("tenants", query);
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<PaginationResult<TenantListItemDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new PaginationResult<TenantListItemDto>();
+        }
+
+        public async Task<TenantDetailDto?> GetTenantAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"tenants/{id}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TenantDetailDto>(
+                cancellationToken: cancellationToken);
+        }
+
 
         // === Tenant Theme ===
         public async Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(

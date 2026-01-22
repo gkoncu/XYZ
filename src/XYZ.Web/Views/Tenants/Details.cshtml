@@ -1,0 +1,135 @@
+﻿@model XYZ.Web.Models.Tenants.TenantDetailsViewModel
+@{
+    ViewData["Title"] = "Tenant Detay";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">@Model.Tenant.Name</h2>
+        <div class="text-muted small">@Model.Tenant.Subdomain</div>
+    </div>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Tenant.Id" class="btn btn-sm btn-outline-light me-1">Düzenle</a>
+
+        <form asp-action="Delete" asp-route-id="@Model.Tenant.Id" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Tenant silinsin mi? (IsActive=false)');">
+                Sil
+            </button>
+        </form>
+
+        <a asp-action="Index" class="btn btn-sm btn-outline-light ms-1">Liste</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="fw-semibold mb-2">İletişim</div>
+            <div class="small text-muted">Email: @Model.Tenant.Email</div>
+            <div class="small text-muted">Phone: @Model.Tenant.Phone</div>
+            <div class="small text-muted">Address: @Model.Tenant.Address</div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card-surface p-3">
+            <div class="fw-semibold mb-2">Abonelik</div>
+            <div class="small text-muted">Plan: @Model.Tenant.SubscriptionPlan</div>
+            <div class="small text-muted">Start: @Model.Tenant.SubscriptionStartDate.ToString("yyyy-MM-dd")</div>
+            <div class="small text-muted">End: @Model.Tenant.SubscriptionEndDate.ToString("yyyy-MM-dd")</div>
+            <div class="mt-2">
+                @if (Model.Tenant.IsActive)
+                {
+                    <span class="badge-soft badge-soft-success">Aktif</span>
+                }
+                else
+                {
+                    <span class="badge-soft badge-soft-muted">Pasif</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card-surface p-3">
+            <div class="fw-semibold mb-2">Özet</div>
+            <div class="small text-muted">
+                Branch: @Model.Tenant.ActiveBranchCount · Class: @Model.Tenant.ActiveClassCount · Student: @Model.Tenant.ActiveStudentCount · Coach: @Model.Tenant.ActiveCoachCount
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card-surface p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-semibold">Bu Tenant İçin Admin Oluştur</div>
+                <div class="small text-muted">İlk şifre API tarafında: <span class="fw-semibold">Admin123!</span></div>
+            </div>
+
+            <form asp-action="CreateAdmin" asp-route-id="@Model.Tenant.Id" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+                <div class="col-md-4">
+                    <label asp-for="CreateAdmin.FirstName" class="form-label small"></label>
+                    <input asp-for="CreateAdmin.FirstName" class="form-control form-control-sm" />
+                    <span asp-validation-for="CreateAdmin.FirstName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="CreateAdmin.LastName" class="form-label small"></label>
+                    <input asp-for="CreateAdmin.LastName" class="form-control form-control-sm" />
+                    <span asp-validation-for="CreateAdmin.LastName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="CreateAdmin.Email" class="form-label small"></label>
+                    <input asp-for="CreateAdmin.Email" class="form-control form-control-sm" />
+                    <span asp-validation-for="CreateAdmin.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="CreateAdmin.PhoneNumber" class="form-label small"></label>
+                    <input asp-for="CreateAdmin.PhoneNumber" class="form-control form-control-sm" />
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="CreateAdmin.IdentityNumber" class="form-label small"></label>
+                    <input asp-for="CreateAdmin.IdentityNumber" class="form-control form-control-sm" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small d-block">Yetkiler</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="CreateAdmin.CanManageUsers" />
+                        <label class="form-check-label small" asp-for="CreateAdmin.CanManageUsers"></label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="CreateAdmin.CanManageFinance" />
+                        <label class="form-check-label small" asp-for="CreateAdmin.CanManageFinance"></label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="CreateAdmin.CanManageSettings" />
+                        <label class="form-check-label small" asp-for="CreateAdmin.CanManageSettings"></label>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end mt-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Admin Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

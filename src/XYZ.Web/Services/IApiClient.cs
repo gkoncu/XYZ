@@ -18,6 +18,8 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
+using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
 
@@ -139,6 +141,16 @@ namespace XYZ.Web.Services
         Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
             CancellationToken cancellationToken = default);
 
+        // === Tenants (SuperAdmin) ===
+        Task<PaginationResult<TenantListItemDto>> GetTenantsAsync(
+            string? searchTerm,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<TenantDetailDto?> GetTenantAsync(
+            int id,
+            CancellationToken cancellationToken = default);
 
         // === Tenant Theme ===
         Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
