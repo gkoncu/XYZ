@@ -9,6 +9,12 @@ using XYZ.Application.Features.Branches.Commands.CreateBranch;
 using XYZ.Application.Features.Branches.Commands.UpdateBranch;
 using XYZ.Application.Features.Branches.Queries.GetAllBranches;
 using XYZ.Application.Features.Branches.Queries.GetBranchById;
+using XYZ.Application.Features.Classes.Commands.AssignCoachToClass;
+using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
+using XYZ.Application.Features.Classes.Commands.CreateClass;
+using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
+using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
+using XYZ.Application.Features.Classes.Queries.GetAllClasses;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
@@ -121,6 +127,28 @@ namespace XYZ.Web.Services
         Task<int> DeleteBranchAsync(
             int id,
             CancellationToken cancellationToken = default);
+
+
+        // === Classes ===
+        Task<PaginationResult<ClassListItemDto>> GetClassesAsync(
+            string? searchTerm,
+            int? branchId,
+            bool? isActive,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task<ClassDetailDto?> GetClassAsync(int id, CancellationToken cancellationToken = default);
+
+        Task<int> CreateClassAsync(CreateClassCommand command, CancellationToken cancellationToken = default);
+
+        Task<int> DeleteClassAsync(int id, CancellationToken cancellationToken = default);
+
+        Task<int> AssignStudentToClassAsync(int classId, AssignStudentToClassCommand command, CancellationToken cancellationToken = default);
+        Task<int> UnassignStudentFromClassAsync(int classId, UnassignStudentFromClassCommand command, CancellationToken cancellationToken = default);
+
+        Task<int> AssignCoachToClassAsync(int classId, AssignCoachToClassCommand command, CancellationToken cancellationToken = default);
+        Task<int> UnassignCoachFromClassAsync(int classId, UnassignCoachFromClassCommand command, CancellationToken cancellationToken = default);
 
 
         // === Payments ===
