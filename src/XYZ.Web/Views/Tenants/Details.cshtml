@@ -1,6 +1,7 @@
 ﻿@model XYZ.Web.Models.Tenants.TenantDetailsViewModel
 @{
-    ViewData["Title"] = "Tenant Detay";
+    ViewData["Title"] = "Kulüp Detay";
+    var kulupAdi = Model.Tenant.Name;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -15,7 +16,7 @@
             @Html.AntiForgeryToken()
             <button type="submit"
                     class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Tenant silinsin mi? (IsActive=false)');">
+                    onclick="return confirm('Kulüp silinsin mi? (IsActive=false)');">
                 Sil
             </button>
         </form>
@@ -37,9 +38,9 @@
     <div class="col-md-6">
         <div class="card-surface p-3">
             <div class="fw-semibold mb-2">İletişim</div>
-            <div class="small text-muted">Email: @Model.Tenant.Email</div>
-            <div class="small text-muted">Phone: @Model.Tenant.Phone</div>
-            <div class="small text-muted">Address: @Model.Tenant.Address</div>
+            <div class="small text-muted">E-posta: @Model.Tenant.Email</div>
+            <div class="small text-muted">Telefon: @Model.Tenant.Phone</div>
+            <div class="small text-muted">Adres: @Model.Tenant.Address</div>
         </div>
     </div>
 
@@ -47,8 +48,8 @@
         <div class="card-surface p-3">
             <div class="fw-semibold mb-2">Abonelik</div>
             <div class="small text-muted">Plan: @Model.Tenant.SubscriptionPlan</div>
-            <div class="small text-muted">Start: @Model.Tenant.SubscriptionStartDate.ToString("yyyy-MM-dd")</div>
-            <div class="small text-muted">End: @Model.Tenant.SubscriptionEndDate.ToString("yyyy-MM-dd")</div>
+            <div class="small text-muted">Başlangıç: @Model.Tenant.SubscriptionStartDate.ToString("yyyy-MM-dd")</div>
+            <div class="small text-muted">Bitiş: @Model.Tenant.SubscriptionEndDate.ToString("yyyy-MM-dd")</div>
             <div class="mt-2">
                 @if (Model.Tenant.IsActive)
                 {
@@ -66,7 +67,39 @@
         <div class="card-surface p-3">
             <div class="fw-semibold mb-2">Özet</div>
             <div class="small text-muted">
-                Branch: @Model.Tenant.ActiveBranchCount · Class: @Model.Tenant.ActiveClassCount · Student: @Model.Tenant.ActiveStudentCount · Coach: @Model.Tenant.ActiveCoachCount
+                Şube: @Model.Tenant.ActiveBranchCount · Sınıf: @Model.Tenant.ActiveClassCount · Öğrenci: @Model.Tenant.ActiveStudentCount · Koç: @Model.Tenant.ActiveCoachCount
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card-surface p-3">
+            <div class="fw-semibold mb-2">Kısayollar</div>
+            <div class="small text-muted mb-3">
+                Aşağıdaki bağlantılar, ilgili listeleri açar ve arama kutusunu kulüp adıyla doldurarak bu kulübe göre filtrelemenizi sağlar.
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-light"
+                   asp-controller="Students"
+                   asp-action="Index"
+                   asp-route-searchTerm="@kulupAdi">
+                    Öğrenciler
+                </a>
+
+                <a class="btn btn-sm btn-outline-light"
+                   asp-controller="Coaches"
+                   asp-action="Index"
+                   asp-route-searchTerm="@kulupAdi">
+                    Koçlar
+                </a>
+
+                <a class="btn btn-sm btn-outline-light"
+                   asp-controller="Admins"
+                   asp-action="Index"
+                   asp-route-searchTerm="@kulupAdi">
+                    Adminler
+                </a>
             </div>
         </div>
     </div>
@@ -74,8 +107,8 @@
     <div class="col-12">
         <div class="card-surface p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="fw-semibold">Bu Tenant İçin Admin Oluştur</div>
-                <div class="small text-muted">İlk şifre API tarafında: <span class="fw-semibold">Admin123!</span></div>
+                <div class="fw-semibold">Bu Kulüp İçin Admin Oluştur</div>
+                <div class="small text-muted">İlk şifre (API): <span class="fw-semibold">Admin123!</span></div>
             </div>
 
             <form asp-action="CreateAdmin" asp-route-id="@Model.Tenant.Id" method="post" class="row g-3">
