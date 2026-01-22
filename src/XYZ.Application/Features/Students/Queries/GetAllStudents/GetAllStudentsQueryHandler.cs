@@ -1,9 +1,8 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
@@ -35,11 +34,28 @@ namespace XYZ.Application.Features.Students.Queries.GetAllStudents
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = $"%{request.SearchTerm.Trim()}%";
+
                 query = query.Where(s =>
                     EF.Functions.Like(s.User.FirstName, term) ||
                     EF.Functions.Like(s.User.LastName, term) ||
                     (s.User.Email != null && EF.Functions.Like(s.User.Email, term)) ||
-                    (s.IdentityNumber != null && EF.Functions.Like(s.IdentityNumber, term)));
+                    (s.User.PhoneNumber != null && EF.Functions.Like(s.User.PhoneNumber, term)) ||
+                    (s.IdentityNumber != null && EF.Functions.Like(s.IdentityNumber, term)) ||
+
+                    (s.Parent1FirstName != null && EF.Functions.Like(s.Parent1FirstName, term)) ||
+                    (s.Parent1LastName != null && EF.Functions.Like(s.Parent1LastName, term)) ||
+                    (s.Parent1Email != null && EF.Functions.Like(s.Parent1Email, term)) ||
+                    (s.Parent1PhoneNumber != null && EF.Functions.Like(s.Parent1PhoneNumber, term)) ||
+                    (s.Parent2FirstName != null && EF.Functions.Like(s.Parent2FirstName, term)) ||
+                    (s.Parent2LastName != null && EF.Functions.Like(s.Parent2LastName, term)) ||
+                    (s.Parent2Email != null && EF.Functions.Like(s.Parent2Email, term)) ||
+                    (s.Parent2PhoneNumber != null && EF.Functions.Like(s.Parent2PhoneNumber, term)) ||
+
+                    (s.Class != null && EF.Functions.Like(s.Class.Name, term)) ||
+                    (s.Class != null && EF.Functions.Like(s.Class.Branch.Name, term)) ||
+
+                    EF.Functions.Like(s.Tenant.Name, term)
+                );
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
@@ -79,6 +95,10 @@ namespace XYZ.Application.Features.Students.Queries.GetAllStudents
                     FullName = s.User.FirstName + " " + s.User.LastName,
                     Email = s.User.Email ?? string.Empty,
                     PhoneNumber = s.User.PhoneNumber,
+
+                    TenantId = s.TenantId,
+                    TenantName = s.Tenant.Name,
+
                     ClassId = s.ClassId,
                     ClassName = s.Class != null ? s.Class.Name : null,
                     BranchName = s.Class != null ? s.Class.Branch.Name : null,

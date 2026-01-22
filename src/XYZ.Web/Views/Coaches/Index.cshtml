@@ -1,10 +1,11 @@
-﻿@using XYZ.Application.Common.Models
+﻿﻿@using XYZ.Application.Common.Models
 @using XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 @model PaginationResult<CoachListItemDto>
 
 @{
     ViewData["Title"] = "Koçlar";
     var searchTerm = ViewBag.SearchTerm as string;
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
 }
 
 <section class="mb-3 d-flex justify-content-between align-items-center">
@@ -33,7 +34,7 @@
                    name="searchTerm"
                    value="@searchTerm"
                    class="form-control form-control-sm"
-                   placeholder="İsim, e-posta veya branş" />
+                   placeholder="İsim, e-posta, branş@(isSuperAdmin ? ", kulüp" : "")" />
         </div>
 
         <div class="col-md-2">
@@ -60,6 +61,10 @@
             <thead>
                 <tr>
                     <th>Koç</th>
+                    @if (isSuperAdmin)
+                    {
+                        <th>Kulüp</th>
+                    }
                     <th>E-posta</th>
                     <th>Telefon</th>
                     <th>Branş</th>
@@ -71,7 +76,7 @@
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan=@(isSuperAdmin ? 7 : 6) class="text-center text-muted py-4">
                             Kriterlere uygun koç bulunamadı.
                         </td>
                     </tr>
@@ -85,6 +90,12 @@
                                 <div class="fw-semibold">@c.FullName</div>
                                 <div class="small text-muted">Id: @c.Id</div>
                             </td>
+
+                            @if (isSuperAdmin)
+                            {
+                                <td>@c.TenantName</td>
+                            }
+
                             <td>@c.Email</td>
                             <td>@c.PhoneNumber</td>
                             <td>@c.BranchName</td>
@@ -150,8 +161,8 @@
 
                 @for (var i = 1; i <= Model.TotalPages; i++)
                 {
-                    var active = i == Model.PageNumber ? "active" : "";
-                    <li class="page-item @active">
+                    var activeClass = i == Model.PageNumber ? "active" : "";
+                    <li class="page-item @activeClass">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-pageNumber="@i"

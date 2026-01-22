@@ -1,23 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 {
     public class CoachClassItemDto
     {
         public int Id { get; set; }
+
         public string FullName { get; set; } = string.Empty;
+
         public string BranchName { get; set; } = string.Empty;
+
         public bool IsActive { get; set; }
     }
 
     public class CoachDetailDto
     {
         public int Id { get; set; }
-        public string UserId { get; set; } = null!;
+        public string UserId { get; set; } = string.Empty;
+
+        public int TenantId { get; set; }
+        public string? TenantName { get; set; }
 
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
@@ -26,8 +29,6 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
         public string Gender { get; set; } = string.Empty;
         public string BloodType { get; set; } = string.Empty;
         public DateTime BirthDate { get; set; }
-
-        public int TenantId { get; set; }
 
         public int BranchId { get; set; }
         public string BranchName { get; set; } = string.Empty;
@@ -48,10 +49,12 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
+
+        public int TenantId { get; set; }
+        public string? TenantName { get; set; }
+
         public string BranchName { get; set; } = string.Empty;
         public int ClassesCount { get; set; }
         public bool IsActive { get; set; }
     }
-
-
 }

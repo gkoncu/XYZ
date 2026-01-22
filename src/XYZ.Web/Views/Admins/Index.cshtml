@@ -1,4 +1,4 @@
-﻿@using XYZ.Application.Common.Models
+﻿﻿@using XYZ.Application.Common.Models
 @using XYZ.Application.Features.Admins.Queries.GetAllAdmins
 @model PaginationResult<AdminListItemDto>
 
@@ -6,6 +6,7 @@
     ViewData["Title"] = "Adminler";
     var searchTerm = ViewBag.SearchTerm as string;
     bool? isActive = ViewBag.IsActive as bool?;
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
 }
 
 <section class="mb-3 d-flex justify-content-between align-items-center">
@@ -34,7 +35,7 @@
                    name="searchTerm"
                    value="@searchTerm"
                    class="form-control form-control-sm"
-                   placeholder="Ad, soyad, e-posta, kulüp, T.C." />
+                   placeholder="Ad, soyad, e-posta@(isSuperAdmin ? ", kulüp" : ""), T.C." />
         </div>
 
         <div class="col-md-3">
@@ -92,7 +93,10 @@
             <thead>
                 <tr>
                     <th>Admin</th>
-                    <th>Kulüp</th>
+                    @if (isSuperAdmin)
+                    {
+                        <th>Kulüp</th>
+                    }
                     <th>E-posta</th>
                     <th>Telefon</th>
                     <th>Yetkiler</th>
@@ -104,7 +108,7 @@
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
+                        <td colspan=@(isSuperAdmin ? 7 : 6) class="text-center text-muted py-4">
                             Kriterlere uygun admin bulunamadı.
                         </td>
                     </tr>
@@ -118,7 +122,12 @@
                                 <div class="fw-semibold">@a.FullName</div>
                                 <div class="small text-muted">UserId: @a.UserId</div>
                             </td>
-                            <td>@a.TenantName</td>
+
+                            @if (isSuperAdmin)
+                            {
+                                <td>@a.TenantName</td>
+                            }
+
                             <td>@a.Email</td>
                             <td>@a.PhoneNumber</td>
                             <td>
