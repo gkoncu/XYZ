@@ -1,0 +1,113 @@
+﻿@model XYZ.Web.Models.ProgressRecords.StudentProgressRecordsViewModel
+
+@{
+    ViewData["Title"] = "Gelişim Kayıtları";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">Gelişim Kayıtları</h2>
+        <div class="text-muted small">Öğrenci: <span class="fw-semibold">@Model.StudentFullName</span></div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-sm btn-outline-light"
+           asp-controller="Students"
+           asp-action="Details"
+           asp-route-id="@Model.StudentId">Öğrenci Detay</a>
+
+        @if (Model.CanWrite)
+        {
+            <a class="btn btn-sm btn-primary"
+               asp-action="Create"
+               asp-route-studentId="@Model.StudentId">+ Yeni Kayıt</a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<div class="card-surface mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <input type="hidden" name="studentId" value="@Model.StudentId" />
+
+        <div class="col-md-4">
+            <label class="form-label form-label-sm">Başlangıç</label>
+            <input type="date" class="form-control form-control-sm" name="from"
+                   value="@(Model.From.HasValue? Model.From.Value.ToString("yyyy-MM-dd") : "")" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label form-label-sm">Bitiş</label>
+            <input type="date" class="form-control form-control-sm" name="to"
+                   value="@(Model.To.HasValue? Model.To.Value.ToString("yyyy-MM-dd") : "")" />
+        </div>
+
+        <div class="col-md-4 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-light me-2" type="submit">Filtrele</button>
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Student"
+               asp-route-studentId="@Model.StudentId">Temizle</a>
+        </div>
+    </form>
+</div>
+
+<div class="card-surface">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Boy</th>
+                    <th>Kilo</th>
+                    <th>Yağ</th>
+                    <th>Puanlar</th>
+                    <th>Not</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Kayıt bulunamadı.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var r in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@r.RecordDate.ToString("yyyy-MM-dd")</td>
+                            <td>@(r.Height?.ToString() ?? "-")</td>
+                            <td>@(r.Weight?.ToString() ?? "-")</td>
+                            <td>@(r.BodyFatPercentage?.ToString() ?? "-")</td>
+                            <td class="small text-muted">
+                                T:@(r.TechnicalScore?.ToString() ?? "-"),
+                                Ta:@(r.TacticalScore?.ToString() ?? "-"),
+                                F:@(r.PhysicalScore?.ToString() ?? "-"),
+                                M:@(r.MentalScore?.ToString() ?? "-")
+                            </td>
+                            <td class="small text-muted">
+                                @(string.IsNullOrWhiteSpace(r.CoachNotes) ? "-" : (r.CoachNotes.Length > 60 ? r.CoachNotes[..60] + "..." : r.CoachNotes))
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-light"
+                                   asp-action="Details"
+                                   asp-route-id="@r.Id">Detay</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
