@@ -627,8 +627,8 @@ namespace XYZ.Web.Services
             var url = $"progressrecords/student/{studentId}";
 
             var query = new Dictionary<string, string?>();
-            if (from.HasValue) query["From"] = from.Value.ToString("yyyy-MM-dd");
-            if (to.HasValue) query["To"] = to.Value.ToString("yyyy-MM-dd");
+            if (from.HasValue) query["from"] = from.Value.ToString("yyyy-MM-dd");
+            if (to.HasValue) query["to"] = to.Value.ToString("yyyy-MM-dd");
 
             if (query.Count > 0)
             {
@@ -636,7 +636,19 @@ namespace XYZ.Web.Services
             }
 
             var resp = await _httpClient.GetAsync(url, cancellationToken);
-            resp.EnsureSuccessStatusCode();
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var contentType = resp.Content.Headers.ContentType?.ToString() ?? "-";
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+                var message =
+                    $"Gelişim kayıtları alınamadı. " +
+                    $"HTTP {(int)resp.StatusCode} ({resp.ReasonPhrase}), " +
+                    $"Url: {url}, Content-Type: {contentType}, Body: {body}";
+
+                throw new InvalidOperationException(message);
+            }
 
             return (await resp.Content.ReadFromJsonAsync<IList<ProgressRecordListItemDto>>(cancellationToken: cancellationToken))
                    ?? new List<ProgressRecordListItemDto>();

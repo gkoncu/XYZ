@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
+using XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords;
 using XYZ.Web.Models.ProgressRecords;
 using XYZ.Web.Services;
 
@@ -29,17 +30,29 @@ namespace XYZ.Web.Controllers
             DateTime? to,
             CancellationToken cancellationToken = default)
         {
+            if (studentId <= 0)
+            {
+                TempData["ErrorMessage"] = $"Geçersiz öğrenci id: {studentId}. URL query param adı 'studentId' olmalı.";
+                return RedirectToAction("Index", "Students");
+            }
+
             var student = await _apiClient.GetStudentAsync(studentId, cancellationToken);
             if (student is null)
             {
                 return NotFound();
             }
 
-            var items = await _apiClient.GetStudentProgressRecordsAsync(
-                studentId,
-                from,
-                to,
-                cancellationToken);
+            IList<ProgressRecordListItemDto> items;
+
+            try
+            {
+                items = await _apiClient.GetStudentProgressRecordsAsync(studentId, from, to, cancellationToken);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                items = new List<ProgressRecordListItemDto>();
+            }
 
             var vm = new StudentProgressRecordsViewModel
             {
