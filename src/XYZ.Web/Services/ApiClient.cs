@@ -28,6 +28,10 @@ using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
+using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
+using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
+using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
+using XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
@@ -611,6 +615,75 @@ namespace XYZ.Web.Services
 
             return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
                 cancellationToken: cancellationToken);
+        }
+
+        // === ProgressRecords ===
+        public async Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(
+            int studentId,
+            DateTime? from,
+            DateTime? to,
+            CancellationToken cancellationToken = default)
+        {
+            var url = $"progressrecords/student/{studentId}";
+
+            var query = new Dictionary<string, string?>();
+            if (from.HasValue) query["From"] = from.Value.ToString("yyyy-MM-dd");
+            if (to.HasValue) query["To"] = to.Value.ToString("yyyy-MM-dd");
+
+            if (query.Count > 0)
+            {
+                url = QueryHelpers.AddQueryString(url, query);
+            }
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<ProgressRecordListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<ProgressRecordListItemDto>();
+        }
+
+        public async Task<ProgressRecordDetailDto?> GetProgressRecordAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"progressrecords/{id}", cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resp.Content.ReadFromJsonAsync<ProgressRecordDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreateProgressRecordAsync(
+            CreateProgressRecordCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("progressrecords", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UpdateProgressRecordAsync(
+            int id,
+            UpdateProgressRecordCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PutAsJsonAsync($"progressrecords/{id}", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> DeleteProgressRecordAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"progressrecords/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
         }
 
         // === Tenants (SuperAdmin) ===
