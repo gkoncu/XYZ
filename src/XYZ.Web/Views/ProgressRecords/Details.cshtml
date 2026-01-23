@@ -1,0 +1,74 @@
+﻿@model XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById.ProgressRecordDetailDto
+
+@{
+    ViewData["Title"] = "Gelişim Kaydı Detay";
+    var canWrite = (bool)(ViewBag.CanWrite ?? false);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">Gelişim Kaydı</h2>
+        <div class="text-muted small">
+            Öğrenci: <span class="fw-semibold">@Model.StudentFullName</span> · Tarih: @Model.RecordDate.ToString("yyyy-MM-dd")
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-sm btn-outline-light"
+           asp-action="Student"
+           asp-route-studentId="@Model.StudentId">Liste</a>
+
+        @if (canWrite)
+        {
+            <a class="btn btn-sm btn-outline-light"
+               asp-action="Edit"
+               asp-route-id="@Model.Id">Düzenle</a>
+
+            <form asp-action="Delete" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="studentId" value="@Model.StudentId" />
+                <button type="submit" class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Kayıt silinsin mi?');">
+                    Sil
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<div class="card-surface p-3">
+    <div class="row g-3">
+        <div class="col-md-3"><div class="small text-muted">Boy</div><div class="fw-semibold">@((Model.Height?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Kilo</div><div class="fw-semibold">@((Model.Weight?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Yağ Oranı</div><div class="fw-semibold">@((Model.BodyFatPercentage?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Dikey Sıçrama</div><div class="fw-semibold">@((Model.VerticalJump?.ToString()) ?? "-")</div></div>
+
+        <div class="col-md-3"><div class="small text-muted">Sprint</div><div class="fw-semibold">@((Model.SprintTime?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Dayanıklılık</div><div class="fw-semibold">@((Model.Endurance?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Esneklik</div><div class="fw-semibold">@((Model.Flexibility?.ToString()) ?? "-")</div></div>
+
+        <div class="col-md-3"><div class="small text-muted">Teknik</div><div class="fw-semibold">@((Model.TechnicalScore?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Taktik</div><div class="fw-semibold">@((Model.TacticalScore?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Fiziksel</div><div class="fw-semibold">@((Model.PhysicalScore?.ToString()) ?? "-")</div></div>
+        <div class="col-md-3"><div class="small text-muted">Mental</div><div class="fw-semibold">@((Model.MentalScore?.ToString()) ?? "-")</div></div>
+
+        <div class="col-12">
+            <div class="small text-muted">Koç Notu</div>
+            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.CoachNotes) ? Model.CoachNotes : "-")</div>
+        </div>
+
+        <div class="col-12">
+            <div class="small text-muted">Hedefler</div>
+            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Goals) ? Model.Goals : "-")</div>
+        </div>
+    </div>
+</div>

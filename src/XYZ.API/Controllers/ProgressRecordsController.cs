@@ -43,12 +43,14 @@ namespace XYZ.API.Controllers
         [HttpGet("student/{studentId:int}")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(IList<ProgressRecordListItemDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IList<ProgressRecordListItemDto>>> GetByStudent(
-            int studentId,
-            [FromQuery] GetStudentProgressRecordsQuery query,
-            CancellationToken cancellationToken)
+        public async Task<ActionResult<IList<ProgressRecordListItemDto>>> GetByStudent(int studentId,[FromQuery] DateTime? from,[FromQuery] DateTime? to, CancellationToken cancellationToken)
         {
-            query.StudentId = studentId;
+            var query = new GetStudentProgressRecordsQuery
+            {
+                StudentId = studentId,
+                From = from,
+                To = to
+            };
 
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);

@@ -26,6 +26,10 @@ using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
+using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
+using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
+using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
+using XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
@@ -191,6 +195,31 @@ namespace XYZ.Web.Services
 
         Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
             CancellationToken cancellationToken = default);
+
+        // === ProgressRecords ===
+        Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(
+            int studentId,
+            DateTime? from,
+            DateTime? to,
+            CancellationToken cancellationToken = default);
+
+        Task<ProgressRecordDetailDto?> GetProgressRecordAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreateProgressRecordAsync(
+            CreateProgressRecordCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdateProgressRecordAsync(
+            int id,
+            UpdateProgressRecordCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeleteProgressRecordAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
 
         // === Tenants (SuperAdmin) ===
         Task<PaginationResult<TenantListItemDto>> GetTenantsAsync(
