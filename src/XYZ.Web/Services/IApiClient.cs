@@ -189,6 +189,16 @@ namespace XYZ.Web.Services
             int id,
             CancellationToken cancellationToken = default);
 
+        // === Documents / Compliance ===
+        Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetStudentDocumentStatusAsync(
+            int studentId,
+            CancellationToken cancellationToken = default);
+
+        Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetCoachDocumentStatusAsync(
+            int coachId,
+            CancellationToken cancellationToken = default);
+
+
         // === Payment Plans ===
         Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
             int studentId,
