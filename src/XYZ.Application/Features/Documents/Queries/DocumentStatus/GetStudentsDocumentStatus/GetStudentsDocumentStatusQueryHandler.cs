@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsDocumentStatus
@@ -36,7 +37,7 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsD
 
             if (requiredIds.Count == 0)
             {
-                var baseQ = _dataScope.Students().Include(s => s.User);
+                IQueryable<Student> baseQ = _dataScope.Students();
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 {
@@ -45,6 +46,7 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsD
                 }
 
                 return await baseQ
+                    .Include(s => s.User)
                     .OrderBy(s => s.User.FullName)
                     .Take(Math.Clamp(request.Take, 1, 1000))
                     .Select(s => new StudentDocumentStatusListItemDto
