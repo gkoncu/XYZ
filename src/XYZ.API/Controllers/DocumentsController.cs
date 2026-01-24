@@ -7,6 +7,10 @@ using XYZ.Application.Features.Documents.Commands.CreateDocument;
 using XYZ.Application.Features.Documents.Commands.DeleteDocument;
 using XYZ.Application.Features.Documents.Commands.UpdateDocument;
 using XYZ.Application.Features.Documents.Queries.DocumentStatus;
+using XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachDocumentStatus;
+using XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachesDocumentStatus;
+using XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentDocumentStatus;
+using XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsDocumentStatus;
 using XYZ.Application.Features.Documents.Queries.GetDocumentById;
 using XYZ.Application.Features.Documents.Queries.GetUserDocuments;
 using XYZ.Domain.Enums;
@@ -167,11 +171,11 @@ namespace XYZ.API.Controllers
 
         [HttpGet("student/{studentId:int}/status")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [ProducesResponseType(typeof(UserDocumentStatusDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserDocumentStatusDto>> GetStudentStatus(int studentId,CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(
-                new XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentDocumentStatus.GetStudentDocumentStatusQuery
-                { StudentId = studentId },
+                new GetStudentDocumentStatusQuery { StudentId = studentId },
                 cancellationToken);
 
             return Ok(result);
@@ -179,13 +183,13 @@ namespace XYZ.API.Controllers
 
         [HttpGet("coach/{coachId:int}/status")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [ProducesResponseType(typeof(UserDocumentStatusDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserDocumentStatusDto>> GetCoachStatus(
             int coachId,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(
-                new XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachDocumentStatus.GetCoachDocumentStatusQuery
-                { CoachId = coachId },
+                new GetCoachDocumentStatusQuery { CoachId = coachId },
                 cancellationToken);
 
             return Ok(result);
@@ -193,6 +197,7 @@ namespace XYZ.API.Controllers
 
         [HttpGet("students/status")]
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [ProducesResponseType(typeof(IList<StudentDocumentStatusListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IList<StudentDocumentStatusListItemDto>>> GetStudentsStatus(
             [FromQuery] bool onlyIncomplete,
             [FromQuery] string? searchTerm,
@@ -200,7 +205,7 @@ namespace XYZ.API.Controllers
             CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(
-                new XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsDocumentStatus.GetStudentsDocumentStatusQuery
+                new GetStudentsDocumentStatusQuery
                 {
                     OnlyIncomplete = onlyIncomplete,
                     SearchTerm = searchTerm,
@@ -213,6 +218,7 @@ namespace XYZ.API.Controllers
 
         [HttpGet("coaches/status")]
         [Authorize(Roles = "Admin,SuperAdmin")]
+        [ProducesResponseType(typeof(IList<CoachDocumentStatusListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IList<CoachDocumentStatusListItemDto>>> GetCoachesStatus(
             [FromQuery] bool onlyIncomplete,
             [FromQuery] string? searchTerm,
@@ -220,7 +226,7 @@ namespace XYZ.API.Controllers
             CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(
-                new XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachesDocumentStatus.GetCoachesDocumentStatusQuery
+                new GetCoachesDocumentStatusQuery
                 {
                     OnlyIncomplete = onlyIncomplete,
                     SearchTerm = searchTerm,
