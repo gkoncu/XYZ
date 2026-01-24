@@ -30,15 +30,13 @@ namespace XYZ.Application.Features.Announcements.Commands.CreateSystemAnnounceme
                 throw new UnauthorizedAccessException("Bu işlem sadece SuperAdmin içindir.");
 
             var tenantIds = await _db.Tenants
-                .Where(t => t.IsActive == false)
+                .IgnoreQueryFilters()
+                .AsNoTracking()
                 .Select(t => t.Id)
                 .ToListAsync(cancellationToken);
 
             if (tenantIds.Count == 0)
                 return 0;
-
-            if (request.Type != AnnouncementType.System)
-                request.Type = AnnouncementType.System;
 
             foreach (var tenantId in tenantIds)
             {
@@ -50,7 +48,7 @@ namespace XYZ.Application.Features.Announcements.Commands.CreateSystemAnnounceme
                     Content = request.Content.Trim(),
                     PublishDate = request.PublishDate,
                     ExpiryDate = request.ExpiryDate,
-                    Type = request.Type,
+                    Type = AnnouncementType.System,
                     IsActive = true
                 });
             }

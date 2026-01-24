@@ -33,6 +33,7 @@ namespace XYZ.Web.Models.Announcements
 
         public List<SelectListItem> TypeOptions { get; set; } = new();
 
+        [Display(Name = "Tüm kulüplere gönder (Sistem duyurusu)")]
         public bool SendToAllClubs { get; set; }
     }
 }

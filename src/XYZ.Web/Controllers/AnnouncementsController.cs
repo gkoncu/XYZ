@@ -109,14 +109,15 @@ namespace XYZ.Web.Controllers
         {
             if (User.IsInRole("SuperAdmin") && model.SendToAllClubs)
             {
-                var count = await _api.BroadcastSystemAnnouncementAsync(new XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants.CreateSystemAnnouncementForAllTenantsCommand
-                {
-                    Title = model.Title?.Trim() ?? string.Empty,
-                    Content = model.Content?.Trim() ?? string.Empty,
-                    PublishDate = model.PublishDate,
-                    ExpiryDate = model.ExpiryDate,
-                    Type = AnnouncementType.System
-                }, ct);
+                var count = await _api.BroadcastSystemAnnouncementAsync(
+                    new XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants.CreateSystemAnnouncementForAllTenantsCommand
+                    {
+                        Title = model.Title?.Trim() ?? string.Empty,
+                        Content = model.Content?.Trim() ?? string.Empty,
+                        PublishDate = model.PublishDate,
+                        ExpiryDate = model.ExpiryDate,
+                        Type = AnnouncementType.System
+                    }, ct);
 
                 TempData["SuccessMessage"] = $"Sistem duyurusu {count} kulübe gönderildi.";
                 return RedirectToAction(nameof(Index));
