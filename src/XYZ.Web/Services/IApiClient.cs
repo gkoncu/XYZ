@@ -244,7 +244,7 @@ namespace XYZ.Web.Services
         Task<int> DeleteDocumentAsync(int id, CancellationToken cancellationToken = default);
 
         // === Document Definitions ===
-        Task<IList<XYZ.Application.Features.DocumentDefinitions.Queries.GetDocumentDefinitions.DocumentDefinitionListItemDto>> GetDocumentDefinitionsAsync(
+        Task<IList<XYZ.Application.Features.DocumentDefinitions.Queries.DocumentDefinitionListItemDto>> GetDocumentDefinitionsAsync(
             int target,
             bool includeInactive = false,
             CancellationToken cancellationToken = default);
