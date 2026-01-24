@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
+using XYZ.Domain.Entities;
 using XYZ.Web.Models.Coaches;
 using XYZ.Web.Services;
 
@@ -28,8 +29,40 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> Index(string searchTerm, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            var result = await _apiClient.GetCoachesAsync(searchTerm, pageNumber, pageSize, cancellationToken);
-            return View(result);
+            var coaches = await _apiClient.GetCoachesAsync(searchTerm, pageNumber, pageSize, cancellationToken);
+
+            var onlyIncompleteDocs = Request.Query.ContainsKey("onlyIncompleteDocs")
+                         && string.Equals(Request.Query["onlyIncompleteDocs"], "true", StringComparison.OrdinalIgnoreCase);
+
+            ViewBag.OnlyIncompleteDocs = onlyIncompleteDocs;
+
+            var statusPairs = await Task.WhenAll(
+                coaches.Items.Select(async c =>
+                {
+                    try
+                    {
+                        var st = await _apiClient.GetCoachDocumentStatusAsync(c.Id, cancellationToken);
+                        return (CoachId: c.Id, IsComplete: st.IsComplete, MissingCount: st.MissingCount);
+                    }
+                    catch
+                    {
+                        return (CoachId: c.Id, IsComplete: true, MissingCount: 0);
+                    }
+                })
+            );
+
+            var docStatusMap = statusPairs.ToDictionary(x => x.CoachId, x => (x.IsComplete, x.MissingCount));
+
+            if (onlyIncompleteDocs)
+            {
+                coaches.Items = coaches.Items
+                    .Where(c => docStatusMap.TryGetValue(c.Id, out var v) && v.MissingCount > 0)
+                    .ToList();
+            }
+
+            ViewBag.CoachDocStatusMap = docStatusMap;
+
+            return View(coaches);
         }
 
         [HttpGet]
