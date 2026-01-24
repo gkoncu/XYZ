@@ -19,6 +19,7 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<Payment> Payments { get; }
         DbSet<PaymentPlan> PaymentPlans { get; }
         DbSet<Document> Documents { get; }
+        DbSet<DocumentDefinition> DocumentDefinitions { get; }
         DbSet<ProgressRecord> ProgressRecords { get; }
         DbSet<Announcement> Announcements { get; }
         DbSet<Admin> Admins { get; }

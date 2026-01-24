@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XYZ.Domain.Enums;
+using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class DocumentDefinition
+    public class DocumentDefinition : BaseEntity
     {
         public int TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
