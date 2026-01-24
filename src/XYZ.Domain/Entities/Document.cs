@@ -14,9 +14,12 @@ namespace XYZ.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public DocumentType Type { get; set; }
+
         public DateTime UploadDate { get; set; } = DateTime.UtcNow;
         public string UploadedBy { get; set; } = string.Empty;
+
+        public int DocumentDefinitionId { get; set; }
+        public DocumentDefinition DocumentDefinition { get; set; } = null!;
 
         public int? StudentId { get; set; }
         public int? CoachId { get; set; }
