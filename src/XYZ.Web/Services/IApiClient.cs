@@ -243,6 +243,24 @@ namespace XYZ.Web.Services
 
         Task<int> DeleteDocumentAsync(int id, CancellationToken cancellationToken = default);
 
+        // === Document Definitions ===
+        Task<IList<XYZ.Application.Features.DocumentDefinitions.Queries.GetDocumentDefinitions.DocumentDefinitionListItemDto>> GetDocumentDefinitionsAsync(
+            int target,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreateDocumentDefinitionAsync(
+            XYZ.Application.Features.DocumentDefinitions.Commands.CreateDocumentDefinition.CreateDocumentDefinitionCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdateDocumentDefinitionAsync(
+            int id,
+            XYZ.Application.Features.DocumentDefinitions.Commands.UpdateDocumentDefinition.UpdateDocumentDefinitionCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeleteDocumentDefinitionAsync(
+            int id,
+            CancellationToken cancellationToken = default);
 
         // === Payment Plans ===
         Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
