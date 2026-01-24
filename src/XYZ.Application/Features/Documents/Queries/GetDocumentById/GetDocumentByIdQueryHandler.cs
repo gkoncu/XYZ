@@ -25,8 +25,9 @@ namespace XYZ.Application.Features.Documents.Queries.GetDocumentById
             CancellationToken ct)
         {
             var entity = await _dataScope.Documents()
-                .Include(d => d.Student)
-                    .ThenInclude(s => s.User)
+                .Include(d => d.Student).ThenInclude(s => s.User)
+                .Include(d => d.Coach).ThenInclude(c => c.User)
+                .Include(d => d.DocumentDefinition)
                 .FirstOrDefaultAsync(d => d.Id == request.Id, ct);
 
             if (entity is null)
@@ -35,12 +36,17 @@ namespace XYZ.Application.Features.Documents.Queries.GetDocumentById
             return new DocumentDetailDto
             {
                 Id = entity.Id,
-                StudentId = entity.StudentId ?? 0,
-                StudentFullName = entity.Student?.User.FullName ?? string.Empty,
+                StudentId = entity.StudentId,
+                StudentFullName = entity.Student?.User.FullName,
+                CoachId = entity.CoachId,
+                CoachFullName = entity.Coach?.User.FullName,
+                DocumentDefinitionId = entity.DocumentDefinitionId,
+                DocumentDefinitionName = entity.DocumentDefinition.Name,
+                Target = entity.DocumentDefinition.Target,
+                IsRequired = entity.DocumentDefinition.IsRequired,
                 Name = entity.Name,
                 FilePath = entity.FilePath,
                 Description = entity.Description,
-                Type = entity.Type,
                 UploadDate = entity.UploadDate,
                 UploadedBy = entity.UploadedBy,
                 IsActive = entity.IsActive
