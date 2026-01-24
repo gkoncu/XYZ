@@ -1,0 +1,62 @@
+﻿@model XYZ.Web.Models.Announcements.AnnouncementUpsertViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Duyuru Oluştur";
+    var classes = ViewBag.ClassesSelectList as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<h2 class="h4 mb-3">Duyuru Oluştur</h2>
+
+<form asp-action="Create" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+    <div class="col-md-6">
+        <label class="form-label small">Sınıf</label>
+        <select class="form-select form-select-sm" asp-for="ClassId">
+            <option value="">Genel (Sınıf yok)</option>
+            @foreach (var c in classes)
+            {
+                <option value="@c.Value" selected=@(Model.ClassId?.ToString() == c.Value)>@c.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Type" class="form-label small"></label>
+        <select asp-for="Type" class="form-select form-select-sm">
+            @foreach (var t in Model.TypeOptions)
+            {
+                <option value="@t.Value" selected=@(Model.Type.ToString() == t.Value)>@t.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Title" class="form-label small"></label>
+        <input asp-for="Title" class="form-control form-control-sm" />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Content" class="form-label small"></label>
+        <textarea asp-for="Content" rows="6" class="form-control form-control-sm"></textarea>
+        <span asp-validation-for="Content" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="PublishDate" class="form-label small"></label>
+        <input asp-for="PublishDate" type="date" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="ExpiryDate" class="form-label small"></label>
+        <input asp-for="ExpiryDate" type="date" class="form-control form-control-sm" />
+    </div>
+
+    <div class="col-12 d-flex justify-content-end mt-2">
+        <a class="btn btn-sm btn-outline-light me-2" asp-action="Index">İptal</a>
+        <button type="submit" class="btn btn-sm btn-primary">Kaydet</button>
+    </div>
+</form>

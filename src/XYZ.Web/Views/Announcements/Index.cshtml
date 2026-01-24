@@ -1,0 +1,127 @@
+﻿@model XYZ.Web.Models.Announcements.AnnouncementsIndexViewModel
+@using XYZ.Domain.Enums
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Duyurular";
+    var classes = ViewBag.ClassesSelectList as List<SelectListItem> ?? new List<SelectListItem>();
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">Duyurular</h2>
+
+    @if (Model.CanWrite)
+    {
+        <a class="btn btn-sm btn-primary" asp-action="Create">+ Yeni Duyuru</a>
+    }
+</div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<div class="card-surface mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label form-label-sm">Arama</label>
+            <input class="form-control form-control-sm" name="searchTerm" value="@Model.SearchTerm" placeholder="Başlık / içerik" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label form-label-sm">Sınıf</label>
+            <select class="form-select form-select-sm" name="classId">
+                <option value="">Tümü</option>
+                @foreach (var c in classes)
+                {
+                    <option value="@c.Value" selected=@(Model.ClassId?.ToString() == c.Value)>@c.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label form-label-sm">Tür</label>
+            <select class="form-select form-select-sm" name="type">
+                <option value="">Tümü</option>
+                @foreach (var t in Model.TypeOptions)
+                {
+                    <option value="@t.Value" selected=@(Model.Type?.ToString() == t.Value)>@t.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+
+            <input type="hidden" name="onlyCurrent" value="false" />
+
+            <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="onlyCurrentChecked"
+                       value="true"
+                       @(Model.OnlyCurrent ? "checked" : "") />
+                <label class="form-check-label small">Sadece güncel</label>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <button type="submit" class="btn btn-sm btn-outline-light">Filtrele</button>
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Index">Temizle</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="card-surface">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Başlık</th>
+                    <th>Tür</th>
+                    <th>Yayın</th>
+                    <th>Bitiş</th>
+                    <th>Sınıf</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Duyuru bulunamadı.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var a in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@a.Title</td>
+                            <td class="small text-muted">
+                                @(a.Type switch
+                                {
+                                    AnnouncementType.General => "Genel",
+                                    AnnouncementType.Match => "Maç",
+                                    AnnouncementType.Event => "Etkinlik",
+                                    AnnouncementType.System => "Sistem",
+                                    _ => a.Type.ToString()
+                                })
+                            </td>
+                            <td>@a.PublishDate.ToString("yyyy-MM-dd")</td>
+                            <td>@(a.ExpiryDate.HasValue? a.ExpiryDate.Value.ToString("yyyy-MM-dd") : "-")</td>
+                            <td>@(string.IsNullOrWhiteSpace(a.ClassName) ? "-" : a.ClassName)</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-light" asp-action="Details" asp-route-id="@a.Id">Detay</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
