@@ -25,8 +25,8 @@ namespace XYZ.Application.Features.Documents.Queries.GetDocumentById
             CancellationToken ct)
         {
             var entity = await _dataScope.Documents()
-                .Include(d => d.Student).ThenInclude(s => s.User)
-                .Include(d => d.Coach).ThenInclude(c => c.User)
+                .Include(d => d.Student).ThenInclude(s => s!.User)
+                .Include(d => d.Coach).ThenInclude(c => c!.User)
                 .Include(d => d.DocumentDefinition)
                 .FirstOrDefaultAsync(d => d.Id == request.Id, ct);
 
