@@ -27,6 +27,8 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.Documents.Queries.DocumentStatus;
+using XYZ.Application.Features.Documents.Queries.GetUserDocuments;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
 using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
@@ -410,41 +412,161 @@ namespace XYZ.Web.Services
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
         }
 
-        // === Documents / Compliance ===
-        public async Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetStudentDocumentStatusAsync(
-            int studentId,
+        // === Documents / Compliance Index ===
+        public async Task<IList<StudentDocumentStatusListItemDto>> GetStudentsDocumentStatusAsync(
+            bool onlyIncomplete,
+            string? searchTerm,
+            int take,
             CancellationToken cancellationToken = default)
+        {
+            var url = $"documents/students/status?onlyIncomplete={onlyIncomplete.ToString().ToLowerInvariant()}&take={take}";
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+                url += $"&searchTerm={Uri.EscapeDataString(searchTerm.Trim())}";
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<StudentDocumentStatusListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<StudentDocumentStatusListItemDto>();
+        }
+
+        public async Task<IList<CoachDocumentStatusListItemDto>> GetCoachesDocumentStatusAsync(
+            bool onlyIncomplete,
+            string? searchTerm,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            var url = $"documents/coaches/status?onlyIncomplete={onlyIncomplete.ToString().ToLowerInvariant()}&take={take}";
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+                url += $"&searchTerm={Uri.EscapeDataString(searchTerm.Trim())}";
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<CoachDocumentStatusListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<CoachDocumentStatusListItemDto>();
+        }
+
+        // === Documents / User Detail Status ===
+        public async Task<UserDocumentStatusDto> GetStudentDocumentStatusAsync(int studentId, CancellationToken cancellationToken = default)
         {
             var resp = await _httpClient.GetAsync($"documents/student/{studentId}/status", cancellationToken);
             resp.EnsureSuccessStatusCode();
 
-            return (await resp.Content.ReadFromJsonAsync<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto>(
-                        cancellationToken: cancellationToken))
-                   ?? new XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto();
+            return (await resp.Content.ReadFromJsonAsync<UserDocumentStatusDto>(cancellationToken: cancellationToken))
+                   ?? new UserDocumentStatusDto();
         }
 
-        public async Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetCoachDocumentStatusAsync(
-            int coachId,
-            CancellationToken cancellationToken = default)
+        public async Task<UserDocumentStatusDto> GetCoachDocumentStatusAsync(int coachId, CancellationToken cancellationToken = default)
         {
             var resp = await _httpClient.GetAsync($"documents/coach/{coachId}/status", cancellationToken);
             resp.EnsureSuccessStatusCode();
 
-            return (await resp.Content.ReadFromJsonAsync<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto>(
-                        cancellationToken: cancellationToken))
-                   ?? new XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto();
+            return (await resp.Content.ReadFromJsonAsync<UserDocumentStatusDto>(cancellationToken: cancellationToken))
+                   ?? new UserDocumentStatusDto();
+        }
+
+        // === Documents / Lists ===
+        public async Task<IList<DocumentListItemDto>> GetStudentDocumentsAsync(int studentId, int? type, CancellationToken cancellationToken = default)
+        {
+            var url = $"documents/student/{studentId}";
+            if (type.HasValue) url += $"?type={type.Value}";
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<DocumentListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<DocumentListItemDto>();
+        }
+
+        public async Task<IList<DocumentListItemDto>> GetCoachDocumentsAsync(int coachId, int? type, CancellationToken cancellationToken = default)
+        {
+            var url = $"documents/coach/{coachId}";
+            if (type.HasValue) url += $"?type={type.Value}";
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<DocumentListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<DocumentListItemDto>();
+        }
+
+        // === Documents / Upload ===
+        public async Task<int> UploadStudentDocumentAsync(
+            int studentId,
+            Stream fileStream,
+            string fileName,
+            string? name,
+            string? description,
+            int documentDefinitionId,
+            CancellationToken cancellationToken = default)
+        {
+            using var content = new MultipartFormDataContent();
+
+            var fileContent = new StreamContent(fileStream);
+            content.Add(fileContent, "File", fileName);
+
+            if (!string.IsNullOrWhiteSpace(name))
+                content.Add(new StringContent(name.Trim()), "Name");
+
+            if (!string.IsNullOrWhiteSpace(description))
+                content.Add(new StringContent(description.Trim()), "Description");
+
+            content.Add(new StringContent(documentDefinitionId.ToString()), "DocumentDefinitionId");
+
+            var resp = await _httpClient.PostAsync($"documents/student/{studentId}", content, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        public async Task<int> UploadCoachDocumentAsync(
+            int coachId,
+            Stream fileStream,
+            string fileName,
+            string? name,
+            string? description,
+            int documentDefinitionId,
+            CancellationToken cancellationToken = default)
+        {
+            using var content = new MultipartFormDataContent();
+
+            var fileContent = new StreamContent(fileStream);
+            content.Add(fileContent, "File", fileName);
+
+            if (!string.IsNullOrWhiteSpace(name))
+                content.Add(new StringContent(name.Trim()), "Name");
+
+            if (!string.IsNullOrWhiteSpace(description))
+                content.Add(new StringContent(description.Trim()), "Description");
+
+            content.Add(new StringContent(documentDefinitionId.ToString()), "DocumentDefinitionId");
+
+            var resp = await _httpClient.PostAsync($"documents/coach/{coachId}", content, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        // === Documents / Delete ===
+        public async Task<int> DeleteDocumentAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"documents/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
         }
 
 
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
-       int? studentId,
-       DateOnly? fromDueDate,
-       DateOnly? toDueDate,
-       PaymentStatus? status,
-       int pageNumber,
-       int pageSize,
-       CancellationToken cancellationToken = default)
+            int? studentId,
+            DateOnly? fromDueDate,
+            DateOnly? toDueDate,
+            PaymentStatus? status,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
         {
             var url = "payments";
 
