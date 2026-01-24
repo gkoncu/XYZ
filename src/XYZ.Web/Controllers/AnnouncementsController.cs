@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
+using XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants;
 using XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Announcements;
@@ -194,6 +195,47 @@ namespace XYZ.Web.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
+        public IActionResult Broadcast()
+        {
+            ViewData["Title"] = "Sistem Duyurusu Gönder";
+            return View(new BroadcastAnnouncementViewModel
+            {
+                PublishDate = DateTime.Today
+            });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Broadcast(BroadcastAnnouncementViewModel model, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            try
+            {
+                var count = await _api.BroadcastSystemAnnouncementAsync(new CreateSystemAnnouncementForAllTenantsCommand
+                {
+                    Title = model.Title.Trim(),
+                    Content = model.Content.Trim(),
+                    PublishDate = model.PublishDate,
+                    ExpiryDate = model.ExpiryDate,
+                    Type = AnnouncementType.System
+                }, ct);
+
+                TempData["SuccessMessage"] = $"Sistem duyurusu {count} kulübe gönderildi.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+{
+                TempData["ErrorMessage"] = ex.Message;
+                return View(model);
+            }
+        }
+
 
         private async Task FillClassesSelectList(CancellationToken ct, int? selectedClassId)
         {

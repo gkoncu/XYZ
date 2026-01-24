@@ -41,14 +41,14 @@
                             <a class="nav-link" asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Students" asp-action="Index">Students</a>
+                            <a class="nav-link" asp-controller="Students" asp-action="Index">Öğrenciler</a>
                         </li>
-                        <li class="nav-item"> <a class="nav-link" asp-controller="Payments" asp-action="Index"> Payments</a>
+                        <li class="nav-item"> <a class="nav-link" asp-controller="Payments" asp-action="Index"> Ödemeler</a>
                         </li>
                         @if (User.IsInRole("SuperAdmin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Tenants" asp-action="Index">Tenants</a>
+                                <a class="nav-link" asp-controller="Tenants" asp-action="Index">Kulüpler</a>
                             </li>
                         }
                         @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
@@ -57,6 +57,9 @@
                                 <a class="nav-link" asp-controller="Branches" asp-action="Index">Şubeler</a>
                             </li>
                         }
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Announcements" asp-action="Index">Duyurular</a>
+                        </li>
                         @* Navlinkler *@
                     </ul>
                     <div class="d-flex align-items-center gap-3">

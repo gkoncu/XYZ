@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
+using XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants;
 using XYZ.Application.Features.Announcements.Commands.DeleteAnnouncement;
 using XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement;
 using XYZ.Application.Features.Announcements.Queries.GetAllAnnouncements;
@@ -90,5 +91,15 @@ namespace XYZ.API.Controllers
 
             return Ok(deletedId);
         }
+
+        [HttpPost("system/broadcast")]
+        [Authorize(Roles = "SuperAdmin")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        public async Task<ActionResult<int>> BroadcastSystem([FromBody] CreateSystemAnnouncementForAllTenantsCommand command,CancellationToken cancellationToken)
+        {
+            var count = await _mediator.Send(command, cancellationToken);
+            return Ok(count);
+        }
+
     }
 }
