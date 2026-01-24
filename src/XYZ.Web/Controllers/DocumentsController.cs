@@ -209,6 +209,14 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Coach), new { coachId });
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        public async Task<IActionResult> Download(int id, CancellationToken ct = default)
+        {
+            var streamResult = await _api.DownloadDocumentAsync(id, ct);
+            return File(streamResult.Stream, streamResult.ContentType, streamResult.FileName);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]

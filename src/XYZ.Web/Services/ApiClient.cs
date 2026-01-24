@@ -27,6 +27,9 @@ using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
+using XYZ.Application.Features.DocumentDefinitions.Commands.CreateDocumentDefinition;
+using XYZ.Application.Features.DocumentDefinitions.Commands.UpdateDocumentDefinition;
+using XYZ.Application.Features.DocumentDefinitions.Queries;
 using XYZ.Application.Features.Documents.Queries.DocumentStatus;
 using XYZ.Application.Features.Documents.Queries.GetUserDocuments;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
@@ -557,6 +560,67 @@ namespace XYZ.Web.Services
             return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
         }
 
+        // === Document Definitions ===
+        public async Task<IList<DocumentDefinitionListItemDto>> GetDocumentDefinitionsAsync(
+            int target,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default)
+        {
+            var url = $"documentdefinitions?target={target}&includeInactive={includeInactive.ToString().ToLowerInvariant()}";
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<DocumentDefinitionListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<DocumentDefinitionListItemDto>();
+        }
+
+        public async Task<int> CreateDocumentDefinitionAsync(
+            CreateDocumentDefinitionCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("documentdefinitions", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        public async Task<int> UpdateDocumentDefinitionAsync(
+            int id,
+            UpdateDocumentDefinitionCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PutAsJsonAsync($"documentdefinitions/{id}", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        public async Task<int> DeleteDocumentDefinitionAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"documentdefinitions/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        // === Documents / Download ===
+        public async Task<(Stream Stream, string ContentType, string FileName)> DownloadDocumentAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"documents/{id}/download", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            var contentType = resp.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+            var fileName = resp.Content.Headers.ContentDisposition?.FileNameStar
+                ?? resp.Content.Headers.ContentDisposition?.FileName
+                ?? $"document-{id}";
+
+            fileName = fileName.Trim('"');
+
+            var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+            return (stream, contentType, fileName);
+        }
 
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(

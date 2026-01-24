@@ -176,7 +176,10 @@
                                     <td>@d.UploadedBy</td>
                                     <td>@d.UploadDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
                                     <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary" href="@($"/api/documents/{d.Id}/download")" target="_blank">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-controller="Documents"
+                                           asp-action="Download"
+                                           asp-route-id="@d.Id">
                                             İndir
                                         </a>
 
@@ -184,7 +187,7 @@
                                               asp-action="Delete">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@d.Id" />
-                                            <input type="hidden" name="ownerId" value="@Model.OwnerId" />
+                                            <input type="hidden" name="ownerId" value="@Model.OwnerDisplayName" />
                                             <input type="hidden" name="returnTo" value="@(Model.Title.Contains("Koç") ? "coach" : "student")" />
 
                                             <button type="submit" class="btn btn-sm btn-outline-danger"

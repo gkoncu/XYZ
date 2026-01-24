@@ -69,7 +69,6 @@
                     <th>Telefon</th>
                     <th>Branş</th>
                     <th>Durum</th>
-                    <th>Belge Durumu</th>
                     <th class="text-end">İşlem</th>
                 </tr>
             </thead>
@@ -108,20 +107,6 @@
                                 else
                                 {
                                     <span class="badge-soft badge-soft-secondary">Pasif</span>
-                                }
-                            </td>
-                            @{
-                                var map = ViewBag.CoachDocStatusMap as Dictionary<int, (bool IsComplete, int MissingCount)>;
-                                (bool isComplete, int missingCount) = map != null && map.TryGetValue(c.Id, out var v) ? v : (true, 0);
-                            }
-                            <td>
-                                @if (missingCount > 0)
-                                {
-                                    <span class="badge bg-warning text-dark">Eksik (@missingCount)</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">Tam</span>
                                 }
                             </td>
                             <td class="text-end">

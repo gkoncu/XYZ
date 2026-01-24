@@ -45,7 +45,7 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
                     BranchId = s.Class != null ? (int?)s.Class.BranchId : null,
                     BranchName = s.Class != null ? s.Class.Branch.Name : null,
 
-                    IdentityNumber = s.IdentityNumber,
+                    IdentityNumber = s.IdentityNumber ?? string.Empty,
                     Address = s.Address,
 
                     Parent1FirstName = s.Parent1FirstName,

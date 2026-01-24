@@ -44,8 +44,8 @@ namespace XYZ.Application.Features.Coaches.Queries.GetCoachById
                     BranchId = c.BranchId,
                     BranchName = c.Branch.Name,
 
-                    IdentityNumber = c.IdentityNumber,
-                    LicenseNumber = c.LicenseNumber,
+                    IdentityNumber = c.IdentityNumber ?? string.Empty,
+                    LicenseNumber = c.LicenseNumber ?? string.Empty,
 
                     IsActive = c.IsActive && c.User.IsActive,
                     CreatedAt = c.CreatedAt,

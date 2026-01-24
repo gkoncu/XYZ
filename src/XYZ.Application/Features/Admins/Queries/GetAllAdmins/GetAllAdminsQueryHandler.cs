@@ -89,7 +89,7 @@ namespace XYZ.Application.Features.Admins.Queries.GetAllAdmins
                     PhoneNumber = a.User.PhoneNumber,
                     TenantId = a.TenantId,
                     TenantName = a.Tenant.Name,
-                    IdentityNumber = a.IdentityNumber,
+                    IdentityNumber = a.IdentityNumber ?? string.Empty,
                     CanManageUsers = a.CanManageUsers,
                     CanManageFinance = a.CanManageFinance,
                     CanManageSettings = a.CanManageSettings,

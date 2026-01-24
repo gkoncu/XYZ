@@ -39,37 +39,6 @@ namespace XYZ.Web.Controllers
                 pageSize,
                 cancellationToken);
 
-            var onlyIncompleteDocs = Request.Query.ContainsKey("onlyIncompleteDocs")
-                         && string.Equals(Request.Query["onlyIncompleteDocs"], "true", StringComparison.OrdinalIgnoreCase);
-
-            ViewBag.OnlyIncompleteDocs = onlyIncompleteDocs;
-
-            var statusPairs = await Task.WhenAll(
-                students.Items.Select(async s =>
-                {
-                    try
-                    {
-                        var st = await _apiClient.GetStudentDocumentStatusAsync(s.Id, cancellationToken);
-                        return (StudentId: s.Id, IsComplete: st.IsComplete, MissingCount: st.MissingCount);
-                    }
-                    catch
-                    {
-                        return (StudentId: s.Id, IsComplete: true, MissingCount: 0);
-                    }
-                })
-            );
-
-            var docStatusMap = statusPairs.ToDictionary(x => x.StudentId, x => (x.IsComplete, x.MissingCount));
-
-            if (onlyIncompleteDocs)
-            {
-                students.Items = students.Items
-                    .Where(s => docStatusMap.TryGetValue(s.Id, out var v) && v.MissingCount > 0)
-                    .ToList();
-            }
-
-            ViewBag.StudentDocStatusMap = docStatusMap;
-
             ViewBag.SearchTerm = searchTerm;
 
             return View(students);

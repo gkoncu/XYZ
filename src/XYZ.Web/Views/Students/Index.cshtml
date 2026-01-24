@@ -36,14 +36,6 @@
             <button type="submit" class="btn btn-sm btn-outline-light">
                 Ara
             </button>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="onlyIncompleteDocs" value="true"
-                       id="onlyIncompleteDocs"
-                       @(ViewBag.OnlyIncompleteDocs == true ? "checked" : "") />
-                <label class="form-check-label" for="onlyIncompleteDocs">
-                    Sadece eksik belgeler
-                </label>
-            </div>
         </form>
         <div class="small text-muted">
             Toplam @Model.TotalCount kayıt · Sayfa @Model.PageNumber / @Model.TotalPages
@@ -63,7 +55,6 @@
                         <th>Sınıf</th>
                         <th>Şube</th>
                         <th>Durum</th>
-                        <th>Belge Durumu</th>
                         <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
@@ -123,21 +114,6 @@
                                     else
                                     {
                                         <span class="badge-soft badge-soft-muted">Pasif</span>
-                                    }
-                                </td>
-                                @{
-                                    var map = ViewBag.StudentDocStatusMap as Dictionary<int, (bool IsComplete, int MissingCount)>;
-                                    (bool isComplete, int missingCount) = map != null && map.TryGetValue(s.Id, out var v) ? v : (true, 0);
-                                }
-
-                                <td>
-                                    @if (missingCount > 0)
-                                    {
-                                        <span class="badge bg-warning text-dark">Eksik (@missingCount)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-success">Tam</span>
                                     }
                                 </td>
                                 <td class="text-end">

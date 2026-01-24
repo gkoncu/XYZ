@@ -31,37 +31,6 @@ namespace XYZ.Web.Controllers
         {
             var coaches = await _apiClient.GetCoachesAsync(searchTerm, pageNumber, pageSize, cancellationToken);
 
-            var onlyIncompleteDocs = Request.Query.ContainsKey("onlyIncompleteDocs")
-                         && string.Equals(Request.Query["onlyIncompleteDocs"], "true", StringComparison.OrdinalIgnoreCase);
-
-            ViewBag.OnlyIncompleteDocs = onlyIncompleteDocs;
-
-            var statusPairs = await Task.WhenAll(
-                coaches.Items.Select(async c =>
-                {
-                    try
-                    {
-                        var st = await _apiClient.GetCoachDocumentStatusAsync(c.Id, cancellationToken);
-                        return (CoachId: c.Id, IsComplete: st.IsComplete, MissingCount: st.MissingCount);
-                    }
-                    catch
-                    {
-                        return (CoachId: c.Id, IsComplete: true, MissingCount: 0);
-                    }
-                })
-            );
-
-            var docStatusMap = statusPairs.ToDictionary(x => x.CoachId, x => (x.IsComplete, x.MissingCount));
-
-            if (onlyIncompleteDocs)
-            {
-                coaches.Items = coaches.Items
-                    .Where(c => docStatusMap.TryGetValue(c.Id, out var v) && v.MissingCount > 0)
-                    .ToList();
-            }
-
-            ViewBag.CoachDocStatusMap = docStatusMap;
-
             return View(coaches);
         }
 
