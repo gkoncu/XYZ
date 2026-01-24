@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachesDocumentStatus
@@ -34,15 +35,14 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachesDo
                 .Select(d => d.Id)
                 .ToListAsync(ct);
 
-            var coachesQ = _dataScope.Coaches()
-                .Include(c => c.User)
-                .AsQueryable();
+            IQueryable<Coach> coachesQ = _dataScope.Coaches().Include(c => c.User);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var st = request.SearchTerm.Trim();
                 coachesQ = coachesQ.Where(c => c.User.FullName.Contains(st));
             }
+
 
             var coaches = await coachesQ
                 .OrderBy(c => c.User.FullName)
