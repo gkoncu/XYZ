@@ -5,6 +5,7 @@ using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
+using XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants;
 using XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement;
 using XYZ.Application.Features.Announcements.Queries.GetAllAnnouncements;
 using XYZ.Application.Features.Announcements.Queries.GetAnnouncementById;
@@ -249,6 +250,10 @@ namespace XYZ.Web.Services
 
         Task<int> DeleteAnnouncementAsync(
             int id,
+            CancellationToken cancellationToken = default);
+
+        Task<int> BroadcastSystemAnnouncementAsync(
+            CreateSystemAnnouncementForAllTenantsCommand command,
             CancellationToken cancellationToken = default);
 
         // === Tenants (SuperAdmin) ===
