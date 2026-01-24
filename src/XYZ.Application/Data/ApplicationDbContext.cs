@@ -20,6 +20,7 @@ namespace XYZ.Application.Data
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<PaymentPlan> PaymentPlans => Set<PaymentPlan>();
         public DbSet<Document> Documents => Set<Document>();
+        public DbSet<DocumentDefinition> DocumentDefinitions => Set<DocumentDefinition>();
         public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
         public DbSet<Announcement> Announcements => Set<Announcement>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -44,6 +45,7 @@ namespace XYZ.Application.Data
             builder.Entity<ClassEnrollment>().HasQueryFilter(ce => ce.IsActive);
             builder.Entity<Attendance>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Document>().HasQueryFilter(d => d.IsActive);
+            builder.Entity<DocumentDefinition>().HasQueryFilter(dd => dd.IsActive);
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
@@ -224,6 +226,12 @@ namespace XYZ.Application.Data
                       .WithMany(a => a.Documents)
                       .HasForeignKey(d => d.AdminId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.DocumentDefinition)
+                      .WithMany()
+                      .HasForeignKey(d => d.DocumentDefinitionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
             });
         }
 

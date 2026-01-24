@@ -1,26 +1,20 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Documents.Commands.CreateDocument
 {
-    public class CreateDocumentCommandValidator
-        : AbstractValidator<CreateDocumentCommand>
+    public class CreateDocumentCommandValidator : AbstractValidator<CreateDocumentCommand>
     {
         public CreateDocumentCommandValidator()
         {
-            RuleFor(x => x.StudentId).GreaterThan(0);
+            RuleFor(x => x.DocumentDefinitionId).GreaterThan(0);
 
-            RuleFor(x => x.Name)
-                .NotEmpty()
-                .MaximumLength(200);
+            RuleFor(x => x)
+                .Must(x => (x.StudentId ?? 0) > 0 ^ (x.CoachId ?? 0) > 0)
+                .WithMessage("StudentId veya CoachId alanlarından sadece biri dolu olmalıdır.");
 
-            RuleFor(x => x.FilePath)
-                .NotEmpty()
-                .MaximumLength(500);
+            RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.FilePath).NotEmpty().MaximumLength(500);
+            RuleFor(x => x.Description).MaximumLength(500).When(x => !string.IsNullOrWhiteSpace(x.Description));
         }
     }
 }

@@ -172,25 +172,34 @@ public class DataScopeService : IDataScopeService
 
             case "Admin":
                 return tenantId.HasValue
-                    ? q.Where(d => d.Student.TenantId == tenantId.Value)
+                    ? q.Where(d =>
+                        (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId.Value)
+                        || (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId.Value))
                     : q.Where(_ => false);
 
             case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(d => d.Student.TenantId == tenantId.Value
-                                   && d.Student.Class != null
-                                   && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+                if (!tenantId.HasValue || !coachId.HasValue)
+                    return q.Where(_ => false);
+
+                return q.Where(d =>
+                    (d.CoachId != null && d.CoachId == coachId.Value)
+                    || (d.StudentId != null
+                        && d.Student != null
+                        && d.Student.TenantId == tenantId.Value
+                        && d.Student.Class != null
+                        && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value)));
 
             case "Student":
                 return studentId.HasValue
-                    ? q.Where(d => d.StudentId == studentId.Value)
+                    ? q.Where(d => d.StudentId != null && d.StudentId == studentId.Value)
                     : q.Where(_ => false);
 
             default:
                 return q.Where(_ => false);
         }
     }
+
+
 
     private IQueryable<Attendance> ApplyAttendanceScope(IQueryable<Attendance> q)
     {

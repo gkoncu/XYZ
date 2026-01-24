@@ -410,6 +410,32 @@ namespace XYZ.Web.Services
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
         }
 
+        // === Documents / Compliance ===
+        public async Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetStudentDocumentStatusAsync(
+            int studentId,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"documents/student/{studentId}/status", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto>(
+                        cancellationToken: cancellationToken))
+                   ?? new XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto();
+        }
+
+        public async Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetCoachDocumentStatusAsync(
+            int coachId,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"documents/coach/{coachId}/status", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto>(
+                        cancellationToken: cancellationToken))
+                   ?? new XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto();
+        }
+
+
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
        int? studentId,

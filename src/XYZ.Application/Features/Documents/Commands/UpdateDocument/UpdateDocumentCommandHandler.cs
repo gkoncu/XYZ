@@ -41,7 +41,6 @@ namespace XYZ.Application.Features.Documents.Commands.UpdateDocument
 
             entity.Name = request.Name.Trim();
             entity.Description = request.Description;
-            entity.Type = request.Type;
 
             if (!string.IsNullOrWhiteSpace(request.FilePath))
                 entity.FilePath = request.FilePath.Trim();
