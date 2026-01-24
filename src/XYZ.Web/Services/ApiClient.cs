@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
+using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
+using XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement;
+using XYZ.Application.Features.Announcements.Queries.GetAllAnnouncements;
+using XYZ.Application.Features.Announcements.Queries.GetAnnouncementById;
 using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Branches.Commands.CreateBranch;
 using XYZ.Application.Features.Branches.Commands.UpdateBranch;
@@ -693,6 +697,80 @@ namespace XYZ.Web.Services
             CancellationToken cancellationToken = default)
         {
             var resp = await _httpClient.DeleteAsync($"progressrecords/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        // === Announcements ===
+        public async Task<PaginationResult<AnnouncementListItemDto>> GetAnnouncementsAsync(
+            string? searchTerm,
+            int? classId,
+            AnnouncementType? type,
+            bool onlyCurrent,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var url = "announcements";
+
+            var query = new Dictionary<string, string?>
+            {
+                ["OnlyCurrent"] = onlyCurrent.ToString(),
+                ["PageNumber"] = pageNumber.ToString(),
+                ["PageSize"] = pageSize.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm)) query["SearchTerm"] = searchTerm.Trim();
+            if (classId.HasValue) query["ClassId"] = classId.Value.ToString();
+            if (type.HasValue) query["Type"] = type.Value.ToString();
+
+            url = QueryHelpers.AddQueryString(url, query);
+
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<PaginationResult<AnnouncementListItemDto>>(cancellationToken: cancellationToken)
+                   ?? new PaginationResult<AnnouncementListItemDto>();
+        }
+
+        public async Task<AnnouncementDetailDto?> GetAnnouncementAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"announcements/{id}", cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+                return null;
+
+            return await resp.Content.ReadFromJsonAsync<AnnouncementDetailDto>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> CreateAnnouncementAsync(
+            CreateAnnouncementCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("announcements", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> UpdateAnnouncementAsync(
+            int id,
+            UpdateAnnouncementCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PutAsJsonAsync($"announcements/{id}", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        public async Task<int> DeleteAnnouncementAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"announcements/{id}", cancellationToken);
             resp.EnsureSuccessStatusCode();
 
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
