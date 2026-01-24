@@ -604,6 +604,24 @@ namespace XYZ.Web.Services
             return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
         }
 
+        // === Documents / Download ===
+        public async Task<(Stream Stream, string ContentType, string FileName)> DownloadDocumentAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.GetAsync($"documents/{id}/download", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            var contentType = resp.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+            var fileName = resp.Content.Headers.ContentDisposition?.FileNameStar
+                ?? resp.Content.Headers.ContentDisposition?.FileName
+                ?? $"document-{id}";
+
+            fileName = fileName.Trim('"');
+
+            var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+            return (stream, contentType, fileName);
+        }
+
         // === Payments ===
         public async Task<PaginationResult<PaymentListItemDto>> GetPaymentsAsync(
             int? studentId,

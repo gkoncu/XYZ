@@ -262,6 +262,10 @@ namespace XYZ.Web.Services
             int id,
             CancellationToken cancellationToken = default);
 
+        // === Documents / Download ===
+        Task<(Stream Stream, string ContentType, string FileName)> DownloadDocumentAsync(int id, CancellationToken cancellationToken = default);
+
+
         // === Payment Plans ===
         Task<StudentPaymentPlanDto?> GetStudentPaymentPlanAsync(
             int studentId,

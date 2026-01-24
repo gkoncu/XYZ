@@ -53,7 +53,7 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsD
                     .Select(s => new StudentDocumentStatusListItemDto
                     {
                         StudentId = s.Id,
-                        FullName = s.User.FullName,
+                        FullName = s.User.FirstName + " " + s.User.LastName,
                         IsComplete = true,
                         MissingCount = 0
                     })
@@ -67,13 +67,18 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsD
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var st = request.SearchTerm.Trim();
-                studentsQ = studentsQ.Where(s => s.User.FullName.Contains(st));
+                studentsQ = studentsQ.Where(s => s.User.FirstName.Contains(st) || s.User.LastName.Contains(st));
             }
 
             var students = await studentsQ
-                .OrderBy(s => s.User.FullName)
+                .OrderBy(s => s.User.FirstName)
+                .ThenBy(s => s.User.LastName)
                 .Take(Math.Clamp(request.Take, 1, 1000))
-                .Select(s => new { s.Id, s.User.FullName })
+                .Select(s => new
+                {
+                    s.Id,
+                    FullName = s.User.FirstName + " " + s.User.LastName
+                })
                 .ToListAsync(ct);
 
             var studentIds = students.Select(x => x.Id).ToList();
