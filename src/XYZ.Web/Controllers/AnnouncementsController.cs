@@ -31,10 +31,17 @@ namespace XYZ.Web.Controllers
             int? classId,
             AnnouncementType? type,
             bool onlyCurrent = true,
+            bool? onlyCurrentChecked = null,
             int pageNumber = 1,
             int pageSize = 20,
             CancellationToken ct = default)
         {
+
+            if (onlyCurrentChecked.HasValue)
+            {
+                onlyCurrent = onlyCurrentChecked.Value;
+            }
+
             pageSize = Math.Clamp(pageSize, 1, 200);
 
             var result = await _api.GetAnnouncementsAsync(
