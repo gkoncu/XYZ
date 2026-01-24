@@ -8,6 +8,21 @@
 
 <h2 class="h4 mb-3">Duyuru Oluştur</h2>
 
+@if (User.IsInRole("SuperAdmin"))
+{
+    <div class="col-12">
+        <div class="form-check">
+            <input class="form-check-input" asp-for="SendToAllClubs" />
+            <label class="form-check-label small" asp-for="SendToAllClubs">
+                Tüm kulüplere gönder (Sistem duyurusu)
+            </label>
+        </div>
+        <div class="text-muted small mt-1">
+            Bu seçenek seçilirse duyuru her kulüp için ayrı kayıt olarak oluşturulur.
+        </div>
+    </div>
+}
+
 <form asp-action="Create" method="post" class="row g-3">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger small"></div>

@@ -107,6 +107,21 @@ namespace XYZ.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AnnouncementUpsertViewModel model, CancellationToken ct = default)
         {
+            if (User.IsInRole("SuperAdmin") && model.SendToAllClubs)
+            {
+                var count = await _api.BroadcastSystemAnnouncementAsync(new XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants.CreateSystemAnnouncementForAllTenantsCommand
+                {
+                    Title = model.Title?.Trim() ?? string.Empty,
+                    Content = model.Content?.Trim() ?? string.Empty,
+                    PublishDate = model.PublishDate,
+                    ExpiryDate = model.ExpiryDate,
+                    Type = AnnouncementType.System
+                }, ct);
+
+                TempData["SuccessMessage"] = $"Sistem duyurusu {count} kulübe gönderildi.";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (!ModelState.IsValid)
             {
                 await FillClassesSelectList(ct, model.ClassId);

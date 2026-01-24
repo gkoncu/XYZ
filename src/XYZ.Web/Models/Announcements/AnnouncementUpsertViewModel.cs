@@ -32,5 +32,7 @@ namespace XYZ.Web.Models.Announcements
         public AnnouncementType Type { get; set; } = AnnouncementType.General;
 
         public List<SelectListItem> TypeOptions { get; set; } = new();
+
+        public bool SendToAllClubs { get; set; }
     }
 }
