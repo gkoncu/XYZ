@@ -165,8 +165,6 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        if (role is null) return q.Where(_ => false);
-
         switch (role)
         {
             case "SuperAdmin":
@@ -175,27 +173,32 @@ public class DataScopeService : IDataScopeService
             case "Admin":
                 return tenantId.HasValue
                     ? q.Where(d =>
-                        (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId) ||
-                        (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId) ||
-                        (d.AdminId != null && d.Admin != null && d.Admin.TenantId == tenantId))
+                        (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId.Value)
+                        || (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId.Value))
                     : q.Where(_ => false);
 
             case "Coach":
-                if (!tenantId.HasValue || !coachId.HasValue) return q.Where(_ => false);
+                if (!tenantId.HasValue || !coachId.HasValue)
+                    return q.Where(_ => false);
 
                 return q.Where(d =>
-                    (d.CoachId != null && d.CoachId == coachId) ||
-                    (d.StudentId != null && d.Student != null && d.Student.CoachId == coachId));
+                    (d.CoachId != null && d.CoachId == coachId.Value)
+                    || (d.StudentId != null
+                        && d.Student != null
+                        && d.Student.TenantId == tenantId.Value
+                        && d.Student.Class != null
+                        && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value)));
 
             case "Student":
-                if (!tenantId.HasValue || !studentId.HasValue) return q.Where(_ => false);
-
-                return q.Where(d => d.StudentId != null && d.StudentId == studentId);
+                return studentId.HasValue
+                    ? q.Where(d => d.StudentId != null && d.StudentId == studentId.Value)
+                    : q.Where(_ => false);
 
             default:
                 return q.Where(_ => false);
         }
     }
+
 
 
     private IQueryable<Attendance> ApplyAttendanceScope(IQueryable<Attendance> q)
