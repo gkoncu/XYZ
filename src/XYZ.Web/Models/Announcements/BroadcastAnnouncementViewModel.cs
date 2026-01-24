@@ -1,18 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using XYZ.Domain.Enums;
 
 namespace XYZ.Web.Models.Announcements
 {
-    public sealed class AnnouncementUpsertViewModel
+    public sealed class BroadcastAnnouncementViewModel
     {
-        public int Id { get; set; }
-
-        [Display(Name = "Sınıf")]
-        public int? ClassId { get; set; }
-
         [Required]
         [MaxLength(200)]
         [Display(Name = "Başlık")]
@@ -27,10 +19,5 @@ namespace XYZ.Web.Models.Announcements
 
         [Display(Name = "Bitiş Tarihi")]
         public DateTime? ExpiryDate { get; set; }
-
-        [Display(Name = "Tür")]
-        public AnnouncementType Type { get; set; } = AnnouncementType.General;
-
-        public List<SelectListItem> TypeOptions { get; set; } = new();
     }
 }

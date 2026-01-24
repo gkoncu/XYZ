@@ -8,14 +8,24 @@
     var isSuperAdmin = User.IsInRole("SuperAdmin");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0">Duyurular</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Duyurular</h2>
 
-    @if (Model.CanWrite)
-    {
-        <a class="btn btn-sm btn-primary" asp-action="Create">+ Yeni Duyuru</a>
-    }
-</div>
+        <div class="d-flex gap-2">
+            @if (Model.CanWrite)
+            {
+                <a class="btn btn-sm btn-primary" asp-action="Create">+ Yeni Duyuru</a>
+            }
+            @if (isSuperAdmin)
+            {
+                <a class="btn btn-sm btn-primary"
+                   asp-controller="Announcements"
+                   asp-action="Broadcast">+ Genel Sistem Duyurusu</a>
+            }
+        </div>
+    </div>
+
+
 
 @if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
 {

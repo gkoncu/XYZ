@@ -1,10 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
@@ -16,19 +12,14 @@ namespace XYZ.Application.Features.Announcements.Commands.CreateSystemAnnounceme
         : IRequestHandler<CreateSystemAnnouncementForAllTenantsCommand, int>
     {
         private readonly IApplicationDbContext _db;
-        private readonly ICurrentUserService _current;
 
-        public CreateSystemAnnouncementForAllTenantsCommandHandler(IApplicationDbContext db, ICurrentUserService current)
+        public CreateSystemAnnouncementForAllTenantsCommandHandler(IApplicationDbContext db)
         {
             _db = db;
-            _current = current;
         }
 
         public async Task<int> Handle(CreateSystemAnnouncementForAllTenantsCommand request, CancellationToken cancellationToken)
         {
-            if (_current.Role is not "Superadmin")
-                throw new UnauthorizedAccessException("Bu işlem sadece SuperAdmin içindir.");
-
             var tenantIds = await _db.Tenants
                 .IgnoreQueryFilters()
                 .AsNoTracking()

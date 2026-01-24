@@ -782,7 +782,17 @@ namespace XYZ.Web.Services
             CancellationToken cancellationToken = default)
         {
             var resp = await _httpClient.PostAsJsonAsync("announcements/system/broadcast", command, cancellationToken);
-            resp.EnsureSuccessStatusCode();
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+                var msg = string.IsNullOrWhiteSpace(body)
+                    ? $"Sistem duyurusu gönderilemedi. (HTTP {(int)resp.StatusCode})"
+                    : body;
+
+                throw new InvalidOperationException(msg);
+            }
+
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
         }
 
