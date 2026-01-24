@@ -1,0 +1,204 @@
+﻿@model XYZ.Web.Models.Documents.UserDocumentsViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+    var missingCount = Model.Status?.MissingCount ?? 0;
+    var isComplete = Model.Status?.IsComplete ?? true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">@Model.Title</h2>
+        @if (!isComplete)
+        {
+            <div class="text-muted">Eksik belge sayısı: <strong>@missingCount</strong></div>
+        }
+    </div>
+
+    <div>
+        @if (!isComplete)
+        {
+            <span class="badge bg-warning text-dark">Eksik (@missingCount)</span>
+        }
+        else
+        {
+            <span class="badge bg-success">Tam</span>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <strong>Zorunlu Belgeler</strong>
+            </div>
+            <div class="card-body">
+                @if (Model.Status is null)
+                {
+                    <div class="text-muted">Durum bilgisi alınamadı.</div>
+                }
+                else if (Model.Status.MissingCount == 0)
+                {
+                    <div class="text-success">Tüm zorunlu belgeler tamam.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var m in Model.Status.Missing.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>@m.Name</span>
+                                <span class="badge bg-warning text-dark">Eksik</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <strong>Yeni Belge Yükle</strong>
+            </div>
+            <div class="card-body">
+                @{
+                    var isCoach = Model.Title.Contains("Koç");
+                }
+
+                @if (isCoach)
+                {
+                    <form method="post" enctype="multipart/form-data"
+                          asp-action="UploadCoach"
+                          asp-route-coachId="@Model.OwnerId">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-2">
+                            <label class="form-label">Belge Türü</label>
+                            <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
+                                <option value="">Seçiniz</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Dosya</label>
+                            <input class="form-control" type="file" asp-for="File" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Görünen Ad (opsiyonel)</label>
+                            <input class="form-control" asp-for="Name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Açıklama (opsiyonel)</label>
+                            <textarea class="form-control" asp-for="Description" rows="2"></textarea>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Yükle</button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" enctype="multipart/form-data"
+                          asp-action="UploadStudent"
+                          asp-route-studentId="@Model.OwnerId">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-2">
+                            <label class="form-label">Belge Türü</label>
+                            <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
+                                <option value="">Seçiniz</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Dosya</label>
+                            <input class="form-control" type="file" asp-for="File" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Görünen Ad (opsiyonel)</label>
+                            <input class="form-control" asp-for="Name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Açıklama (opsiyonel)</label>
+                            <textarea class="form-control" asp-for="Description" rows="2"></textarea>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Yükle</button>
+                    </form>
+                }
+
+
+                <div class="form-text mt-2">
+                    Not: Şimdilik açılır listede yalnızca eksik belge türleri gösterilir.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Yüklenen Belgeler</strong>
+                <a class="btn btn-sm btn-outline-secondary"
+                   href="@(Context.Request.Path + Context.Request.QueryString)">
+                    Yenile
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Tür</th>
+                            <th>Yükleyen</th>
+                            <th>Tarih</th>
+                            <th class="text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Documents is null || Model.Documents.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Belge bulunamadı.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var d in Model.Documents)
+                            {
+                                <tr>
+                                    <td>@d.Name</td>
+                                    <td>@d.DocumentDefinitionName</td>
+                                    <td>@d.UploadedBy</td>
+                                    <td>@d.UploadDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" href="@($"/api/documents/{d.Id}/download")" target="_blank">
+                                            İndir
+                                        </a>
+
+                                        <form method="post" class="d-inline"
+                                              asp-action="Delete">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <input type="hidden" name="ownerId" value="@Model.OwnerId" />
+                                            <input type="hidden" name="returnTo" value="@(Model.Title.Contains("Koç") ? "coach" : "student")" />
+
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Belge silinsin mi?');">
+                                                Sil
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

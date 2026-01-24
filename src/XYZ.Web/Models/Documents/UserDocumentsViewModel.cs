@@ -21,6 +21,7 @@ namespace XYZ.Web.Models.Documents
         public IFormFile? File { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
+        public bool IsCoach { get; set; }
 
         public IList<SelectListItem> DocumentDefinitionOptions { get; set; } = new List<SelectListItem>();
     }

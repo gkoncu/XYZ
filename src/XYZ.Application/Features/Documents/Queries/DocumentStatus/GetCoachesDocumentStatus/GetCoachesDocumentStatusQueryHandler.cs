@@ -40,12 +40,13 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetCoachesDo
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var st = request.SearchTerm.Trim();
-                coachesQ = coachesQ.Where(c => c.User.FullName.Contains(st));
+                coachesQ = coachesQ.Where(c => c.User.FirstName.Contains(st) || c.User.LastName.Contains(st));
             }
 
 
             var coaches = await coachesQ
-                .OrderBy(c => c.User.FullName)
+                .OrderBy(c => c.User.FirstName)
+                .ThenBy(c => c.User.LastName)
                 .Take(Math.Clamp(request.Take, 1, 1000))
                 .Select(c => new { c.Id, c.User.FullName })
                 .ToListAsync(ct);
