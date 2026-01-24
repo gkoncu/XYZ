@@ -42,12 +42,13 @@ namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentsD
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 {
                     var st = request.SearchTerm.Trim();
-                    baseQ = baseQ.Where(s => s.User.FullName.Contains(st));
+                    baseQ = baseQ.Where(s => s.User.FirstName.Contains(st) || s.User.LastName.Contains(st));
                 }
 
                 return await baseQ
                     .Include(s => s.User)
-                    .OrderBy(s => s.User.FullName)
+                    .OrderBy(s => s.User.FirstName)
+                    .ThenBy(s => s.User.LastName)
                     .Take(Math.Clamp(request.Take, 1, 1000))
                     .Select(s => new StudentDocumentStatusListItemDto
                     {

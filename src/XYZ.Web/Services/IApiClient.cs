@@ -190,6 +190,21 @@ namespace XYZ.Web.Services
             CancellationToken cancellationToken = default);
 
         // === Documents / Compliance ===
+
+        Task<IList<XYZ.Application.Features.Documents.Queries.DocumentStatus.StudentDocumentStatusListItemDto>> GetStudentsDocumentStatusAsync(
+            bool onlyIncomplete,
+            string? searchTerm,
+            int take,
+            CancellationToken cancellationToken = default);
+
+        Task<IList<XYZ.Application.Features.Documents.Queries.DocumentStatus.CoachDocumentStatusListItemDto>> GetCoachesDocumentStatusAsync(
+            bool onlyIncomplete,
+            string? searchTerm,
+            int take,
+            CancellationToken cancellationToken = default);
+
+        // === Documents / User Detail ===
+
         Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetStudentDocumentStatusAsync(
             int studentId,
             CancellationToken cancellationToken = default);
@@ -197,6 +212,36 @@ namespace XYZ.Web.Services
         Task<XYZ.Application.Features.Documents.Queries.DocumentStatus.UserDocumentStatusDto> GetCoachDocumentStatusAsync(
             int coachId,
             CancellationToken cancellationToken = default);
+
+        Task<IList<XYZ.Application.Features.Documents.Queries.GetUserDocuments.DocumentListItemDto>> GetStudentDocumentsAsync(
+            int studentId,
+            int? type,
+            CancellationToken cancellationToken = default);
+
+        Task<IList<XYZ.Application.Features.Documents.Queries.GetUserDocuments.DocumentListItemDto>> GetCoachDocumentsAsync(
+            int coachId,
+            int? type,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UploadStudentDocumentAsync(
+            int studentId,
+            Stream fileStream,
+            string fileName,
+            string? name,
+            string? description,
+            int documentDefinitionId,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UploadCoachDocumentAsync(
+            int coachId,
+            Stream fileStream,
+            string fileName,
+            string? name,
+            string? description,
+            int documentDefinitionId,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeleteDocumentAsync(int id, CancellationToken cancellationToken = default);
 
 
         // === Payment Plans ===
