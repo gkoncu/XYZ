@@ -1,18 +1,17 @@
-﻿@model XYZ.Web.Models.Settings.SettingsViewModel
+﻿@model XYZ.Web.Models.Settings.ClubSettingsViewModel
 @{
-    ViewData["Title"] = "Ayarlar";
+    ViewData["Title"] = "Kulüp Ayarları";
     var success = TempData["SuccessMessage"] as string;
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
     <div>
-        <h2 class="mb-1">Ayarlar</h2>
-        <div class="text-muted small">Hesap ve uygulama tercihlerinizi buradan yönetebilirsiniz.</div>
+        <h2 class="mb-1">Kulüp Ayarları</h2>
+        <div class="text-muted small">Tema ve uyum ayarlarını buradan yönetebilirsiniz.</div>
     </div>
-
     <div class="d-flex flex-wrap gap-2">
-        <a asp-controller="Profile" asp-action="Index" class="btn btn-sm btn-outline-secondary">Profilim</a>
-        <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-primary">Bilgilerimi Düzenle</a>
+        <a asp-controller="Settings" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ayarlar</a>
+        <a asp-controller="AdminDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Dashboard</a>
     </div>
 </div>
 
@@ -22,45 +21,160 @@
 }
 
 <div class="row g-3">
-    <div class="col-12 col-lg-6">
-        <div class="card-surface p-3 h-100">
-            <div class="fw-semibold">Hesap</div>
-            <div class="text-muted small mt-1">@Model.FullName • @Model.Email</div>
+    <div class="col-12 col-lg-7">
+        <div class="card-surface p-3">
+            <div class="fw-semibold">Tema</div>
+            <div class="text-muted small mt-1">@Model.TenantName</div>
 
-            <div class="mt-3 d-flex flex-wrap gap-2">
-                <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-outline-primary">Bilgilerimi Düzenle</a>
-                <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-sm btn-outline-secondary">Şifre Değiştir</a>
-            </div>
+            <form asp-action="Club" method="post" class="mt-3" id="clubThemeForm">
+                @Html.AntiForgeryToken()
 
-            <div class="text-muted small mt-3">
-                Not: E-posta değişikliği ayrı bir doğrulama akışı gerektirdiği için şimdilik kapalı.
-            </div>
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Primary Color</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <input asp-for="PrimaryColor" class="form-control" id="primaryColorText" />
+                            <input type="color" class="form-control form-control-color" id="primaryColorPicker" value="@Model.PrimaryColor" title="Primary Color" />
+                        </div>
+                        <span asp-validation-for="PrimaryColor" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Secondary Color</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <input asp-for="SecondaryColor" class="form-control" id="secondaryColorText" />
+                            <input type="color" class="form-control form-control-color" id="secondaryColorPicker" value="@Model.SecondaryColor" title="Secondary Color" />
+                        </div>
+                        <span asp-validation-for="SecondaryColor" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Logo URL (opsiyonel)</label>
+                        <input asp-for="LogoUrl" class="form-control" id="logoUrlInput" placeholder="https://..." />
+                        <span asp-validation-for="LogoUrl" class="text-danger small"></span>
+                        <div class="form-text">
+                            Logo url boş bırakılırsa varsayılan harfli logo görünür.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-outline-secondary" id="previewBtn">Önizlemeyi Güncelle</button>
+                </div>
+
+                <div class="text-muted small mt-3">
+                    Not: Renk formatı '#RRGGBB' olmalıdır. Değişiklikler tüm sayfalarda tema filter’ı üzerinden uygulanır.
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-lg-5">
         <div class="card-surface p-3 h-100">
-            <div class="fw-semibold">Kulüp</div>
-            <div class="text-muted small mt-1">@Model.TenantName</div>
+            <div class="fw-semibold">Canlı Önizleme</div>
+            <div class="text-muted small mt-1">Kaydetmeden önce görünümü kontrol edin.</div>
 
-            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-            {
-                <div class="mt-3 d-flex flex-wrap gap-2">
-                    <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-primary">Kulüp Ayarları</a>
-                    <a asp-controller="DocumentDefinitions" asp-action="Index" class="btn btn-sm btn-outline-secondary">Belge Tanımları</a>
-                    <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Eksik Belgeler</a>
+            <div class="d-flex align-items-center gap-3 mt-3">
+                <div class="rounded-circle border d-flex align-items-center justify-content-center"
+                     style="width:54px;height:54px;overflow:hidden;background:rgba(0,0,0,.04);">
+                    <img id="logoPreview" src="@Model.LogoUrl" alt="Logo" style="display:none;width:54px;height:54px;object-fit:cover;" />
+                    <span id="logoFallback" class="fw-semibold" style="letter-spacing:.5px;">
+                        @(string.IsNullOrWhiteSpace(Model.TenantName) ? "X" : Model.TenantName.Substring(0, 1))
+                    </span>
                 </div>
 
-                <div class="text-muted small mt-3">
-                    Kulüp ayarlarında tema (renkler/logo) ve uyum (belge gereksinimleri) yönetilir.
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">@Model.TenantName</div>
+                    <div class="text-muted small">Tema renkleri ve logo</div>
                 </div>
-            }
-            else
-            {
-                <div class="text-muted small mt-3">
-                    Kulüp ayarları yalnızca yönetici rolü ile düzenlenebilir.
+            </div>
+
+            <div class="mt-3 p-3 rounded border" id="colorPreviewBox">
+                <div class="small text-muted">Örnek kart</div>
+                <div class="fw-semibold">Dashboard kartı örneği</div>
+                <div class="small text-muted">Primary / Secondary kullanımı</div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="#" class="btn btn-sm text-white" id="primaryBtnPreview" style="background:#3B82F6;border-color:#3B82F6;">Primary</a>
+                    <a href="#" class="btn btn-sm text-white" id="secondaryBtnPreview" style="background:#1E40AF;border-color:#1E40AF;">Secondary</a>
                 </div>
-            }
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="fw-semibold">Uyum / Belgeler</div>
+            <div class="text-muted small mt-1">Belge gereksinimlerini ve eksikleri buradan yönetebilirsiniz.</div>
+
+            <div class="mt-3 d-grid gap-2">
+                <a asp-controller="DocumentDefinitions" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                    Belge Tanımları
+                </a>
+                <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">
+                    Öğrenci Eksik Belgeler
+                </a>
+                <a asp-controller="Documents" asp-action="Coaches" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">
+                    Koç Eksik Belgeler
+                </a>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const primaryText = document.getElementById('primaryColorText');
+            const secondaryText = document.getElementById('secondaryColorText');
+            const primaryPicker = document.getElementById('primaryColorPicker');
+            const secondaryPicker = document.getElementById('secondaryColorPicker');
+            const logoInput = document.getElementById('logoUrlInput');
+
+            const primaryBtn = document.getElementById('primaryBtnPreview');
+            const secondaryBtn = document.getElementById('secondaryBtnPreview');
+
+            const logoImg = document.getElementById('logoPreview');
+            const logoFallback = document.getElementById('logoFallback');
+
+            function applyPreview() {
+                const p = (primaryText.value || '').trim();
+                const s = (secondaryText.value || '').trim();
+
+                if (p) {
+                    primaryBtn.style.background = p;
+                    primaryBtn.style.borderColor = p;
+                }
+                if (s) {
+                    secondaryBtn.style.background = s;
+                    secondaryBtn.style.borderColor = s;
+                }
+
+                const logoUrl = (logoInput.value || '').trim();
+                if (logoUrl) {
+                    logoImg.src = logoUrl;
+                    logoImg.style.display = 'block';
+                    logoFallback.style.display = 'none';
+
+                    logoImg.onerror = function () {
+                        logoImg.style.display = 'none';
+                        logoFallback.style.display = 'inline';
+                    };
+                } else {
+                    logoImg.style.display = 'none';
+                    logoFallback.style.display = 'inline';
+                }
+            }
+
+            primaryPicker.addEventListener('input', () => { primaryText.value = primaryPicker.value; applyPreview(); });
+            secondaryPicker.addEventListener('input', () => { secondaryText.value = secondaryPicker.value; applyPreview(); });
+            primaryText.addEventListener('input', () => { primaryPicker.value = primaryText.value; });
+            secondaryText.addEventListener('input', () => { secondaryPicker.value = secondaryText.value; });
+
+            document.getElementById('previewBtn').addEventListener('click', applyPreview);
+
+            applyPreview();
+        })();
+    </script>
+}

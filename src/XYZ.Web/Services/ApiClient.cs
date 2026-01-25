@@ -1105,7 +1105,11 @@ namespace XYZ.Web.Services
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {
             var response = await _httpClient.GetAsync("tenants/current-theme", cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException($"GET tenants/current-theme failed. Status={(int)response.StatusCode} {response.StatusCode}. Body={body}");
+            }
 
             return await response.Content.ReadFromJsonAsync<TenantThemeDto>(cancellationToken: cancellationToken);
         }
