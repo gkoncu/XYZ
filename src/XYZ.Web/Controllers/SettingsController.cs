@@ -80,7 +80,7 @@ public sealed class SettingsController : Controller
 
         Response.Cookies.Delete("TenantTheme");
 
-        TempData["SuccessMessage"] = "Kulüp teması güncellendi.Sayfayı yenileyin.";
+        TempData["SuccessMessage"] = "Kulüp teması güncellendi.";
         return RedirectToAction(nameof(Club));
     }
 
