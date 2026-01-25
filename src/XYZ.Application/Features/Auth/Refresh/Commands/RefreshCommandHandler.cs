@@ -19,17 +19,20 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
         private readonly IJwtFactory _jwtFactory;
         private readonly IOptions<JwtOptions> _jwtOptions;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserLookup _userLookup;
 
         public RefreshCommandHandler(
             IRefreshTokenStore rtStore,
             IJwtFactory jwtFactory,
             IOptions<JwtOptions> jwtOptions,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IUserLookup userLookup)
         {
             _rtStore = rtStore;
             _jwtFactory = jwtFactory;
             _jwtOptions = jwtOptions;
             _userManager = userManager;
+            _userLookup = userLookup;
         }
 
         public async Task<LoginResultDto> Handle(RefreshCommand request, CancellationToken ct)
@@ -42,18 +45,23 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
             if (user is null)
                 throw new UnauthorizedAccessException("User not found.");
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var rolesArray = roles.ToArray();
+            var identity = await _userLookup.FindByUserIdAsync(user.Id, ct);
+            if (identity is null)
+                throw new UnauthorizedAccessException("User identity not found.");
+
+            var rolesArray = identity.Roles.ToArray();
 
             var subject = new JwtSubject(
-                UserId: user.Id,
+                UserId: identity.UserId,
                 Roles: rolesArray,
-                TenantId: user.TenantId.ToString(),
-                Email: user.Email,
-                PhoneNumber: user.PhoneNumber,
-                StudentId: null,
-                CoachId: null,
-                AdminId: null,
+                TenantId: identity.TenantId,
+                Email: identity.Email ?? user.Email,
+                PhoneNumber: identity.PhoneNumber ?? user.PhoneNumber,
+
+                StudentId: identity.StudentId,
+                CoachId: identity.CoachId,
+                AdminId: identity.AdminId,
+
                 ExtraClaims: null
             );
 
@@ -77,7 +85,7 @@ namespace XYZ.Application.Features.Auth.Refresh.Commands
                 Email: user.Email ?? string.Empty,
                 FullName: user.FullName,
                 Roles: rolesArray,
-                TenantId: user.TenantId.ToString()
+                TenantId: identity.TenantId
             );
         }
     }
