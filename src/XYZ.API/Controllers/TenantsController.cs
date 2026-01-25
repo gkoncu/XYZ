@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Tenants.Commands.CreateTenant;
 using XYZ.Application.Features.Tenants.Commands.DeleteTenant;
+using XYZ.Application.Features.Tenants.Commands.UpdateCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
 using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
@@ -14,7 +15,7 @@ namespace XYZ.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize]
     public class TenantsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -79,12 +80,15 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("current-theme")]
-        [ProducesResponseType(typeof(TenantThemeDto), StatusCodes.Status200OK)]
-        public async Task<ActionResult<TenantThemeDto>> GetCurrentTheme(
-            CancellationToken cancellationToken)
+        public async Task<ActionResult<TenantThemeDto>> GetCurrentTheme(CancellationToken ct)
+        => Ok(await _mediator.Send(new GetCurrentTenantThemeQuery(), ct));
+
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        [HttpPut("current-theme")]
+        public async Task<IActionResult> UpdateCurrentTheme([FromBody] UpdateCurrentTenantThemeCommand command, CancellationToken ct)
         {
-            var dto = await _mediator.Send(new GetCurrentTenantThemeQuery(), cancellationToken);
-            return Ok(dto);
+            await _mediator.Send(command, ct);
+            return NoContent();
         }
 
     }

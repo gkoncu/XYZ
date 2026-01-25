@@ -30,9 +30,14 @@ namespace XYZ.Web.Controllers
                 {
                     return RedirectToAction("Index", "SuperAdminDashboard");
                 }
-                if (User.IsInRole("Admin") || User.IsInRole("Coach"))
+                if (User.IsInRole("Admin"))
                 {
                     return RedirectToAction("Index", "AdminDashboard");
+                }
+                if (User.IsInRole("Coach"))
+                {
+                    return RedirectToAction("Index", "CoachDashboard");
+
                 }
                 if (User.IsInRole("Student"))
                 {
@@ -122,9 +127,14 @@ namespace XYZ.Web.Controllers
                 return RedirectToAction("Index", "SuperAdminDashboard");
             }
 
-            if (principal.IsInRole("Admin") || principal.IsInRole("Coach"))
+            if (principal.IsInRole("Admin"))
             {
                 return RedirectToAction("Index", "AdminDashboard");
+            }
+
+            if (principal.IsInRole("Coach"))
+            {
+                return RedirectToAction("Index", "CoachDashboard");
             }
 
             if (principal.IsInRole("Student"))

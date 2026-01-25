@@ -1,0 +1,66 @@
+﻿@model XYZ.Web.Models.Settings.SettingsViewModel
+@{
+    ViewData["Title"] = "Ayarlar";
+    var success = TempData["SuccessMessage"] as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">Ayarlar</h2>
+        <div class="text-muted small">Hesap ve uygulama tercihlerinizi buradan yönetebilirsiniz.</div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Profile" asp-action="Index" class="btn btn-sm btn-outline-secondary">Profilim</a>
+        <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-primary">Bilgilerimi Düzenle</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(success))
+{
+    <div class="alert alert-success">@success</div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="card-surface p-3 h-100">
+            <div class="fw-semibold">Hesap</div>
+            <div class="text-muted small mt-1">@Model.FullName • @Model.Email</div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-outline-primary">Bilgilerimi Düzenle</a>
+                <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-sm btn-outline-secondary">Şifre Değiştir</a>
+            </div>
+
+            <div class="text-muted small mt-3">
+                Not: E-posta değişikliği ayrı bir doğrulama akışı gerektirdiği için şimdilik kapalı.
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card-surface p-3 h-100">
+            <div class="fw-semibold">Kulüp</div>
+            <div class="text-muted small mt-1">@Model.TenantName</div>
+
+            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            {
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-primary">Kulüp Ayarları</a>
+                    <a asp-controller="DocumentDefinitions" asp-action="Index" class="btn btn-sm btn-outline-secondary">Belge Tanımları</a>
+                    <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Eksik Belgeler</a>
+                </div>
+
+                <div class="text-muted small mt-3">
+                    Kulüp ayarlarında tema (renkler/logo) ve uyum (belge gereksinimleri) yönetilir.
+                </div>
+            }
+            else
+            {
+                <div class="text-muted small mt-3">
+                    Kulüp ayarları yalnızca yönetici rolü ile düzenlenebilir.
+                </div>
+            }
+        </div>
+    </div>
+</div>
