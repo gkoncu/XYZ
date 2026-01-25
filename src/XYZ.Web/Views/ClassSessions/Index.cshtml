@@ -2,7 +2,7 @@
 XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionListItemDto >
 
 @{
-    ViewData["Title"] = "Seanslar";
+    ViewData["Title"] = "Antrenman Programı";
 
     var from = ViewBag.From as string ?? "";
     var to = ViewBag.To as string ?? "";
@@ -11,9 +11,9 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
 <section class="mb-3">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
-            <h2 class="h4 mb-1">Seanslar</h2>
+            <h2 class="h4 mb-1">Antrenmanlar</h2>
             <p class="text-muted small mb-0">
-                Sınıflara ait seansları tarih aralığına göre listeleyebilirsiniz.
+                Sınıflara ait antrenmanları tarih aralığına göre listeleyebilirsiniz.
             </p>
         </div>
     </div>
@@ -51,7 +51,7 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
     @if (Model.Items == null || !Model.Items.Any())
     {
         <div class="alert alert-info">
-            Belirtilen kriterlere uygun seans bulunamadı.
+            Belirtilen kriterlere uygun antrenman bulunamadı.
         </div>
     }
     else

@@ -1,25 +1,57 @@
-﻿@{
+﻿﻿@using System
+@using System.Linq
+@{
     var primaryColor = ViewData["PrimaryColor"] as string ?? "#3B82F6";
     var secondaryColor = ViewData["SecondaryColor"] as string ?? "#1E40AF";
     var tenantName = ViewData["TenantName"] as string ?? "XYZ Club";
     var logoUrl = ViewData["LogoUrl"] as string;
+
+    var dashboardController =
+        (User?.IsInRole("SuperAdmin") ?? false) ? "SuperAdminDashboard" :
+        (User?.IsInRole("Admin") ?? false) ? "AdminDashboard" :
+        (User?.IsInRole("Coach") ?? false) ? "CoachDashboard" :
+        (User?.IsInRole("Student") ?? false) ? "StudentDashboard" :
+        "Home";
+
+    var displayName = (User?.Identity?.IsAuthenticated ?? false)
+        ? (User?.Identity?.Name ?? "Kullanıcı")
+        : "Guest";
+
+    string BuildInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Take(2)
+                        .ToArray();
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+        return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+    }
+
+    var initials = (User?.Identity?.IsAuthenticated ?? false) ? BuildInitials(displayName) : "?";
+
+    var profilePictureUrl = ViewData["ProfilePictureUrl"] as string;
 }
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @tenantName</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/XYZ.Web.styles.css" asp-append-version="true" />
+
     @RenderSection("Styles", required: false)
 </head>
+
 <body class="app-shell" style="--primary-color:@primaryColor; --secondary-color:@secondaryColor;">
     <header class="app-header shadow-sm">
         <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="AdminDashboard" asp-action="Index">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="@dashboardController" asp-action="Index">
                     @if (!string.IsNullOrEmpty(logoUrl))
                     {
                         <img src="@logoUrl" alt="@tenantName logo" class="club-logo img-fluid" />
@@ -32,59 +64,142 @@
                     }
                     <span class="fw-semibold">@tenantName</span>
                 </a>
-                <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+
+                <button class="navbar-toggler text-white" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Menüyü Aç/Kapat">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 app-nav-links">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
+                            <a class="nav-link" asp-controller="@dashboardController" asp-action="Index">Dashboard</a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Students" asp-action="Index">Öğrenciler</a>
                         </li>
-                        <li class="nav-item"> <a class="nav-link" asp-controller="Payments" asp-action="Index"> Ödemeler</a>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Payments" asp-action="Index">Ödemeler</a>
                         </li>
+
+                        @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Attendance" asp-action="Index">Antrenmanlar</a>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    Belgeler
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Documents"
+                                           asp-action="Students"
+                                           asp-route-onlyIncomplete="true">
+                                            Öğrenci Belgeleri (Eksikler)
+                                        </a>
+                                    </li>
+
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="Documents"
+                                               asp-action="Coaches"
+                                               asp-route-onlyIncomplete="true">
+                                                Koç Belgeleri (Eksikler)
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="DocumentDefinitions"
+                                               asp-action="Index">
+                                                Belge Tanımları
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
                         @if (User.IsInRole("SuperAdmin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Tenants" asp-action="Index">Kulüpler</a>
                             </li>
                         }
+
                         @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Branches" asp-action="Index">Şubeler</a>
                             </li>
                         }
+
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Announcements" asp-action="Index">Duyurular</a>
                         </li>
-                        @* Navlinkler *@
                     </ul>
+
                     <div class="d-flex align-items-center gap-3">
-                        <div class="text-end small text-white-50">
-                            @if (User?.Identity?.IsAuthenticated ?? false)
-                            {
-                                <div>@User.Identity!.Name</div>
-                                <div>
-                                    @string.Join(" / ",
-                                    User.Claims
-                                    .Where(c => c.Type == "role" || c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
-                                    .Select(c => c.Value))
-                            </div>
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="ms-3">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-light">
-                                    Çıkış
-                                </button>
-                            </form>
-                                                        }
-                            else
-                            {
-                                <div>Guest</div>
-                            }
+                        @if (User?.Identity?.IsAuthenticated ?? false)
+                        {
+                            <div class="dropdown">
+                                <a class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle"
+                                   href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                   style="color: rgba(255,255,255,.85);">
+                                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center border"
+                                          style="width:34px;height:34px;overflow:hidden;background:rgba(255,255,255,.12);">
+                                        @if (!string.IsNullOrWhiteSpace(profilePictureUrl))
+                                        {
+                                            <img src="@profilePictureUrl" alt="Profil" style="width:34px;height:34px;object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold" style="letter-spacing:.5px;">@initials</span>
+                                        }
+                                    </span>
+
+                                    <span class="d-none d-lg-inline text-end">
+                                        <span class="d-block small" style="line-height:1.1;">@displayName</span>
+                                        <span class="d-block small text-white-50" style="line-height:1.1;">
+                                            @string.Join(" / ",
+                                            User.Claims
+                                            .Where(c => c.Type == "role" || c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+                                            .Select(c => c.Value))
+                                    </span>
+                                </span>
+                            </a>
+
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Profile" asp-action="Index">
+                                        Profilim
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-3 py-1">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                            Çıkış
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
                         </div>
+                                                }
+                        else
+                        {
+                            <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Login">Giriş</a>
+                        }
                     </div>
                 </div>
             </div>

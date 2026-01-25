@@ -38,6 +38,7 @@ using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
+using XYZ.Application.Features.Profile.Queries.GetMyProfile;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
@@ -1078,5 +1079,19 @@ namespace XYZ.Web.Services
                 LogoUrl = dto.LogoUrl
             };
         }
+
+        // === Profile ===
+        public async Task<MyProfileDto?> GetMyProfileAsync(CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync("profile/me", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<MyProfileDto>(
+                cancellationToken: cancellationToken);
+        }
+
     }
 }

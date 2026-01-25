@@ -31,6 +31,7 @@ using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
+using XYZ.Application.Features.Profile.Queries.GetMyProfile;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
@@ -347,5 +348,8 @@ namespace XYZ.Web.Services
         // === Tenant Theme ===
         Task<TenantThemeViewModel> GetCurrentTenantThemeAsync(
             CancellationToken cancellationToken = default);
+
+        // === Profile ===
+        Task<MyProfileDto?> GetMyProfileAsync(CancellationToken cancellationToken = default);
     }
 }

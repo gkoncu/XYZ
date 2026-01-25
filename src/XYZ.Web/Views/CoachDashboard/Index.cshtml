@@ -1,22 +1,17 @@
-﻿@model AdminDashboardViewModel
+﻿@model XYZ.Web.Models.Dashboard.CoachDashboardViewModel
 @{
-    ViewData["Title"] = "Yönetim Paneli";
+    ViewData["Title"] = "Koç Paneli";
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
     <div>
-        <h2 class="mb-1">Yönetim Paneli</h2>
+        <h2 class="mb-1">Koç Paneli</h2>
         <div class="text-muted small">Hoş geldin, @Model.UserDisplayName</div>
     </div>
 
     <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-sm btn-primary" asp-controller="Students" asp-action="Create">Yeni Öğrenci</a>
-
-        @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-        {
-            <a class="btn btn-sm btn-outline-primary" asp-controller="Classes" asp-action="Create">Yeni Sınıf</a>
-            <a class="btn btn-sm btn-outline-secondary" asp-controller="Announcements" asp-action="Create">Duyuru Yayınla</a>
-        }
+        <a class="btn btn-sm btn-primary" asp-controller="Attendance" asp-action="Index">Bugünkü Antrenmanlar</a>
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="Students" asp-action="Index">Öğrencilerim</a>
     </div>
 </div>
 
@@ -24,20 +19,22 @@
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Öğrenci</div>
+                <div class="text-muted small">Öğrenciler</div>
                 <a class="small" asp-controller="Students" asp-action="Index">Liste</a>
             </div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.StudentCount</div>
+            <div class="text-muted small">Sana bağlı öğrenciler</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Sınıf</div>
+                <div class="text-muted small">Sınıflar</div>
                 <a class="small" asp-controller="Classes" asp-action="Index">Liste</a>
             </div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.ClassCount</div>
+            <div class="text-muted small">Atanmış sınıflar</div>
         </div>
     </div>
 
@@ -48,6 +45,7 @@
                 <a class="small" asp-controller="Attendance" asp-action="Index">Aç</a>
             </div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.TodaySessionsCount</div>
+            <div class="text-muted small">Yoklama almayı unutma</div>
         </div>
     </div>
 
@@ -58,12 +56,13 @@
                 <a class="small" asp-controller="Attendance" asp-action="Index">Aç</a>
             </div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.UpcomingSessionsCount</div>
+            <div class="text-muted small">Planlanmış oturumlar</div>
         </div>
     </div>
 </div>
 
 <div class="row g-3 mt-1">
-    <div class="col-12 col-lg-4">
+    <div class="col-12 col-lg-6">
         <div class="card-surface p-3 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="text-muted small">Ödemeler</div>
@@ -73,18 +72,20 @@
             <div class="mt-3">
                 <div class="d-flex justify-content-between align-items-baseline">
                     <div>
-                        <div class="fw-semibold">Gecikmiş</div>
-                        <div class="text-muted small">Vadesi geçmiş ödemeler</div>
+                        <div class="fw-semibold">Gecikmiş Ödemeler</div>
+                        <div class="text-muted small">Hatırlatma yapman gerekenler</div>
                     </div>
                     <div class="text-end">
                         <div class="fw-semibold">@Model.Stats.OverduePaymentsCount</div>
                         <div class="text-muted small">@Model.Stats.OverduePaymentsAmount.ToString("C2")</div>
                     </div>
                 </div>
-
                 <div class="mt-2">
-                    <a class="btn btn-sm btn-outline-danger w-100" asp-controller="Payments" asp-action="Index" asp-route-status="Overdue">
-                        Gecikmişleri Gör
+                    <a class="btn btn-sm btn-outline-danger w-100"
+                       asp-controller="Payments"
+                       asp-action="Index"
+                       asp-route-status="Overdue">
+                        Gecikmişleri Aç
                     </a>
                 </div>
             </div>
@@ -93,7 +94,7 @@
 
             <div class="d-flex justify-content-between align-items-baseline">
                 <div>
-                    <div class="fw-semibold">Bekleyen</div>
+                    <div class="fw-semibold">Bekleyen Ödemeler</div>
                     <div class="text-muted small">Henüz vadesi geçmemiş</div>
                 </div>
                 <div class="text-end">
@@ -103,8 +104,11 @@
             </div>
 
             <div class="mt-2">
-                <a class="btn btn-sm btn-outline-secondary w-100" asp-controller="Payments" asp-action="Index" asp-route-status="Pending">
-                    Bekleyenleri Gör
+                <a class="btn btn-sm btn-outline-secondary w-100"
+                   asp-controller="Payments"
+                   asp-action="Index"
+                   asp-route-status="Pending">
+                    Bekleyenleri Aç
                 </a>
             </div>
 
@@ -114,82 +118,35 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-4">
+    <div class="col-12 col-lg-6">
         <div class="card-surface p-3 h-100">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Belgeler</div>
-                <a class="small" asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true">Eksikler</a>
+                <div class="text-muted small">Eksik Belgeler (Öğrenciler)</div>
+                <a class="small" asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true">Liste</a>
             </div>
 
             <div class="mt-3">
                 <div class="d-flex justify-content-between align-items-baseline">
                     <div>
-                        <div class="fw-semibold">Öğrenci belgeleri</div>
-                        <div class="text-muted small">Eksik belgesi olan öğrenci sayısı</div>
+                        <div class="fw-semibold">Eksik belgesi olan öğrenci</div>
+                        <div class="text-muted small">Kulüp uyum süreci</div>
                     </div>
                     <div class="fs-4 fw-semibold">@Model.Stats.IncompleteStudentDocumentsCount</div>
                 </div>
 
                 <div class="mt-2">
-                    <a class="btn btn-sm btn-outline-primary w-100" asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true">
-                        Öğrenci Eksiklerini Aç
-                    </a>
-                </div>
-            </div>
-
-            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-            {
-                <hr class="my-3" />
-
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <div>
-                        <div class="fw-semibold">Koç belgeleri</div>
-                        <div class="text-muted small">Eksik belgesi olan koç sayısı</div>
-                    </div>
-                    <div class="fs-4 fw-semibold">@Model.Stats.IncompleteCoachDocumentsCount</div>
-                </div>
-
-                <div class="mt-2">
-                    <a class="btn btn-sm btn-outline-secondary w-100" asp-controller="Documents" asp-action="Coaches" asp-route-onlyIncomplete="true">
-                        Koç Eksiklerini Aç
+                    <a class="btn btn-sm btn-outline-primary w-100"
+                       asp-controller="Documents"
+                       asp-action="Students"
+                       asp-route-onlyIncomplete="true">
+                        Eksikleri Aç
                     </a>
                 </div>
 
-                <div class="mt-3">
-                    <a class="btn btn-sm btn-outline-dark w-100" asp-controller="DocumentDefinitions" asp-action="Index">
-                        Belge Tanımları
-                    </a>
+                <div class="text-muted small mt-3">
+                    Not: Belgeleri öğrenci adına sen de yükleyebilirsin.
                 </div>
-            }
-        </div>
-    </div>
-
-    <div class="col-12 col-lg-4">
-        <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Duyurular</div>
-                <a class="small" asp-controller="Announcements" asp-action="Index">Liste</a>
-            </div>
-
-            <div class="mt-3">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <div>
-                        <div class="fw-semibold">Aktif duyuru</div>
-                        <div class="text-muted small">Yayında olan duyurular</div>
-                    </div>
-                    <div class="fs-4 fw-semibold">@Model.Stats.ActiveAnnouncementsCount</div>
-                </div>
-
-                @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-                {
-                    <div class="mt-2">
-                        <a class="btn btn-sm btn-outline-primary w-100" asp-controller="Announcements" asp-action="Create">
-                            Yeni Duyuru Yayınla
-                        </a>
-                    </div>
-                }
             </div>
         </div>
     </div>
 </div>
-
