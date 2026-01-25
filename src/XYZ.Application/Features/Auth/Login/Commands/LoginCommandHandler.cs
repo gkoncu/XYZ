@@ -58,9 +58,9 @@ namespace XYZ.Application.Features.Auth.Login.Commands
                 TenantId: userIdentity.TenantId,
                 Email: userIdentity.Email,
                 PhoneNumber: userIdentity.PhoneNumber,
-                StudentId: null,
-                CoachId: null,
-                AdminId: null,
+                StudentId: userIdentity.StudentId,
+                CoachId: userIdentity.CoachId,
+                AdminId: userIdentity.AdminId,
                 ExtraClaims: null
             );
 

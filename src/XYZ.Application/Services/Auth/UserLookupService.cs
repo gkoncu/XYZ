@@ -79,5 +79,31 @@ namespace XYZ.Application.Services.Auth
                 user.AdminId
             );
         }
+
+        public async Task<UserIdentity?> FindByUserIdAsync(string userId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId)) return null;
+
+            var user = await _context.Users
+                .Include(u => u.StudentProfile)
+                .Include(u => u.CoachProfile)
+                .Include(u => u.AdminProfile)
+                .FirstOrDefaultAsync(x => x.Id == userId, ct);
+
+            if (user is null) return null;
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new UserIdentity(
+                user.Id,
+                user.Email,
+                user.PhoneNumber,
+                roles.ToArray(),
+                user.TenantId.ToString(),
+                user.StudentId,
+                user.CoachId,
+                user.AdminId
+            );
+        }
     }
 }

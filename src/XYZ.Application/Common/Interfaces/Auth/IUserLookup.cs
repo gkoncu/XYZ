@@ -11,6 +11,7 @@ namespace XYZ.Application.Common.Interfaces.Auth
         Task<UserIdentity?> FindByEmailAsync(string email, CancellationToken ct = default);
         Task<UserIdentity?> FindByPhoneAsync(string phone, CancellationToken ct = default);
         Task<UserIdentity?> FindByIdentifierAsync(string identifier, CancellationToken ct = default);
+        Task<UserIdentity?> FindByUserIdAsync(string userId, CancellationToken ct = default);
     }
 
     public sealed record UserIdentity(
