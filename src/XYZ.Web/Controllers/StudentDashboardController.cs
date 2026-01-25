@@ -26,12 +26,8 @@ namespace XYZ.Web.Controllers
             var stats = await _apiClient.GetStudentDashboardAsync(cancellationToken)
                         ?? new StudentDashboardDto();
 
-            var theme = TenantThemeFilter.GetThemeFromHttpContext(HttpContext)
-                        ?? new TenantThemeViewModel();
-
             var model = new StudentDashboardViewModel
             {
-                Theme = theme,
                 Stats = stats,
                 UserDisplayName = User?.Identity?.Name ?? "Öğrenci"
             };

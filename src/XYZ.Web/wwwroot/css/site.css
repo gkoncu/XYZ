@@ -31,10 +31,18 @@ body {
     body.app-shell {
         margin-bottom: 0;
         min-height: 100vh;
+        /* Fallback (hard-coded) */
         background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%), radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.35), transparent 55%), var(--bg-body);
         color: var(--text-main);
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
     }
+
+/* Modern override: tenant renkleriyle transparan ton üret */
+@supports (color: color-mix(in srgb, white 50%, black)) {
+    body.app-shell {
+        background: radial-gradient(circle at top left, color-mix(in srgb, var(--primary-color) 25%, transparent), transparent 55%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--secondary-color) 35%, transparent), transparent 55%), var(--bg-body);
+    }
+}
 
 /* Navbar / header */
 
@@ -109,10 +117,18 @@ body {
         top: 50%;
         width: 260px;
         height: 260px;
+        /* Fallback */
         background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 60%);
         transform: translateY(-50%);
         opacity: 0.8;
     }
+
+/* Modern override */
+@supports (color: color-mix(in srgb, white 50%, black)) {
+    .dashboard-hero::after {
+        background: radial-gradient(circle, color-mix(in srgb, var(--primary-color) 35%, transparent), transparent 60%);
+    }
+}
 
 .dashboard-hero-title {
     font-size: 1.75rem;
@@ -152,8 +168,16 @@ body {
     background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.4), transparent 60%), rgba(15, 23, 42, 0.95);
     border-radius: 1.25rem;
     padding: 1.25rem 1.35rem;
+    /* Fallback */
     border: 1px solid rgba(30, 64, 175, 0.35);
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.65);
+}
+
+/* Modern override: secondary-color ile border tonu */
+@supports (color: color-mix(in srgb, white 50%, black)) {
+    .stat-card {
+        border: 1px solid color-mix(in srgb, var(--secondary-color) 35%, transparent);
+    }
 }
 
 .stat-card-header {
@@ -270,4 +294,72 @@ body {
     .dashboard-hero {
         padding: 1.25rem 1.25rem;
     }
+}
+
+/* =========================================================
+   Tenant Theme - Bootstrap style helpers (scoped)
+   Bu blok: primary/secondary renklerin Bootstrap sýnýflarýna yansýmasý.
+   ========================================================= */
+
+body.app-shell a,
+body.app-shell .link-primary {
+    color: var(--primary-color);
+}
+
+    body.app-shell a:hover,
+    body.app-shell .link-primary:hover {
+        color: var(--secondary-color);
+    }
+
+body.app-shell .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+    body.app-shell .btn-primary:hover,
+    body.app-shell .btn-primary:focus {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+body.app-shell .btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+    body.app-shell .btn-outline-primary:hover,
+    body.app-shell .btn-outline-primary:focus {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #fff;
+    }
+
+body.app-shell .text-primary {
+    color: var(--primary-color) !important;
+}
+
+body.app-shell .text-secondary {
+    color: var(--secondary-color) !important;
+}
+
+body.app-shell .bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+body.app-shell .bg-secondary {
+    background-color: var(--secondary-color) !important;
+}
+
+body.app-shell .border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+body.app-shell .border-secondary {
+    border-color: var(--secondary-color) !important;
+}
+
+body.app-shell .nav-pills .nav-link.active,
+body.app-shell .nav-pills .show > .nav-link {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }

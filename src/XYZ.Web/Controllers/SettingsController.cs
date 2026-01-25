@@ -78,7 +78,10 @@ public sealed class SettingsController : Controller
             return View(model);
         }
 
-        TempData["SuccessMessage"] = "Kulüp teması güncellendi.";
+        Response.Cookies.Delete("TenantTheme");
+
+        TempData["SuccessMessage"] = "Kulüp teması güncellendi.Sayfayı yenileyin.";
         return RedirectToAction(nameof(Club));
     }
+
 }

@@ -26,12 +26,8 @@ namespace XYZ.Web.Controllers
             var stats = await _apiClient.GetAdminCoachDashboardAsync(cancellationToken)
                         ?? new AdminCoachDashboardDto();
 
-            var theme = TenantThemeFilter.GetThemeFromHttpContext(HttpContext)
-                        ?? new TenantThemeViewModel();
-
             var model = new AdminDashboardViewModel
             {
-                Theme = theme,
                 Stats = stats,
                 UserDisplayName = User?.Identity?.Name ?? "Kullanıcı"
             };
