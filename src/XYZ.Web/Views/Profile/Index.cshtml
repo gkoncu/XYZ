@@ -1,11 +1,12 @@
 ﻿@model XYZ.Web.Models.Profile.ProfileViewModel
+@using XYZ.Domain.Enums
 @{
     ViewData["Title"] = "Profilim";
 
     var p = Model.Profile;
+    var role = p.Role ?? "";
 
     var hasPhoto = !string.IsNullOrWhiteSpace(p.ProfilePictureUrl);
-    var role = p.Role ?? "";
 
     string RoleLabel(string r) => r switch
     {
@@ -13,7 +14,7 @@
         "Coach" => "Koç",
         "Student" => "Öğrenci",
         "SuperAdmin" => "Super Admin",
-        _ => r
+        _ => string.IsNullOrWhiteSpace(r) ? "-" : r
     };
 
     string BadgeClass(string r) => r switch
@@ -24,6 +25,8 @@
         "SuperAdmin" => "bg-dark",
         _ => "bg-light text-dark border"
     };
+
+    string EnumLabel<T>(T value) where T : struct, Enum => value.ToString();
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -38,11 +41,18 @@
         <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-outline-primary">
             Bilgilerimi Düzenle
         </a>
-        <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-sm btn-outline-secondary">
-            Şifre Değiştir
+        <a asp-controller="Settings" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            Ayarlar
         </a>
     </div>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(TempData["SuccessMessage"] as string))
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
 
 <div class="row g-3">
     <div class="col-12 col-lg-4">
@@ -64,7 +74,7 @@
 
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <div class="fw-semibold fs-5">@p.FullName</div>
+                        <div class="fw-semibold fs-5">@Model.FullName</div>
                         <span class="badge @BadgeClass(role)">@RoleLabel(role)</span>
                     </div>
                     <div class="text-muted small mt-1">
@@ -79,10 +89,44 @@
 
             <hr class="my-3" />
 
+            <div class="text-muted small">Kulüp</div>
+            <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.TenantName) ? p.TenantName : "-")</div>
+
+            <div class="text-muted small mt-3">Rol Bazlı</div>
+            <div class="fw-semibold">
+                @if (role == "Student")
+                {
+                    <span>Öğrenci</span>
+                }
+                else if (role == "Coach")
+                {
+                    <span>Koç</span>
+                }
+                else if (role == "Admin")
+                {
+                    <span>Admin</span>
+                }
+                else if (role == "SuperAdmin")
+                {
+                    <span>Super Admin</span>
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </div>
+
+            <hr class="my-3" />
+
             <div class="d-grid gap-2">
-                <button class="btn btn-sm btn-outline-dark" disabled title="Yakında">
-                    Profil Fotoğrafı Yükle (Yakında)
-                </button>
+                <a asp-controller="Profile" asp-action="Edit" class="btn btn-sm btn-primary">
+                    Bilgilerimi Düzenle
+                </a>
+
+                <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-sm btn-outline-secondary">
+                    Şifre Değiştir
+                </a>
+
                 <form asp-controller="Account" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-sm btn-outline-danger w-100">
@@ -90,67 +134,66 @@
                     </button>
                 </form>
             </div>
+
+            <div class="text-muted small mt-3">
+                Profil fotoğrafı yükleme özelliği yakında eklenecek.
+            </div>
         </div>
     </div>
 
     <div class="col-12 col-lg-8">
         <div class="card-surface p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="fw-semibold">Hesap Bilgileri</div>
-                @if (!string.IsNullOrWhiteSpace(p.UserId))
-                {
-                    <span class="text-muted small">ID: @p.UserId</span>
-                }
-            </div>
+            <div class="fw-semibold">Kişisel Bilgiler</div>
 
             <div class="row g-3 mt-1">
                 <div class="col-12 col-md-6">
-                    <div class="text-muted small">Ad Soyad</div>
-                    <div class="fw-semibold">@p.FullName</div>
+                    <div class="text-muted small">Ad</div>
+                    <div class="fw-semibold">@p.FirstName</div>
                 </div>
 
                 <div class="col-12 col-md-6">
-                    <div class="text-muted small">E-posta</div>
-                    <div class="fw-semibold">@p.Email</div>
+                    <div class="text-muted small">Soyad</div>
+                    <div class="fw-semibold">@p.LastName</div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="text-muted small">Cinsiyet</div>
+                    <div class="fw-semibold">@EnumLabel(p.Gender)</div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="text-muted small">Kan Grubu</div>
+                    <div class="fw-semibold">@EnumLabel(p.BloodType)</div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="text-muted small">Doğum Tarihi</div>
+                    <div class="fw-semibold">@p.BirthDate.ToString("dd.MM.yyyy")</div>
                 </div>
 
                 <div class="col-12 col-md-6">
                     <div class="text-muted small">Telefon</div>
                     <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.PhoneNumber) ? p.PhoneNumber : "-")</div>
                 </div>
-
-                <div class="col-12 col-md-6">
-                    <div class="text-muted small">Rol</div>
-                    <div class="fw-semibold">@RoleLabel(role)</div>
-                </div>
             </div>
 
             <hr class="my-3" />
 
-            <div class="fw-semibold mb-2">Kulüp Bilgisi</div>
+            <div class="fw-semibold">Kulüp / Operasyon</div>
 
-            <div class="row g-3">
+            <div class="row g-3 mt-1">
                 <div class="col-12 col-md-6">
                     <div class="text-muted small">Kulüp (Tenant)</div>
                     <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.TenantName) ? p.TenantName : "-")</div>
                 </div>
+
                 <div class="col-12 col-md-6">
-                    <div class="text-muted small">Tenant Id</div>
-                    <div class="fw-semibold">@((p.TenantId.HasValue) ? p.TenantId.Value.ToString() : "-")</div>
+                    <div class="text-muted small">Şube</div>
+                    <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.BranchName) ? p.BranchName : "-")</div>
                 </div>
-            </div>
 
-            <hr class="my-3" />
-
-            <div class="fw-semibold mb-2">Rol Bazlı Bilgiler</div>
-
-            @if (role == "Student")
-            {
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <div class="text-muted small">Şube</div>
-                        <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.BranchName) ? p.BranchName : "-")</div>
-                    </div>
+                @if (role == "Student")
+                {
                     <div class="col-12 col-md-6">
                         <div class="text-muted small">Sınıf</div>
                         <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.ClassName) ? p.ClassName : "-")</div>
@@ -158,83 +201,38 @@
 
                     <div class="col-12">
                         <div class="alert alert-light border small mb-0">
-                            Not: Sınıf/şube bilgisi yönetim tarafından belirlenir. Değişiklik için koçunuz veya admin ile iletişime geçebilirsiniz.
+                            Not: Şube/Sınıf bilgisi yönetim tarafından atanır; buradan değiştirilemez.
                         </div>
                     </div>
-                </div>
-            }
-            else if (role == "Coach")
-            {
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <div class="text-muted small">Şube</div>
-                        <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.BranchName) ? p.BranchName : "-")</div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <div class="text-muted small">Sorumlu Olduğu Sınıf Sayısı</div>
-                        <div class="fw-semibold">@((p.ClassesCount.HasValue) ? p.ClassesCount.Value.ToString() : "-")</div>
-                    </div>
-
+                }
+                else if (role == "Coach")
+                {
                     <div class="col-12">
                         <div class="alert alert-light border small mb-0">
-                            İpucu: Koç panelinden gecikmiş ödemeleri ve eksik belgeleri takip edip öğrencilerinize hatırlatma yapabilirsiniz.
+                            İpucu: Koç panelinden gecikmiş ödemeleri ve eksik belgeleri takip edebilirsiniz.
                         </div>
                     </div>
-                </div>
-            }
-            else if (role == "Admin")
-            {
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <div class="text-muted small">Admin Id</div>
-                        <div class="fw-semibold">@((p.AdminId.HasValue) ? p.AdminId.Value.ToString() : "-")</div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <div class="text-muted small">Yetkiler</div>
-                        <div class="fw-semibold">
-                            <span class="badge bg-light text-dark border me-1">
-                                Kullanıcı: @(p.CanManageUsers == true ? "Var" : "Yok")
-                            </span>
-                            <span class="badge bg-light text-dark border me-1">
-                                Finans: @(p.CanManageFinance == true ? "Var" : "Yok")
-                            </span>
-                            <span class="badge bg-light text-dark border">
-                                Ayarlar: @(p.CanManageSettings == true ? "Var" : "Yok")
-                            </span>
-                        </div>
-                    </div>
-
+                }
+                else if (role == "Admin" || role == "SuperAdmin")
+                {
                     <div class="col-12">
                         <div class="alert alert-light border small mb-0">
-                            Not: Kulüp ayarları (tema, belge gereksinimleri vb.) ayrı “Kulüp Ayarları” ekranında yönetilecektir.
+                            İpucu: Kulüp ayarları (tema, belge gereksinimleri vb.) için Ayarlar &gt; Kulüp Ayarları bölümünü kullanın.
                         </div>
                     </div>
-                </div>
-            }
-            else if (role == "SuperAdmin")
-            {
-                <div class="alert alert-light border small mb-0">
-                    Super Admin hesabı tenantlar üstünde yönetim yetkisine sahiptir. Operasyonel kontroller için tenant seçimi kullanılır.
-                </div>
-            }
-            else
-            {
-                <div class="text-muted small">
-                    Bu rol için tanımlı ek profil alanı bulunmuyor.
-                </div>
-            }
+                }
+            </div>
         </div>
 
         <div class="card-surface p-3 mt-3">
             <div class="fw-semibold">Hızlı İşlemler</div>
-            <div class="text-muted small mt-1">
-                Sık kullanılan aksiyonlara buradan ulaşabilirsiniz.
-            </div>
+            <div class="text-muted small mt-1">Sık kullanılan ekranlara geçiş.</div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
                 @if (role == "Student")
                 {
-                    <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-primary">Ödemelerim</a>
+                    <a asp-controller="StudentDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Dashboard</a>
+                    <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-secondary">Ödemelerim</a>
                     <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">Ödeme Planım</a>
                 }
                 else if (role == "Coach")
@@ -250,7 +248,7 @@
                     <a asp-controller="Students" asp-action="Index" class="btn btn-sm btn-outline-secondary">Öğrenciler</a>
                     <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ödemeler</a>
                     <a asp-controller="Attendance" asp-action="Index" class="btn btn-sm btn-outline-secondary">Antrenmanlar</a>
-                    <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Belgeler</a>
+                    <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-secondary">Kulüp Ayarları</a>
                 }
             </div>
         </div>

@@ -1,0 +1,85 @@
+﻿@model XYZ.Web.Models.Profile.ProfileEditViewModel
+@using XYZ.Domain.Enums
+@{
+    ViewData["Title"] = "Bilgilerimi Düzenle";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">Bilgilerimi Düzenle</h2>
+        <div class="text-muted small">Temel profil bilgilerinizi güncelleyebilirsiniz.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Profile" asp-action="Index" class="btn btn-sm btn-outline-secondary">Profilim</a>
+        <a asp-controller="Settings" asp-action="Index" class="btn btn-sm btn-outline-primary">Ayarlar</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card-surface p-3">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Ad</label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Soyad</label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Telefon (opsiyonel)</label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Doğum Tarihi</label>
+                        <input asp-for="BirthDate" type="date" class="form-control" />
+                        <span asp-validation-for="BirthDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Cinsiyet</label>
+                        <select asp-for="Gender" class="form-select"
+                                asp-items="Html.GetEnumSelectList<Gender>()"></select>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Kan Grubu</label>
+                        <select asp-for="BloodType" class="form-select"
+                                asp-items="Html.GetEnumSelectList<BloodType>()"></select>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+                </div>
+
+                <div class="text-muted small mt-3">
+                    Not: Şube/sınıf gibi operasyonel bilgiler yönetim tarafından atanır; buradan değiştirilemez.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card-surface p-3 h-100">
+            <div class="fw-semibold">Profil Fotoğrafı</div>
+            <div class="text-muted small mt-1">Yükleme özelliği yakında eklenecek.</div>
+
+            <button class="btn btn-sm btn-outline-dark mt-3" disabled title="Yakında">
+                Fotoğraf Yükle (Yakında)
+            </button>
+        </div>
+    </div>
+</div>

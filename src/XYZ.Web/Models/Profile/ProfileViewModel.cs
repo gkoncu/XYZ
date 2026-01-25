@@ -2,9 +2,12 @@
 
 namespace XYZ.Web.Models.Profile
 {
-    public class ProfileViewModel
+    public sealed class ProfileViewModel
     {
         public MyProfileDto Profile { get; set; } = new();
         public string Initials { get; set; } = "?";
+
+        public string FullName =>
+            $"{Profile.FirstName} {Profile.LastName}".Trim();
     }
 }

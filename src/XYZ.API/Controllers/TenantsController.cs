@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Tenants.Commands.CreateTenant;
 using XYZ.Application.Features.Tenants.Commands.DeleteTenant;
+using XYZ.Application.Features.Tenants.Commands.UpdateCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
 using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
@@ -85,6 +86,15 @@ namespace XYZ.API.Controllers
         {
             var dto = await _mediator.Send(new GetCurrentTenantThemeQuery(), cancellationToken);
             return Ok(dto);
+        }
+
+        [HttpPut("current-theme")]
+        public async Task<IActionResult> UpdateCurrentTheme(
+            [FromBody] UpdateCurrentTenantThemeCommand command,
+            CancellationToken cancellationToken)
+        {
+            await _mediator.Send(command, cancellationToken);
+            return NoContent();
         }
 
     }

@@ -31,6 +31,7 @@ using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
+using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
@@ -38,7 +39,9 @@ using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
 using XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Application.Features.Tenants.Commands.UpdateCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
+using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
@@ -351,5 +354,10 @@ namespace XYZ.Web.Services
 
         // === Profile ===
         Task<MyProfileDto?> GetMyProfileAsync(CancellationToken cancellationToken = default);
+        Task<bool> UpdateMyProfileAsync(UpdateMyProfileCommand command, CancellationToken cancellationToken = default);
+
+        Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default);
+        Task<bool> UpdateCurrentTenantThemeAsync(UpdateCurrentTenantThemeCommand command, CancellationToken cancellationToken = default);
+
     }
 }

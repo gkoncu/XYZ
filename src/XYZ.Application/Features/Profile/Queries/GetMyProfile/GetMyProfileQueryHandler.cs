@@ -28,6 +28,11 @@ public sealed class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery
         var user = await _context.Users
             .AsNoTracking()
             .Include(u => u.Tenant)
+            .Include(u => u.StudentProfile)
+                .ThenInclude(s => s!.Class)
+                    .ThenInclude(c => c!.Branch)
+            .Include(u => u.CoachProfile)
+                .ThenInclude(c => c!.Branch)
             .FirstOrDefaultAsync(u => u.Id == _current.UserId, ct);
 
         if (user is null)
@@ -37,66 +42,31 @@ public sealed class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery
         {
             UserId = user.Id,
             Role = _current.Role ?? string.Empty,
-            FullName = user.FullName,
-            Email = user.Email ?? string.Empty,
-            PhoneNumber = user.PhoneNumber,
             TenantId = user.TenantId,
             TenantName = user.Tenant?.Name,
+
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber,
+
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+
+            Gender = user.Gender,
+            BloodType = user.BloodType,
+            BirthDate = user.BirthDate,
+
             ProfilePictureUrl = user.ProfilePictureUrl
         };
 
-        if ((_current.Role == "Student") && _current.StudentId.HasValue)
+        if (dto.Role == "Student" && user.StudentProfile?.Class is not null)
         {
-            var student = await _dataScope.Students()
-                .AsNoTracking()
-                .Include(s => s.Class)
-                    .ThenInclude(c => c!.Branch)
-                .FirstOrDefaultAsync(s => s.Id == _current.StudentId.Value, ct);
-
-            if (student?.Class is not null)
-            {
-                dto.ClassId = student.Class.Id;
-                dto.ClassName = student.Class.Name;
-                dto.BranchId = student.Class.BranchId;
-                dto.BranchName = student.Class.Branch?.Name;
-            }
-
-            return dto;
+            dto.ClassName = user.StudentProfile.Class.Name;
+            dto.BranchName = user.StudentProfile.Class.Branch?.Name;
         }
 
-        if ((_current.Role == "Coach") && _current.CoachId.HasValue)
+        if (dto.Role == "Coach" && user.CoachProfile is not null)
         {
-            var coach = await _dataScope.Coaches()
-                .AsNoTracking()
-                .Include(c => c.Branch)
-                .Include(c => c.Classes)
-                .FirstOrDefaultAsync(c => c.Id == _current.CoachId.Value, ct);
-
-            if (coach is not null)
-            {
-                dto.BranchId = coach.BranchId;
-                dto.BranchName = coach.Branch?.Name;
-                dto.ClassesCount = coach.Classes?.Count ?? 0;
-            }
-
-            return dto;
-        }
-
-        if ((_current.Role == "Admin") && _current.TenantId.HasValue)
-        {
-            var admin = await _context.Admins
-                .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.UserId == _current.UserId && a.TenantId == _current.TenantId.Value, ct);
-
-            if (admin is not null)
-            {
-                dto.AdminId = admin.Id;
-                dto.CanManageUsers = admin.CanManageUsers;
-                dto.CanManageFinance = admin.CanManageFinance;
-                dto.CanManageSettings = admin.CanManageSettings;
-            }
-
-            return dto;
+            dto.BranchName = user.CoachProfile.Branch?.Name;
         }
 
         return dto;
