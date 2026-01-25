@@ -103,9 +103,7 @@ public sealed class StudentsController : ControllerBase
                     BloodType = bloodType
                 };
 
-                const string password = "Student123!";
-
-                var createResult = await _userManager.CreateAsync(user, password);
+                var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
@@ -183,6 +181,19 @@ public sealed class StudentsController : ControllerBase
             var id = await _mediator.Send(command, ct);
 
             await tx.CommitAsync(ct);
+
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            {
+                var hasPassword = await _userManager.HasPasswordAsync(user);
+                if (!hasPassword)
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    Response.Headers["X-Password-UserId"] = user.Id;
+                    Response.Headers["X-Password-Token"] = token;
+                }
+            }
+
+
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
         catch (UnauthorizedAccessException)
