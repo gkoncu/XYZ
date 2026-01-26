@@ -34,7 +34,8 @@ builder.Services
         // TODO : Lockout/Confirm
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // --- Options (Jwt) ---
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));

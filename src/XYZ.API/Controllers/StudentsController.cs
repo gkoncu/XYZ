@@ -182,15 +182,22 @@ public sealed class StudentsController : ControllerBase
 
             await tx.CommitAsync(ct);
 
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            try
             {
-                var hasPassword = await _userManager.HasPasswordAsync(user);
-                if (!hasPassword)
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
                 {
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    Response.Headers["X-Password-UserId"] = user.Id;
-                    Response.Headers["X-Password-Token"] = token;
+                    var hasPassword = await _userManager.HasPasswordAsync(user);
+                    if (!hasPassword)
+                    {
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                        Response.Headers["X-Password-UserId"] = user.Id;
+                        Response.Headers["X-Password-Token"] = token;
+                    }
                 }
+            }
+            catch
+            {
+
             }
 
 
