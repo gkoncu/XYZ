@@ -200,6 +200,8 @@ namespace XYZ.Web.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
+            model.Token = model.Token.Replace(' ', '+');
+
             var (ok, error) = await _apiClient.SetPasswordAsync(model.UserId, model.Token, model.NewPassword, ct);
 
             if (!ok)
