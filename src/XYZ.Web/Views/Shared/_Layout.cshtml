@@ -211,6 +211,36 @@
 
     <div class="app-content">
         <main role="main" class="app-main container-fluid py-4">
+            @{
+                var devSetupUrl = TempData["DevPasswordSetupUrl"] as string;
+                var devPasswordUserId = TempData["DevPasswordUserId"] as string;
+            }
+
+            @if (!string.IsNullOrWhiteSpace(devSetupUrl))
+            {
+                <div class="container-fluid mb-3">
+                    <div class="alert alert-warning d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                        <div>
+                            <strong>DEV:</strong> Yeni kullanıcı için şifre belirleme linki hazır.
+                            @if (!string.IsNullOrWhiteSpace(devPasswordUserId))
+                            {
+                                <span class="ms-1 text-muted">(UserId: @devPasswordUserId)</span>
+                            }
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-dark" href="@devSetupUrl" target="_blank" rel="noopener noreferrer">
+                                Linki Aç
+                            </a>
+
+                            <button type="button" class="btn btn-sm btn-dark"
+                                    onclick="navigator.clipboard.writeText('@devSetupUrl'); this.innerText='Kopyalandı'; setTimeout(()=>this.innerText='Kopyala',1200);">
+                                Kopyala
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }   
             @RenderBody()
         </main>
     </div>
