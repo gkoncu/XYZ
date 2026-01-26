@@ -81,8 +81,7 @@ public sealed class CoachesController(
                     IsActive = true
                 };
 
-                const string password = "Coach123!";
-                var createResult = await userManager.CreateAsync(user, password);
+                var createResult = await userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
@@ -137,6 +136,25 @@ public sealed class CoachesController(
             var id = await mediator.Send(command, ct);
 
             await tx.CommitAsync(ct);
+
+            try
+            {
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                {
+                    var hasPassword = await userManager.HasPasswordAsync(user);
+                    if (!hasPassword)
+                    {
+                        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                        Response.Headers["X-Password-UserId"] = user.Id;
+                        Response.Headers["X-Password-Token"] = token;
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
         catch (UnauthorizedAccessException)

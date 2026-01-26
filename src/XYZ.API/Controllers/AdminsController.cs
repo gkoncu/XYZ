@@ -169,9 +169,7 @@ namespace XYZ.API.Controllers
                         IsActive = true
                     };
 
-                    const string password = "Admin123!";
-
-                    var createResult = await _userManager.CreateAsync(user, password);
+                    var createResult = await _userManager.CreateAsync(user);
                     if (!createResult.Succeeded)
                     {
                         var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
@@ -235,6 +233,25 @@ namespace XYZ.API.Controllers
                 var id = await _mediator.Send(command, cancellationToken);
 
                 await tx.CommitAsync(cancellationToken);
+
+                try
+                {
+                    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                    {
+                        var hasPassword = await _userManager.HasPasswordAsync(user);
+                        if (!hasPassword)
+                        {
+                            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                            Response.Headers["X-Password-UserId"] = user.Id;
+                            Response.Headers["X-Password-Token"] = token;
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
+
                 return CreatedAtAction(nameof(GetById), new { id }, id);
             }
             catch (UnauthorizedAccessException)
