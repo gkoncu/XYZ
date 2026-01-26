@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using XYZ.Application.Features.Auth.DTOs;
+using XYZ.Web.Models.Account;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
@@ -152,6 +153,63 @@ namespace XYZ.Web.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var ok = await _apiClient.ForgotPasswordAsync(model.Email.Trim(), ct);
+
+            model.InfoMessage = "Eğer hesap mevcutsa şifre belirleme bağlantısı gönderilecektir.";
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult SetPassword(string? uid, string? token)
+        {
+            if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(token))
+            {
+                return View(new SetPasswordViewModel
+                {
+                    ErrorMessage = "Bağlantı geçersiz. Lütfen tekrar deneyin."
+                });
+            }
+
+            return View(new SetPasswordViewModel
+            {
+                UserId = uid,
+                Token = token
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetPassword(SetPasswordViewModel model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var (ok, error) = await _apiClient.SetPasswordAsync(model.UserId, model.Token, model.NewPassword, ct);
+
+            if (!ok)
+            {
+                model.ErrorMessage = error ?? "Şifre güncellenemedi.";
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Şifre başarıyla güncellendi. Şimdi giriş yapabilirsiniz.";
+            return RedirectToAction("Login");
         }
 
         [HttpGet]
