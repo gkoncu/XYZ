@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,10 +7,13 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using XYZ.API.HostedServices;
+using XYZ.API.Services.Auth;
+using XYZ.API.Services.Email;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Application.Data;
 using XYZ.Application.Features.Auth.Options;
+using XYZ.Application.Features.Email.Options;
 using XYZ.Application.Services;
 using XYZ.Application.Services.Auth;
 using XYZ.Domain.Entities;
@@ -39,6 +41,12 @@ builder.Services
 
 // --- Options (Jwt) ---
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+
+// --- Options (Email) ---
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+
+// --- Email sender ---
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
 // --- Authentication: JWT Bearer ---
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -80,10 +88,8 @@ builder.Services.AddValidatorsFromAssembly(appAssembly);
 
 // --- IHttpContextAccessor + CurrentUserService ---
 builder.Services.AddHttpContextAccessor();
-// builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // --- Application Services (Auth) ---
-// Interface -> Implementation Matchup
 builder.Services.AddScoped<IDataScopeService, DataScopeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserLookup, UserLookupService>();
@@ -92,6 +98,7 @@ builder.Services.AddScoped<IJwtFactory, JwtFactory>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<IRoleAssignmentService, RoleAssignmentService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IPasswordSetupLinkBuilder, PasswordSetupLinkBuilder>();
 
 // Payments: scheduled overdue marker
 builder.Services.AddScoped<IOverduePaymentService, OverduePaymentService>();
