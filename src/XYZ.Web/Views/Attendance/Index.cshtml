@@ -1,4 +1,4 @@
-﻿﻿@using System
+﻿﻿﻿@using System
 @model IList<XYZ.Web.Models.Attendance.TodaySessionViewModel>
 
 @{
@@ -17,9 +17,9 @@
 
 <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
     <div>
-        <h2 class="mb-0">Yoklama Antrenmanları</h2>
+        <h2 class="mb-0">Yoklama</h2>
         <small class="text-muted">
-            @selectedDate.ToString("dd.MM.yyyy") tarihindeki planlanmış antrenmanlar
+            @selectedDate.ToString("dd.MM.yyyy") tarihindeki planlı seanslar
         </small>
     </div>
 
@@ -30,22 +30,28 @@
                style="min-width: 180px;"
                value="@selectedDate.ToString("yyyy-MM-dd")" />
         <button type="submit" class="btn btn-primary">
-            Tarihi Güncelle
+            Güncelle
         </button>
     </form>
 </div>
 
-<div class="d-flex justify-content-end mb-3 gap-2">
+<div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
+    <a asp-action="Index"
+       asp-route-date="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")"
+       class="btn btn-outline-secondary btn-sm">
+        Bugün
+    </a>
+
     <a asp-action="Index"
        asp-route-date="@prevDate.ToString("yyyy-MM-dd")"
        class="btn btn-outline-secondary btn-sm">
-        &laquo; Önceki Gün (@prevDate.ToString("dd.MM"))
+        &laquo; Önceki (@prevDate.ToString("dd.MM"))
     </a>
 
     <a asp-action="Index"
        asp-route-date="@nextDate.ToString("yyyy-MM-dd")"
        class="btn btn-outline-secondary btn-sm">
-        Sonraki Gün (@nextDate.ToString("dd.MM")) &raquo;
+        Sonraki (@nextDate.ToString("dd.MM")) &raquo;
     </a>
 </div>
 
@@ -59,7 +65,7 @@
 @if (Model is null || !Model.Any())
 {
     <div class="alert alert-info">
-        Bu tarih için planlanmış herhangi bir antrenman yok.
+        Bu tarihte seans bulunmuyor.
     </div>
 }
 else
@@ -128,7 +134,7 @@ else
                             <a asp-action="Session"
                                asp-route-id="@s.SessionId"
                                class="btn btn-sm btn-primary w-100">
-                                Yoklama Detayı
+                                @(s.HasAttendance ? "Görüntüle" : "Yoklama Al")
                             </a>
                         </div>
                     </div>
