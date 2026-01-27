@@ -2,12 +2,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System;
+using System.Linq;
+using XYZ.API.Services.Auth;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Data;
 using XYZ.Application.Features.Coaches.Commands.CreateCoach;
 using XYZ.Application.Features.Coaches.Commands.DeleteCoach;
 using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
+using XYZ.Application.Features.Email.Options;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -20,7 +26,11 @@ public sealed class CoachesController(
     IMediator mediator,
     UserManager<ApplicationUser> userManager,
     RoleManager<IdentityRole> roleManager,
-    ApplicationDbContext db) : ControllerBase
+    ApplicationDbContext db,
+    IEmailSender emailSender,
+    IOptions<EmailOptions> emailOptions,
+    IWebHostEnvironment env,
+    IPasswordSetupLinkBuilder linkBuilder) : ControllerBase
 {
     [HttpGet]
     [Authorize(Roles = "Admin,Coach,SuperAdmin")]
@@ -139,14 +149,26 @@ public sealed class CoachesController(
 
             try
             {
-                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                var hasPassword = await userManager.HasPasswordAsync(user);
+                if (!hasPassword)
                 {
-                    var hasPassword = await userManager.HasPasswordAsync(user);
-                    if (!hasPassword)
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var setupUrl = linkBuilder.Build(user.Id, token);
+
+                    if (emailOptions.Value.Enabled && !string.IsNullOrWhiteSpace(setupUrl))
                     {
-                        var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                        Response.Headers["X-Password-UserId"] = user.Id;
-                        Response.Headers["X-Password-Token"] = token;
+                        var subject = "XYZ - Şifre Belirleme";
+                        var body = $@"
+                        <p>Merhaba,</p>
+                        <p>Şifrenizi belirlemek/sıfırlamak için aşağıdaki bağlantıyı kullanın:</p>
+                        <p><a href=""{setupUrl}"">{setupUrl}</a></p>
+                        <p>Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>";
+                        await emailSender.SendAsync(user.Email!, subject, body, ct);
+                    }
+
+                    if (env.IsDevelopment())
+                    {
+                        PasswordSetupHeaders.Write(Response, user.Id, token, setupUrl);
                     }
                 }
             }
