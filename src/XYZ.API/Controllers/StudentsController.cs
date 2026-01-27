@@ -3,7 +3,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using XYZ.API.Services.Auth;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
+using XYZ.Application.Data;
+using XYZ.Application.Features.Email.Options;
 using XYZ.Application.Features.Students.Commands.ActivateStudent;
 using XYZ.Application.Features.Students.Commands.CreateStudent;
 using XYZ.Application.Features.Students.Commands.DeactivateStudent;
@@ -13,8 +22,6 @@ using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
-
-using XYZ.Application.Data;
 
 namespace XYZ.API.Controllers;
 
@@ -28,16 +35,30 @@ public sealed class StudentsController : ControllerBase
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _db;
 
+    private readonly IEmailSender _emailSender;
+    private readonly IOptions<EmailOptions> _emailOptions;
+    private readonly IWebHostEnvironment _env;
+    private readonly IPasswordSetupLinkBuilder _linkBuilder;
+
     public StudentsController(
         IMediator mediator,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        ApplicationDbContext db)
+        ApplicationDbContext db,
+        IEmailSender emailSender,
+        IOptions<EmailOptions> emailOptions,
+        IWebHostEnvironment env,
+        IPasswordSetupLinkBuilder linkBuilder)
     {
         _mediator = mediator;
         _userManager = userManager;
         _roleManager = roleManager;
         _db = db;
+
+        _emailSender = emailSender;
+        _emailOptions = emailOptions;
+        _env = env;
+        _linkBuilder = linkBuilder;
     }
 
     [HttpGet]
@@ -103,9 +124,7 @@ public sealed class StudentsController : ControllerBase
                     BloodType = bloodType
                 };
 
-                const string password = "Student123!";
-
-                var createResult = await _userManager.CreateAsync(user, password);
+                var createResult = await _userManager.CreateAsync(user);
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
@@ -183,6 +202,36 @@ public sealed class StudentsController : ControllerBase
             var id = await _mediator.Send(command, ct);
 
             await tx.CommitAsync(ct);
+
+            try
+            {
+                var hasPassword = await _userManager.HasPasswordAsync(user);
+                if (!hasPassword)
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var setupUrl = _linkBuilder.Build(user.Id, token);
+
+                    if (_emailOptions.Value.Enabled && !string.IsNullOrWhiteSpace(setupUrl))
+                    {
+                        var subject = "XYZ - Şifre Belirleme";
+                        var body = $@"
+                        <p>Merhaba,</p>
+                        <p>Şifrenizi belirlemek/sıfırlamak için aşağıdaki bağlantıyı kullanın:</p>
+                        <p><a href=""{setupUrl}"">{setupUrl}</a></p>
+                        <p>Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>";
+                        await _emailSender.SendAsync(user.Email!, subject, body, ct);
+                    }
+
+                    if (_env.IsDevelopment())
+                    {
+                        PasswordSetupHeaders.Write(Response, user.Id, token, setupUrl);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
         catch (UnauthorizedAccessException)

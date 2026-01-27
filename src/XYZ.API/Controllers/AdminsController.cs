@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using XYZ.API.Services.Auth;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Data;
 using XYZ.Application.Features.Admins.Commands.CreateAdmin;
@@ -12,6 +18,7 @@ using XYZ.Application.Features.Admins.Commands.DeleteAdmin;
 using XYZ.Application.Features.Admins.Commands.UpdateAdmin;
 using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
+using XYZ.Application.Features.Email.Options;
 using XYZ.Domain.Entities;
 
 namespace XYZ.API.Controllers
@@ -26,16 +33,30 @@ namespace XYZ.API.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _dbContext;
 
+        private readonly IEmailSender _emailSender;
+        private readonly IOptions<EmailOptions> _emailOptions;
+        private readonly IWebHostEnvironment _env;
+        private readonly IPasswordSetupLinkBuilder _linkBuilder;
+
         public AdminsController(
             IMediator mediator,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            IEmailSender emailSender,
+            IOptions<EmailOptions> emailOptions,
+            IWebHostEnvironment env,
+            IPasswordSetupLinkBuilder linkBuilder)
         {
             _mediator = mediator;
             _userManager = userManager;
             _roleManager = roleManager;
             _dbContext = dbContext;
+
+            _emailSender = emailSender;
+            _emailOptions = emailOptions;
+            _env = env;
+            _linkBuilder = linkBuilder;
         }
 
         [HttpGet]
@@ -169,9 +190,7 @@ namespace XYZ.API.Controllers
                         IsActive = true
                     };
 
-                    const string password = "Admin123!";
-
-                    var createResult = await _userManager.CreateAsync(user, password);
+                    var createResult = await _userManager.CreateAsync(user);
                     if (!createResult.Succeeded)
                     {
                         var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
@@ -200,9 +219,11 @@ namespace XYZ.API.Controllers
                     }
                 }
 
-                if (!await _roleManager.RoleExistsAsync("Admin"))
+                const string adminRole = "Admin";
+
+                if (!await _roleManager.RoleExistsAsync(adminRole))
                 {
-                    var roleCreate = await _roleManager.CreateAsync(new IdentityRole("Admin"));
+                    var roleCreate = await _roleManager.CreateAsync(new IdentityRole(adminRole));
                     if (!roleCreate.Succeeded)
                     {
                         var errors = string.Join("; ", roleCreate.Errors.Select(e => e.Description));
@@ -211,9 +232,9 @@ namespace XYZ.API.Controllers
                     }
                 }
 
-                if (!await _userManager.IsInRoleAsync(user, "Admin"))
+                if (!await _userManager.IsInRoleAsync(user, adminRole))
                 {
-                    var roleResult = await _userManager.AddToRoleAsync(user, "Admin");
+                    var roleResult = await _userManager.AddToRoleAsync(user, adminRole);
                     if (!roleResult.Succeeded)
                     {
                         var errors = string.Join("; ", roleResult.Errors.Select(e => e.Description));
@@ -235,6 +256,37 @@ namespace XYZ.API.Controllers
                 var id = await _mediator.Send(command, cancellationToken);
 
                 await tx.CommitAsync(cancellationToken);
+
+                try
+                {
+                    var hasPassword = await _userManager.HasPasswordAsync(user);
+                    if (!hasPassword)
+                    {
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                        var setupUrl = _linkBuilder.Build(user.Id, token);
+
+                        if (_emailOptions.Value.Enabled && !string.IsNullOrWhiteSpace(setupUrl))
+                        {
+                            var subject = "XYZ - Şifre Belirleme";
+                            var body = $@"
+                            <p>Merhaba,</p>
+                            <p>Şifrenizi belirlemek/sıfırlamak için aşağıdaki bağlantıyı kullanın:</p>
+                            <p><a href=""{setupUrl}"">{setupUrl}</a></p>
+                            <p>Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>";
+                            await _emailSender.SendAsync(user.Email!, subject, body, cancellationToken);
+                        }
+
+                        if (_env.IsDevelopment())
+                        {
+                            PasswordSetupHeaders.Write(Response, user.Id, token, setupUrl);
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
+
                 return CreatedAtAction(nameof(GetById), new { id }, id);
             }
             catch (UnauthorizedAccessException)

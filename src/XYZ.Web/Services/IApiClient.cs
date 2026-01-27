@@ -45,6 +45,7 @@ using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
+using static System.Net.WebRequestMethods;
 
 namespace XYZ.Web.Services
 {
@@ -75,6 +76,11 @@ namespace XYZ.Web.Services
             string identifier,
             string password,
             CancellationToken cancellationToken = default);
+
+        // === Account ===
+        Task<bool> ForgotPasswordAsync(string email, CancellationToken ct);
+
+        Task<(bool Ok, string? Error)> SetPasswordAsync(string userId, string token, string newPassword, CancellationToken ct);
 
         // === Dashboard ===
         Task<AdminCoachDashboardDto?> GetAdminCoachDashboardAsync(

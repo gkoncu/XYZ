@@ -135,6 +135,33 @@ namespace XYZ.Web.Controllers
             }
 
             TempData["SuccessMessage"] = "Öğrenci oluşturuldu.";
+
+            string? setupUrl = null;
+
+            if (response.Headers.TryGetValues("X-Password-Setup-Url", out var setupUrlValues))
+            {
+                setupUrl = setupUrlValues.FirstOrDefault();
+            }
+
+            if (string.IsNullOrWhiteSpace(setupUrl)
+                && response.Headers.TryGetValues("X-Password-UserId", out var userIdValues)
+                && response.Headers.TryGetValues("X-Password-Token", out var tokenValues))
+            {
+                var uid = userIdValues.FirstOrDefault();
+                var token = tokenValues.FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(uid) && !string.IsNullOrWhiteSpace(token))
+                {
+                    setupUrl = Url.Action("SetPassword", "Account", new { uid, token });
+                    TempData["DevPasswordUserId"] = uid;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(setupUrl))
+            {
+                TempData["DevPasswordSetupUrl"] = setupUrl;
+            }
+
             return RedirectToAction(nameof(Details), new { id });
         }
 

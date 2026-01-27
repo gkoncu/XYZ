@@ -52,6 +52,7 @@ using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
+using static System.Net.WebRequestMethods;
 
 namespace XYZ.Web.Services
 {
@@ -116,6 +117,40 @@ namespace XYZ.Web.Services
 
             return await response.Content.ReadFromJsonAsync<LoginResultDto>(
                 cancellationToken: cancellationToken);
+        }
+
+        // === Account ===
+        public async Task<bool> ForgotPasswordAsync(string email, CancellationToken ct)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("auth/password/forgot", new
+            {
+                Email = email
+            }, ct);
+
+            return resp.IsSuccessStatusCode;
+        }
+
+        public async Task<(bool Ok, string? Error)> SetPasswordAsync(string userId, string token, string newPassword, CancellationToken ct)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("auth/password/set", new
+            {
+                UserId = userId,
+                Token = token,
+                NewPassword = newPassword
+            }, ct);
+
+            if (resp.IsSuccessStatusCode) return (true, null);
+
+            try
+            {
+                var body = await resp.Content.ReadFromJsonAsync<Dictionary<string, string>>(cancellationToken: ct);
+                if (body is not null && body.TryGetValue("error", out var error))
+                    return (false, error);
+            }
+            catch
+            {
+            }
+            return (false, "Şifre güncellenemedi. Token süresi dolmuş olabilir.");
         }
 
         // === Dashboard ===
