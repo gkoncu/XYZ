@@ -1,24 +1,55 @@
 ﻿@model StudentDetailDto
 @{
     ViewData["Title"] = "Öğrenci Detayı";
+
+    var canManageStudent = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin");
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 }
 
-<section class="mb-3 d-flex justify-content-between align-items-center">
+<section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Öğrenci listesine dön</a>
 
-    <div>
-        <a asp-controller="Attendance"
-           asp-action="List"
-           asp-route-studentId="@Model.Id"
-           class="btn btn-sm btn-outline-light me-2">
-            Yoklama Geçmişi
-        </a>
+    @if (canManageStudent)
+    {
+        <div class="d-none d-md-flex gap-2">
+            <a asp-controller="Attendance"
+               asp-action="List"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Yoklama Geçmişi
+            </a>
 
-        @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
-        {
+            <a asp-controller="Documents"
+               asp-action="Student"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Belgeler
+            </a>
+
+            <a asp-controller="Payments"
+               asp-action="Index"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Ödemeler
+            </a>
+
+            <a asp-controller="PaymentPlans"
+               asp-action="Student"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Ödeme Planı
+            </a>
+
+            <a asp-controller="ProgressRecords"
+               asp-action="Student"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Gelişim Kayıtları
+            </a>
+
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
-               class="btn btn-sm btn-outline-light me-1">
+               class="btn btn-sm btn-outline-secondary">
                 Düzenle
             </a>
 
@@ -33,10 +64,79 @@
                     Sil
                 </button>
             </form>
-        }
-    </div>
+        </div>
+    }
 </section>
 
+@* Mobil-first: Hızlı işlemler *@
+@if (canManageStudent)
+{
+    <section class="card-surface mb-3 d-md-none">
+        <div class="card-body">
+            <div class="fw-semibold mb-2">Hızlı İşlemler</div>
+
+            <div class="d-grid gap-2">
+                <a asp-controller="Attendance"
+                   asp-action="List"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Yoklama Geçmişi
+                </a>
+
+                <a asp-controller="Documents"
+                   asp-action="Student"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Belgeler
+                </a>
+
+                <a asp-controller="Payments"
+                   asp-action="Index"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Ödemeler
+                </a>
+
+                <a asp-controller="PaymentPlans"
+                   asp-action="Student"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Ödeme Planı
+                </a>
+
+                <a asp-controller="ProgressRecords"
+                   asp-action="Student"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Gelişim Kayıtları
+                </a>
+            </div>
+
+            @if (isAdmin)
+            {
+                <hr class="my-3" />
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-outline-secondary">
+                        Düzenle
+                    </a>
+
+                    <form asp-action="Delete"
+                          asp-route-id="@Model.Id"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
+                            Sil
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </section>
+}
 
 <section class="detail-grid">
     <div class="card-surface">
@@ -143,41 +243,38 @@
                 <dd class="col-7">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
             }
         </dl>
-        <section class="mt-4">
-            <div class="card-surface">
-                <h2 class="h6 mb-2">Ödemeler</h2>
-                <p class="small text-muted mb-3">
-                    Bu öğrencinin tüm ödeme kayıtlarını görüntüleyebilir ve yeni ödeme ekleyebilirsiniz.
-                </p>
 
-                <div class="d-flex gap-2">
-                    <a asp-controller="Payments"
-                       asp-action="Index"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-sm btn-outline-primary">
-                        Ödemeleri Gör
-                    </a>
+        <hr class="my-4" />
 
-                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-                    {
-                        <a asp-controller="Payments"
-                           asp-action="Create"
-                           asp-route-studentId="@Model.Id"
-                           class="btn btn-sm btn-primary">
-                            Yeni Ödeme
-                        </a>
-                    }
-                </div>
-            </div>
-            <a class="btn btn-sm btn-outline-light"
-               asp-controller="ProgressRecords"
-               asp-action="Student"
-               asp-route-studentId="@Model.Id">
-                Gelişim Kayıtları
+        <h2 class="h6 mb-2">Ödemeler ve Plan</h2>
+        <p class="small text-muted mb-3">
+            Yeni ödeme üretimi <strong>Ödeme Planı</strong> üzerinden yapılır. Ödeme listesi planın oluşturduğu taksitleri gösterir.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Payments"
+               asp-action="Index"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Ödemeleri Gör
             </a>
 
-        </section>
+            <a asp-controller="PaymentPlans"
+               asp-action="Student"
+               asp-route-studentId="@Model.Id"
+               class="btn btn-sm btn-outline-primary">
+                Ödeme Planını Gör
+            </a>
 
-        @* TODO: yoklama özeti, ilerleme grafiği, ödeme durumu gibi widget'lar *@
+            @if (isAdmin)
+            {
+                <a asp-controller="PaymentPlans"
+                   asp-action="Create"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-sm btn-primary">
+                    Ödeme Planı Oluştur
+                </a>
+            }
+        </div>
     </div>
 </section>

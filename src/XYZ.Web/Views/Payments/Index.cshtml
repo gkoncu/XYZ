@@ -1,5 +1,6 @@
-﻿@using XYZ.Domain.Enums
+﻿﻿@using XYZ.Domain.Enums
 @model PaginationResult<XYZ.Application.Features.Payments.Queries.GetPayments.PaymentListItemDto>
+
 @{
     var isMyPayments = (ViewBag.IsMyPayments as bool?) ?? false;
     int? studentId = ViewBag.StudentId as int?;
@@ -13,10 +14,44 @@
         : (studentId.HasValue ? "Öğrenci Ödemeleri" : "Ödemeler");
 
     string actionName = isMyPayments ? "My" : "Index";
+
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+    var isCoach = User.IsInRole("Coach");
+    var isStudent = User.IsInRole("Student");
+
+    var pendingCount = Model.Items.Count(x => x.Status == PaymentStatus.Pending);
+    var overdueCount = Model.Items.Count(x => x.Status == PaymentStatus.Overdue);
+    var paidCount = Model.Items.Count(x => x.Status == PaymentStatus.Paid);
+    var cancelledCount = Model.Items.Count(x => x.Status == PaymentStatus.Cancelled);
+
+    var today = DateOnly.FromDateTime(DateTime.Today);
+
+    // Student summary extras (current page items)
+    var upcomingNext = Model.Items
+        .Where(x => (x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.Overdue) && x.DueDate >= DateTime.Today)
+        .OrderBy(x => x.DueDate)
+        .FirstOrDefault();
+
+    var overdueTotalNet = Model.Items
+        .Where(x => x.Status == PaymentStatus.Overdue)
+        .Sum(x => x.Amount - (x.DiscountAmount ?? 0m));
+
+    var pendingTotalNet = Model.Items
+        .Where(x => x.Status == PaymentStatus.Pending)
+        .Sum(x => x.Amount - (x.DiscountAmount ?? 0m));
+
+    string StatusBadgeClass(PaymentStatus s) => s switch
+    {
+        PaymentStatus.Pending => "badge bg-warning text-dark",
+        PaymentStatus.Overdue => "badge bg-danger",
+        PaymentStatus.Paid => "badge bg-success",
+        PaymentStatus.Cancelled => "badge bg-secondary",
+        _ => "badge bg-secondary"
+    };
 }
 
 <section class="mb-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
         <div>
             <h2 class="h4 mb-1">
                 @if (isMyPayments)
@@ -32,53 +67,219 @@
                     @:Ödemeler
                 }
             </h2>
+
             <p class="text-muted small mb-0">
-                Ödenmemiş (bekleyen / gecikmiş) ödemeler listenin en üstünde gösterilir. Varsayılan filtre: son 30 gün / gelecek 30 gün (vade tarihine göre).
+                Ödenmemiş (beklemede / gecikmiş) ödemeler öne çıkacak şekilde listelenir.
+                Varsayılan filtre: son 30 gün / gelecek 30 gün (vade tarihine göre).
             </p>
         </div>
 
         @if (!isMyPayments)
         {
-            <div>
-                <a asp-controller="Students"
-                   asp-action="Index"
-                   class="btn btn-sm btn-outline-secondary">
+            <div class="d-none d-md-flex gap-2">
+                <a asp-controller="Students" asp-action="Index" class="btn btn-sm btn-outline-secondary">
                     Öğrenci listesi
                 </a>
+
+                @* Öğrenci filtresi varken: ödeme planı CTA’ları *@
+                @if (studentId.HasValue)
+                {
+                    <a asp-controller="PaymentPlans"
+                       asp-action="Student"
+                       asp-route-studentId="@studentId.Value"
+                       class="btn btn-sm btn-outline-primary">
+                        Ödeme Planı
+                    </a>
+
+                    @if (isAdmin)
+                    {
+                        <a asp-controller="PaymentPlans"
+                           asp-action="Create"
+                           asp-route-studentId="@studentId.Value"
+                           class="btn btn-sm btn-primary">
+                            Ödeme Planı Oluştur
+                        </a>
+                    }
+                }
             </div>
         }
     </div>
 
-    <form asp-action="@actionName" method="get" class="row g-2 align-items-end">
+    @* Student-only: Özet kartı (dashboard’a bulaşmadan burada veriyoruz) *@
+    @if (isMyPayments)
+    {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="fw-semibold">Özet</div>
+                        <div class="small text-muted">Bu ekrandaki kayıtlara göre</div>
+                    </div>
+
+                    @if (overdueCount > 0)
+                    {
+                        <span class="badge bg-danger">Gecikmiş: @overdueCount</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Gecikmiş yok</span>
+                    }
+                </div>
+
+                <div class="row g-2 mt-2">
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-white h-100">
+                            <div class="small text-muted">Beklemede</div>
+                            <div class="fw-semibold">@pendingCount</div>
+                            <div class="small text-muted">Net: @pendingTotalNet.ToString("C2")</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-white h-100">
+                            <div class="small text-muted">Gecikmiş</div>
+                            <div class="fw-semibold">@overdueCount</div>
+                            <div class="small text-muted">Net: @overdueTotalNet.ToString("C2")</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-white h-100">
+                            <div class="small text-muted">Ödendi</div>
+                            <div class="fw-semibold">@paidCount</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-white h-100">
+                            <div class="small text-muted">İptal</div>
+                            <div class="fw-semibold">@cancelledCount</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-primary">
+                        Ödeme Planım
+                    </a>
+                </div>
+
+                @if (upcomingNext is not null)
+                {
+                    var nextNet = upcomingNext.Amount - (upcomingNext.DiscountAmount ?? 0m);
+                    <div class="alert alert-info mt-3 mb-0">
+                        <div class="fw-semibold">Yaklaşan ödeme</div>
+                        <div class="small">
+                            Vade: <strong>@upcomingNext.DueDate.ToString("dd.MM.yyyy")</strong>
+                            · Net: <strong>@nextNet.ToString("C2")</strong>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Quick chips -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="btn btn-sm @(status is null ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="@actionName"
+           asp-route-studentId="@studentId"
+           asp-route-fromDueDate="@fromDueDate"
+           asp-route-toDueDate="@toDueDate">
+            Tümü
+        </a>
+
+        <a class="btn btn-sm @(status == PaymentStatus.Pending ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="@actionName"
+           asp-route-studentId="@studentId"
+           asp-route-fromDueDate="@fromDueDate"
+           asp-route-toDueDate="@toDueDate"
+           asp-route-status="@PaymentStatus.Pending">
+            Beklemede (@pendingCount)
+        </a>
+
+        <a class="btn btn-sm @(status == PaymentStatus.Overdue ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="@actionName"
+           asp-route-studentId="@studentId"
+           asp-route-fromDueDate="@fromDueDate"
+           asp-route-toDueDate="@toDueDate"
+           asp-route-status="@PaymentStatus.Overdue">
+            Gecikmiş (@overdueCount)
+        </a>
+
+        <a class="btn btn-sm @(status == PaymentStatus.Paid ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="@actionName"
+           asp-route-studentId="@studentId"
+           asp-route-fromDueDate="@fromDueDate"
+           asp-route-toDueDate="@toDueDate"
+           asp-route-status="@PaymentStatus.Paid">
+            Ödendi (@paidCount)
+        </a>
+
+        <a class="btn btn-sm @(status == PaymentStatus.Cancelled ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="@actionName"
+           asp-route-studentId="@studentId"
+           asp-route-fromDueDate="@fromDueDate"
+           asp-route-toDueDate="@toDueDate"
+           asp-route-status="@PaymentStatus.Cancelled">
+            İptal (@cancelledCount)
+        </a>
+
+        @* Mobilde: öğrenci filtresi varken plan CTA *@
+        @if (!isMyPayments && studentId.HasValue)
+        {
+            <a asp-controller="PaymentPlans"
+               asp-action="Student"
+               asp-route-studentId="@studentId.Value"
+               class="btn btn-sm btn-outline-primary d-md-none">
+                Ödeme Planı
+            </a>
+
+            @if (isAdmin)
+            {
+                <a asp-controller="PaymentPlans"
+                   asp-action="Create"
+                   asp-route-studentId="@studentId.Value"
+                   class="btn btn-sm btn-primary d-md-none">
+                    Plan Oluştur
+                </a>
+            }
+        }
+
+        <button type="button" class="btn btn-sm btn-outline-primary ms-md-auto d-md-none"
+                data-bs-toggle="offcanvas" data-bs-target="#paymentFilter" aria-controls="paymentFilter">
+            Filtreler
+        </button>
+    </div>
+
+    <!-- Desktop filters -->
+    <form asp-action="@actionName" method="get" class="row g-2 align-items-end d-none d-md-flex">
         @if (studentId.HasValue)
         {
             <input type="hidden" name="studentId" value="@studentId.Value" />
         }
 
-        <div class="col-12 col-md-3">
+        <div class="col-md-3">
             <label class="form-label small mb-1">Vade Başlangıç</label>
             <input type="date" class="form-control form-control-sm" name="fromDueDate"
                    value="@(fromDueDate.HasValue? fromDueDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
         </div>
 
-        <div class="col-12 col-md-3">
+        <div class="col-md-3">
             <label class="form-label small mb-1">Vade Bitiş</label>
             <input type="date" class="form-control form-control-sm" name="toDueDate"
                    value="@(toDueDate.HasValue? toDueDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
         </div>
 
-        <div class="col-12 col-md-3">
+        <div class="col-md-3">
             <label class="form-label small mb-1">Durum</label>
             <select class="form-select form-select-sm" name="status">
-                <option value="" selected="@(status is null ? "selected" : null)">Hepsi</option>
-                <option value="@PaymentStatus.Pending" selected="@(status == PaymentStatus.Pending ? "selected" : null)">Beklemede</option>
-                <option value="@PaymentStatus.Overdue" selected="@(status == PaymentStatus.Overdue ? "selected" : null)">Gecikmiş</option>
-                <option value="@PaymentStatus.Paid" selected="@(status == PaymentStatus.Paid ? "selected" : null)">Ödendi</option>
-                <option value="@PaymentStatus.Cancelled" selected="@(status == PaymentStatus.Cancelled ? "selected" : null)">İptal</option>
+                <option value="" selected=@(status is null ? "selected" : null)>Hepsi</option>
+                <option value=@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
+                <option value=@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
+                <option value=@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
+                <option value=@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
             </select>
         </div>
 
-        <div class="col-12 col-md-3 d-flex gap-2">
+        <div class="col-md-3 d-flex gap-2">
             <button type="submit" class="btn btn-sm btn-primary w-100">Filtrele</button>
             <a class="btn btn-sm btn-outline-secondary w-100"
                asp-action="@actionName"
@@ -89,8 +290,55 @@
     </form>
 </section>
 
+<!-- Mobile offcanvas filter -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="paymentFilter" aria-labelledby="paymentFilterLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="paymentFilterLabel">Filtreler</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form asp-action="@actionName" method="get" class="row g-2">
+            @if (studentId.HasValue)
+            {
+                <input type="hidden" name="studentId" value="@studentId.Value" />
+            }
+
+            <div class="col-6">
+                <label class="form-label small mb-1">Vade Başlangıç</label>
+                <input type="date" class="form-control" name="fromDueDate"
+                       value="@(fromDueDate.HasValue? fromDueDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+            </div>
+
+            <div class="col-6">
+                <label class="form-label small mb-1">Vade Bitiş</label>
+                <input type="date" class="form-control" name="toDueDate"
+                       value="@(toDueDate.HasValue? toDueDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small mb-1">Durum</label>
+                <select class="form-select" name="status">
+                    <option value="" selected=@(status is null ? "selected" : null)>Hepsi</option>
+                    <option value=@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
+                    <option value=@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
+                    <option value=@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
+                    <option value=@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
+                </select>
+            </div>
+
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary flex-fill" data-bs-dismiss="offcanvas">Uygula</button>
+                <a class="btn btn-outline-secondary flex-fill"
+                   asp-action="@actionName"
+                   asp-route-studentId="@studentId">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <section class="card-surface">
-    <div class="table-responsive">
+    <!-- Desktop table -->
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-sm align-middle mb-0">
             <thead class="table-light">
                 <tr>
@@ -107,9 +355,7 @@
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-3">
-                            Kayıt bulunamadı.
-                        </td>
+                        <td colspan="7" class="text-center text-muted py-3">Kayıt bulunamadı.</td>
                     </tr>
                 }
                 else
@@ -117,14 +363,6 @@
                     foreach (var item in Model.Items)
                     {
                         var netAmount = item.Amount - (item.DiscountAmount ?? 0m);
-                        string statusClass = item.Status switch
-                        {
-                            PaymentStatus.Pending => "badge bg-warning text-dark",
-                            PaymentStatus.Overdue => "badge bg-danger",
-                            PaymentStatus.Paid => "badge bg-success",
-                            PaymentStatus.Cancelled => "badge bg-secondary",
-                            _ => "badge bg-secondary"
-                        };
 
                         <tr>
                             <td>@item.StudentFullName</td>
@@ -132,13 +370,11 @@
                             <td class="text-end">@(item.DiscountAmount.HasValue? item.DiscountAmount.Value.ToString("C2") : "-")</td>
                             <td class="text-end fw-semibold">@netAmount.ToString("C2")</td>
                             <td>
-                                <span class="@statusClass">@item.Status.ToDisplayName()</span>
+                                <span class="@StatusBadgeClass(item.Status)">@item.Status.ToDisplayName()</span>
                             </td>
                             <td>@item.DueDate.ToString("dd.MM.yyyy")</td>
                             <td class="text-end">
-                                <a asp-action="Details"
-                                   asp-route-id="@item.Id"
-                                   class="btn btn-sm btn-outline-secondary">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                                     Detay
                                 </a>
                             </td>
@@ -148,4 +384,100 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Mobile cards -->
+    <div class="d-md-none">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="text-center text-muted py-4">Kayıt bulunamadı.</div>
+        }
+        else
+        {
+            <div class="vstack gap-3">
+                @foreach (var item in Model.Items)
+                {
+                    var netAmount = item.Amount - (item.DiscountAmount ?? 0m);
+
+                    <div class="card border shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="fw-semibold">@item.StudentFullName</div>
+                                    <div class="small text-muted">Vade: @item.DueDate.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <span class="@StatusBadgeClass(item.Status)">@item.Status.ToDisplayName()</span>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Tutar</span>
+                                    <span>@item.Amount.ToString("C2")</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">İndirim</span>
+                                    <span>@(item.DiscountAmount.HasValue? item.DiscountAmount.Value.ToString("C2") : "-")</span>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <span class="text-muted">Net</span>
+                                    <span class="fw-semibold">@netAmount.ToString("C2")</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary w-100">Detay</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </section>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-3" aria-label="Sayfalama">
+        <ul class="pagination justify-content-end mb-0">
+            @{
+                var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+                var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
+            }
+            <li class="page-item @prevDisabled">
+                <a class="page-link"
+                   asp-action="@actionName"
+                   asp-route-pageNumber="@(Model.PageNumber - 1)"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-studentId="@studentId"
+                   asp-route-fromDueDate="@fromDueDate"
+                   asp-route-toDueDate="@toDueDate"
+                   asp-route-status="@status">Önceki</a>
+            </li>
+
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                var active = i == Model.PageNumber ? "active" : "";
+                <li class="page-item @active">
+                    <a class="page-link"
+                       asp-action="@actionName"
+                       asp-route-pageNumber="@i"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-studentId="@studentId"
+                       asp-route-fromDueDate="@fromDueDate"
+                       asp-route-toDueDate="@toDueDate"
+                       asp-route-status="@status">@i</a>
+                </li>
+            }
+
+            <li class="page-item @nextDisabled">
+                <a class="page-link"
+                   asp-action="@actionName"
+                   asp-route-pageNumber="@(Model.PageNumber + 1)"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-studentId="@studentId"
+                   asp-route-fromDueDate="@fromDueDate"
+                   asp-route-toDueDate="@toDueDate"
+                   asp-route-status="@status">Sonraki</a>
+            </li>
+        </ul>
+    </nav>
+}

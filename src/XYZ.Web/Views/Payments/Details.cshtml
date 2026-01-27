@@ -3,16 +3,41 @@
     ViewData["Title"] = "Ödeme Detayı";
 
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+    var isStudent = User.IsInRole("Student");
+
+    var backAction = isStudent ? "My" : "Index";
+    var backRouteStudentId = isStudent ? (int?)null : Model.StudentId;
 }
 
-<section class="mb-3 d-flex justify-content-between align-items-center">
-    <a asp-action="Index"
-       asp-route-studentId="@Model.StudentId"
-       class="text-muted small text-decoration-none">&larr; Ödeme listesine dön</a>
+<section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a asp-action="@backAction"
+       asp-route-studentId="@backRouteStudentId"
+       class="text-muted small text-decoration-none">
+        &larr; Ödeme listesine dön
+    </a>
+
+    <div class="d-flex gap-2">
+        <a asp-controller="PaymentPlans"
+           asp-action="Student"
+           asp-route-studentId="@Model.StudentId"
+           class="btn btn-sm btn-outline-primary">
+            Ödeme Planı
+        </a>
+
+        @if (!isStudent)
+        {
+            <a asp-controller="Students"
+               asp-action="Details"
+               asp-route-id="@Model.StudentId"
+               class="btn btn-sm btn-outline-secondary">
+                Öğrenci Detayı
+            </a>
+        }
+    </div>
 
     @if (isAdmin)
     {
-        <div class="btn-group btn-group-sm">
+        <div class="btn-group btn-group-sm d-none d-md-inline-flex">
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-outline-primary">
@@ -45,7 +70,10 @@
             <dd class="col-8">@Model.Amount.ToString("C2")</dd>
 
             <dt class="col-4 text-muted">İndirim</dt>
-            <dd class="col-8">@(Model.DiscountAmount.HasValue? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
+            <dd class="col-8">@(Model.DiscountAmount.HasValue ? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
+
+            <dt class="col-4 text-muted">Net</dt>
+            <dd class="col-8 fw-semibold">@((Model.Amount - (Model.DiscountAmount ?? 0m)).ToString("C2"))</dd>
 
             <dt class="col-4 text-muted">Durum</dt>
             <dd class="col-8">@Model.Status.ToDisplayName()</dd>
@@ -63,4 +91,26 @@
             }
         </dl>
     </div>
+
+    @if (isAdmin)
+    {
+        <!-- Mobile sticky action bar (admin only) -->
+        <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top" style="z-index: 1020;">
+            <div class="container-fluid py-2">
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-fill">Düzenle</a>
+                    <form asp-action="Delete" method="post" class="flex-fill">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="studentId" value="@Model.StudentId" />
+                        <button type="submit"
+                                class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Bu ödemeyi silmek istediğinize emin misiniz?');">
+                            Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
 </section>
