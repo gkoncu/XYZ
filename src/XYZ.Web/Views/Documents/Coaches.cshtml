@@ -2,13 +2,54 @@
 
 @{
     ViewData["Title"] = Model.Title;
+
+    var onlyIncomplete = Model.OnlyIncomplete;
+    var searchTerm = Model.SearchTerm ?? string.Empty;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0">@Model.Title</h2>
-</div>
+<section class="mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+            <h2 class="h4 mb-1">@Model.Title</h2>
+            <div class="text-muted small">Koçların belge durumlarını buradan yönetebilirsiniz.</div>
+        </div>
 
-<form method="get" class="card card-body mb-3">
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary d-md-none"
+                    data-bs-toggle="offcanvas" data-bs-target="#docFilters" aria-controls="docFilters">
+                Filtreler
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <a class="btn btn-sm @(onlyIncomplete ? "btn-outline-secondary" : "btn-primary")"
+           asp-action="Coaches"
+           asp-route-searchTerm="@searchTerm"
+           asp-route-onlyIncomplete="false">
+            Tümü
+        </a>
+
+        <a class="btn btn-sm @(onlyIncomplete ? "btn-primary" : "btn-outline-secondary")"
+           asp-action="Coaches"
+           asp-route-searchTerm="@searchTerm"
+           asp-route-onlyIncomplete="true">
+            Sadece Eksikler
+        </a>
+
+        @if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Coaches"
+               asp-route-onlyIncomplete="@onlyIncomplete">
+                Aramayı Temizle
+            </a>
+        }
+    </div>
+</section>
+
+<!-- Desktop filter form -->
+<form method="get" class="card card-body mb-3 d-none d-md-block">
     <div class="row g-2 align-items-end">
         <div class="col-md-6">
             <label class="form-label">Arama</label>
@@ -29,9 +70,42 @@
     </div>
 </form>
 
-<div class="card">
-    <div class="table-responsive">
-        <table class="table mb-0">
+<!-- Mobile offcanvas filters -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="docFilters" aria-labelledby="docFiltersLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="docFiltersLabel">Filtreler</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="get" class="row g-2">
+            <div class="col-12">
+                <label class="form-label small mb-1">Arama</label>
+                <input class="form-control" name="searchTerm" value="@Model.SearchTerm" placeholder="Koç adı" />
+            </div>
+
+            <div class="col-12">
+                <input type="hidden" name="onlyIncomplete" value="false" />
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="onlyIncomplete" value="true" id="onlyIncomplete_m"
+                           @(Model.OnlyIncomplete ? "checked" : "") />
+                    <label class="form-check-label" for="onlyIncomplete_m">Sadece eksikler</label>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button class="btn btn-primary flex-fill" type="submit" data-bs-dismiss="offcanvas">Uygula</button>
+                <a class="btn btn-outline-secondary flex-fill"
+                   asp-action="Coaches"
+                   asp-route-onlyIncomplete="@Model.OnlyIncomplete">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<section class="card-surface">
+    <!-- Desktop table -->
+    <div class="table-responsive d-none d-md-block">
+        <table class="table mb-0 align-middle">
             <thead>
                 <tr>
                     <th>Koç</th>
@@ -76,4 +150,48 @@
             </tbody>
         </table>
     </div>
-</div>
+
+    <!-- Mobile cards -->
+    <div class="d-md-none">
+        @if (Model.Items is null || Model.Items.Count == 0)
+        {
+            <div class="text-center text-muted py-4">Kayıt bulunamadı.</div>
+        }
+        else
+        {
+            <div class="vstack gap-3">
+                @foreach (var c in Model.Items)
+                {
+                    <div class="card border shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="fw-semibold">@c.FullName</div>
+                                    <div class="small text-muted">ID: @c.CoachId</div>
+                                </div>
+
+                                @if (c.MissingCount > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">Eksik (@c.MissingCount)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Tam</span>
+                                }
+                            </div>
+
+                            <div class="d-grid gap-2 mt-3">
+                                <a class="btn btn-primary"
+                                   asp-controller="Documents"
+                                   asp-action="Coach"
+                                   asp-route-coachId="@c.CoachId">
+                                    Belgeleri Yönet
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

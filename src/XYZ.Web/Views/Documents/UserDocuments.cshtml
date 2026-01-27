@@ -2,32 +2,53 @@
 
 @{
     ViewData["Title"] = Model.Title;
+
     var missingCount = Model.Status?.MissingCount ?? 0;
     var isComplete = Model.Status?.IsComplete ?? true;
+
+    var isCoach = Model.Title.Contains("Koç");
+    var returnTo = isCoach ? "coach" : "student";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h2 class="h4 mb-1">@Model.Title</h2>
-        @if (!isComplete)
-        {
-            <div class="text-muted">Eksik belge sayısı: <strong>@missingCount</strong></div>
-        }
-    </div>
+<section class="mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+            <h2 class="h4 mb-1">@Model.Title</h2>
+            @if (!isComplete)
+            {
+                <div class="text-muted small">Eksik belge sayısı: <strong>@missingCount</strong></div>
+            }
+            else
+            {
+                <div class="text-muted small">Tüm zorunlu belgeler tamam.</div>
+            }
+        </div>
 
-    <div>
-        @if (!isComplete)
-        {
-            <span class="badge bg-warning text-dark">Eksik (@missingCount)</span>
-        }
-        else
-        {
-            <span class="badge bg-success">Tam</span>
-        }
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            @if (!isComplete)
+            {
+                <span class="badge bg-warning text-dark">Eksik (@missingCount)</span>
+            }
+            else
+            {
+                <span class="badge bg-success">Tam</span>
+            }
+
+            <button type="button" class="btn btn-sm btn-primary d-none d-md-inline-flex"
+                    data-bs-toggle="offcanvas" data-bs-target="#uploadDoc" aria-controls="uploadDoc">
+                Yeni Belge Yükle
+            </button>
+
+            <a class="btn btn-sm btn-outline-secondary"
+               href="@(Context.Request.Path + Context.Request.QueryString)">
+                Yenile
+            </a>
+        </div>
     </div>
-</div>
+</section>
 
 <div class="row g-3">
+    <!-- Left: Required docs status -->
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header">
@@ -57,118 +78,52 @@
             </div>
         </div>
 
-        <div class="card mt-3">
+        <div class="card mt-3 d-none d-lg-block">
             <div class="card-header">
-                <strong>Yeni Belge Yükle</strong>
+                <strong>İpucu</strong>
             </div>
             <div class="card-body">
-                @{
-                    var isCoach = Model.Title.Contains("Koç");
-                }
-
-                @if (isCoach)
-                {
-                    <form method="post" enctype="multipart/form-data"
-                          asp-action="UploadCoach"
-                          asp-route-coachId="@Model.OwnerId">
-                        @Html.AntiForgeryToken()
-
-                        <div class="mb-2">
-                            <label class="form-label">Belge Türü</label>
-                            <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
-                                <option value="">Seçiniz</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label">Dosya</label>
-                            <input class="form-control" type="file" asp-for="File" />
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label">Görünen Ad (opsiyonel)</label>
-                            <input class="form-control" asp-for="Name" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Açıklama (opsiyonel)</label>
-                            <textarea class="form-control" asp-for="Description" rows="2"></textarea>
-                        </div>
-
-                        <button class="btn btn-primary" type="submit">Yükle</button>
-                    </form>
-                }
-                else
-                {
-                    <form method="post" enctype="multipart/form-data"
-                          asp-action="UploadStudent"
-                          asp-route-studentId="@Model.OwnerId">
-                        @Html.AntiForgeryToken()
-
-                        <div class="mb-2">
-                            <label class="form-label">Belge Türü</label>
-                            <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
-                                <option value="">Seçiniz</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label">Dosya</label>
-                            <input class="form-control" type="file" asp-for="File" />
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label">Görünen Ad (opsiyonel)</label>
-                            <input class="form-control" asp-for="Name" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Açıklama (opsiyonel)</label>
-                            <textarea class="form-control" asp-for="Description" rows="2"></textarea>
-                        </div>
-
-                        <button class="btn btn-primary" type="submit">Yükle</button>
-                    </form>
-                }
-
-
-                <div class="form-text mt-2">
+                <div class="text-muted small">
                     Not: Şimdilik açılır listede yalnızca eksik belge türleri gösterilir.
+                    Yükleme sonrası “Yenile” ile listeyi güncelleyebilirsiniz.
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Right: Uploaded docs -->
     <div class="col-lg-7">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
                 <strong>Yüklenen Belgeler</strong>
-                <a class="btn btn-sm btn-outline-secondary"
-                   href="@(Context.Request.Path + Context.Request.QueryString)">
-                    Yenile
-                </a>
+                <button type="button" class="btn btn-sm btn-outline-primary d-lg-none"
+                        data-bs-toggle="offcanvas" data-bs-target="#uploadDoc" aria-controls="uploadDoc">
+                    Belge Yükle
+                </button>
             </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Ad</th>
-                            <th>Tür</th>
-                            <th>Yükleyen</th>
-                            <th>Tarih</th>
-                            <th class="text-end">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Documents is null || Model.Documents.Count == 0)
-                        {
+
+            @if (Model.Documents is null || Model.Documents.Count == 0)
+            {
+                <div class="card-body text-center text-muted py-4">
+                    Henüz yüklenmiş belge yok.
+                </div>
+            }
+            else
+            {
+                <!-- Desktop table -->
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table mb-0 align-middle">
+                        <thead>
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">Belge bulunamadı.</td>
+                                <th>Ad</th>
+                                <th>Tür</th>
+                                <th>Yükleyen</th>
+                                <th>Tarih</th>
+                                <th class="text-end">İşlem</th>
                             </tr>
-                        }
-                        else
-                        {
-                            foreach (var d in Model.Documents)
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model.Documents)
                             {
                                 <tr>
                                     <td>@d.Name</td>
@@ -183,13 +138,10 @@
                                             İndir
                                         </a>
 
-                                        <form method="post" class="d-inline"
-                                              asp-action="Delete">
+                                        <form method="post" class="d-inline" asp-action="Delete">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@d.Id" />
-                                            <input type="hidden" name="ownerId" value="@Model.OwnerDisplayName" />
-                                            <input type="hidden" name="returnTo" value="@(Model.Title.Contains("Koç") ? "coach" : "student")" />
-
+                                            <input type="hidden" name="returnTo" value="@returnTo" />
                                             <button type="submit" class="btn btn-sm btn-outline-danger"
                                                     onclick="return confirm('Belge silinsin mi?');">
                                                 Sil
@@ -198,10 +150,157 @@
                                     </td>
                                 </tr>
                             }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile cards -->
+                <div class="d-md-none">
+                    <div class="vstack gap-3 p-3">
+                        @foreach (var d in Model.Documents)
+                        {
+                            <div class="card border shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <div class="fw-semibold">@d.Name</div>
+                                            <div class="small text-muted">@d.DocumentDefinitionName</div>
+                                            <div class="small text-muted">Yükleyen: @d.UploadedBy</div>
+                                            <div class="small text-muted">@d.UploadDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 mt-3">
+                                        <a class="btn btn-outline-secondary flex-fill"
+                                           asp-controller="Documents"
+                                           asp-action="Download"
+                                           asp-route-id="@d.Id">
+                                            İndir
+                                        </a>
+
+                                        <form method="post" class="flex-fill" asp-action="Delete">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <input type="hidden" name="returnTo" value="@returnTo" />
+                                            <button type="submit" class="btn btn-outline-danger w-100"
+                                                    onclick="return confirm('Belge silinsin mi?');">
+                                                Sil
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                </div>
+            }
         </div>
+    </div>
+</div>
+
+<!-- Upload offcanvas -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="uploadDoc" aria-labelledby="uploadDocLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="uploadDocLabel">Yeni Belge Yükle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+
+        @if (isCoach)
+        {
+            <form method="post" enctype="multipart/form-data"
+                  asp-action="UploadCoach"
+                  asp-route-coachId="@Model.OwnerId">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Belge Türü</label>
+                        <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
+                            <option value="">Seçiniz</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Dosya</label>
+                        <input class="form-control" type="file" asp-for="File" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Görünen Ad (opsiyonel)</label>
+                        <input class="form-control" asp-for="Name" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Açıklama (opsiyonel)</label>
+                        <textarea class="form-control" asp-for="Description" rows="2"></textarea>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button class="btn btn-primary flex-fill" type="submit">Yükle</button>
+                        <button class="btn btn-outline-secondary flex-fill" type="button" data-bs-dismiss="offcanvas">Kapat</button>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-text mt-2">
+                            Not: Şimdilik açılır listede yalnızca eksik belge türleri gösterilir.
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+        else
+        {
+            <form method="post" enctype="multipart/form-data"
+                  asp-action="UploadStudent"
+                  asp-route-studentId="@Model.OwnerId">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Belge Türü</label>
+                        <select class="form-select" asp-for="DocumentDefinitionId" asp-items="Model.DocumentDefinitionOptions">
+                            <option value="">Seçiniz</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Dosya</label>
+                        <input class="form-control" type="file" asp-for="File" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Görünen Ad (opsiyonel)</label>
+                        <input class="form-control" asp-for="Name" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Açıklama (opsiyonel)</label>
+                        <textarea class="form-control" asp-for="Description" rows="2"></textarea>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button class="btn btn-primary flex-fill" type="submit">Yükle</button>
+                        <button class="btn btn-outline-secondary flex-fill" type="button" data-bs-dismiss="offcanvas">Kapat</button>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-text mt-2">
+                            Not: Şimdilik açılır listede yalnızca eksik belge türleri gösterilir.
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<!-- Mobile sticky upload bar -->
+<div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
+    <div class="container-fluid py-2">
+        <button type="button" class="btn btn-primary w-100"
+                data-bs-toggle="offcanvas" data-bs-target="#uploadDoc" aria-controls="uploadDoc">
+            Belge Yükle
+        </button>
     </div>
 </div>
