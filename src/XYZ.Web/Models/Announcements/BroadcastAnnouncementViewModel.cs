@@ -1,16 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using XYZ.Web.Infrastructure;
 
 namespace XYZ.Web.Models.Announcements
 {
-    public sealed class BroadcastAnnouncementViewModel
+    public sealed class BroadcastAnnouncementViewModel : IValidatableObject
     {
-        [Required]
-        [MaxLength(200)]
+        [Required(ErrorMessage = ValidationMessages.Required)]
+        [MaxLength(200, ErrorMessage = ValidationMessages.MaxLength)]
         [Display(Name = "Başlık")]
         public string Title { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = ValidationMessages.Required)]
+        [MaxLength(4000, ErrorMessage = ValidationMessages.MaxLength)]
         [Display(Name = "İçerik")]
         public string Content { get; set; } = string.Empty;
 
@@ -19,5 +22,22 @@ namespace XYZ.Web.Models.Announcements
 
         [Display(Name = "Bitiş Tarihi")]
         public DateTime? ExpiryDate { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (PublishDate == default)
+            {
+                yield return new ValidationResult(
+                    ValidationMessages.PublishDateRequired,
+                    new[] { nameof(PublishDate) });
+            }
+
+            if (ExpiryDate.HasValue && PublishDate != default && ExpiryDate.Value.Date < PublishDate.Date)
+            {
+                yield return new ValidationResult(
+                    ValidationMessages.ExpiryBeforePublish,
+                    new[] { nameof(ExpiryDate) });
+            }
+        }
     }
 }

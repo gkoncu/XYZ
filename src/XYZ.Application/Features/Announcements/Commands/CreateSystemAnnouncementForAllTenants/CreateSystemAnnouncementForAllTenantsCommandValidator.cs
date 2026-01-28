@@ -1,16 +1,13 @@
 ﻿using FluentValidation;
 using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement
+namespace XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants
 {
-    public class UpdateAnnouncementCommandValidator : AbstractValidator<UpdateAnnouncementCommand>
+    public sealed class CreateSystemAnnouncementForAllTenantsCommandValidator
+        : AbstractValidator<CreateSystemAnnouncementForAllTenantsCommand>
     {
-        public UpdateAnnouncementCommandValidator()
+        public CreateSystemAnnouncementForAllTenantsCommandValidator()
         {
-            RuleFor(x => x.Id)
-                .GreaterThan(0)
-                .WithMessage("Duyuru Id geçersiz.");
-
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Başlık alanı zorunludur.")
                 .MaximumLength(200).WithMessage("Başlık en fazla 200 karakter olmalıdır.");
@@ -23,19 +20,14 @@ namespace XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement
                 .NotEmpty()
                 .WithMessage("Yayın tarihi alanı zorunludur.");
 
-            RuleFor(x => x.Type)
-                .IsInEnum()
-                .WithMessage("Tür değeri geçersiz.");
-
-            RuleFor(x => x.ClassId)
-                .GreaterThan(0)
-                .When(x => x.ClassId.HasValue)
-                .WithMessage("Sınıf seçimi geçersiz.");
-
             RuleFor(x => x.ExpiryDate)
                 .GreaterThanOrEqualTo(x => x.PublishDate)
                 .When(x => x.ExpiryDate.HasValue)
                 .WithMessage("Bitiş tarihi yayın tarihinden önce olamaz.");
+
+            RuleFor(x => x.Type)
+                .Equal(AnnouncementType.System)
+                .WithMessage("Sistem duyurusu türü System olmalıdır.");
         }
     }
 }

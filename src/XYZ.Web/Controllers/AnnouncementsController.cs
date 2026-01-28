@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
@@ -115,18 +116,28 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
 
-            await _api.CreateAnnouncementAsync(new CreateAnnouncementCommand
+            try
             {
-                ClassId = model.ClassId,
-                Title = model.Title?.Trim() ?? string.Empty,
-                Content = model.Content?.Trim() ?? string.Empty,
-                PublishDate = model.PublishDate,
-                ExpiryDate = model.ExpiryDate,
-                Type = model.Type
-            }, ct);
+                await _api.CreateAnnouncementAsync(new CreateAnnouncementCommand
+                {
+                    ClassId = model.ClassId,
+                    Title = model.Title?.Trim() ?? string.Empty,
+                    Content = model.Content?.Trim() ?? string.Empty,
+                    PublishDate = model.PublishDate == default ? null : model.PublishDate,
+                    ExpiryDate = model.ExpiryDate,
+                    Type = model.Type
+                }, ct);
 
-            TempData["SuccessMessage"] = "Duyuru oluşturuldu.";
-            return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = "Duyuru oluşturuldu.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "Duyuru oluşturulamadı. Lütfen alanları kontrol edin.");
+                await FillClassesSelectList(ct, model.ClassId);
+                model.TypeOptions = BuildTypeOptions(model.Type);
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -169,20 +180,30 @@ namespace XYZ.Web.Controllers
                 return View(model);
             }
 
-            await _api.UpdateAnnouncementAsync(id, new UpdateAnnouncementCommand
+            try
             {
-                Id = id,
-                ClassId = model.ClassId,
-                Title = model.Title?.Trim() ?? string.Empty,
-                Content = model.Content?.Trim() ?? string.Empty,
-                PublishDate = model.PublishDate,
-                ExpiryDate = model.ExpiryDate,
-                Type = model.Type,
-                IsActive = null
-            }, ct);
+                await _api.UpdateAnnouncementAsync(id, new UpdateAnnouncementCommand
+                {
+                    Id = id,
+                    ClassId = model.ClassId,
+                    Title = model.Title?.Trim() ?? string.Empty,
+                    Content = model.Content?.Trim() ?? string.Empty,
+                    PublishDate = model.PublishDate,
+                    ExpiryDate = model.ExpiryDate,
+                    Type = model.Type,
+                    IsActive = null
+                }, ct);
 
-            TempData["SuccessMessage"] = "Duyuru güncellendi.";
-            return RedirectToAction(nameof(Details), new { id });
+                TempData["SuccessMessage"] = "Duyuru güncellendi.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "Duyuru güncellenemedi. Lütfen alanları kontrol edin.");
+                await FillClassesSelectList(ct, model.ClassId);
+                model.TypeOptions = BuildTypeOptions(model.Type);
+                return View(model);
+            }
         }
 
         [HttpPost]
@@ -230,12 +251,16 @@ namespace XYZ.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
             catch (InvalidOperationException ex)
-{
+            {
                 TempData["ErrorMessage"] = ex.Message;
                 return View(model);
             }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "Sistem duyurusu gönderilemedi. Lütfen alanları kontrol edin.");
+                return View(model);
+            }
         }
-
 
         private async Task FillClassesSelectList(CancellationToken ct, int? selectedClassId)
         {

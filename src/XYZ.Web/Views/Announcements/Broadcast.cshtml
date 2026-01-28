@@ -39,11 +39,13 @@
         <div class="col-md-6">
             <label asp-for="PublishDate" class="form-label small"></label>
             <input asp-for="PublishDate" type="date" class="form-control form-control-sm" />
+            <span asp-validation-for="PublishDate" class="text-danger small"></span>
         </div>
 
         <div class="col-md-6">
             <label asp-for="ExpiryDate" class="form-label small"></label>
             <input asp-for="ExpiryDate" type="date" class="form-control form-control-sm" />
+            <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
         </div>
 
         <div class="col-12 d-flex justify-content-end mt-2">

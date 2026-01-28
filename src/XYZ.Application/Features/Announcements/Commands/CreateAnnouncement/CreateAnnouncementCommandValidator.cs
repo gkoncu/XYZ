@@ -1,32 +1,37 @@
 ﻿using FluentValidation;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Announcements.Commands.CreateAnnouncement
 {
-    public class CreateAnnouncementCommandValidator
-        : AbstractValidator<CreateAnnouncementCommand>
+    public class CreateAnnouncementCommandValidator : AbstractValidator<CreateAnnouncementCommand>
     {
         public CreateAnnouncementCommandValidator()
         {
             RuleFor(x => x.Title)
-                .NotEmpty()
-                .MaximumLength(200);
+                .NotEmpty().WithMessage("Başlık alanı zorunludur.")
+                .MaximumLength(200).WithMessage("Başlık en fazla 200 karakter olmalıdır.");
 
             RuleFor(x => x.Content)
-                .NotEmpty()
-                .MaximumLength(4000);
+                .NotEmpty().WithMessage("İçerik alanı zorunludur.")
+                .MaximumLength(4000).WithMessage("İçerik en fazla 4000 karakter olmalıdır.");
+
+            RuleFor(x => x.Type)
+                .IsInEnum().WithMessage("Tür değeri geçersiz.");
+
+            RuleFor(x => x.PublishDate)
+                .Must(d => !d.HasValue || d.Value != default)
+                .WithMessage("Yayın tarihi geçersiz.");
 
             RuleFor(x => x.ClassId)
                 .GreaterThan(0)
-                .When(x => x.ClassId.HasValue);
+                .When(x => x.ClassId.HasValue)
+                .WithMessage("Sınıf seçimi geçersiz.");
 
             RuleFor(x => x.ExpiryDate)
                 .GreaterThanOrEqualTo(x => x.PublishDate ?? DateTime.UtcNow)
-                .When(x => x.ExpiryDate.HasValue);
+                .When(x => x.ExpiryDate.HasValue)
+                .WithMessage("Bitiş tarihi yayın tarihinden önce olamaz.");
         }
     }
 }

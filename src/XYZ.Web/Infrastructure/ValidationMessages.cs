@@ -14,5 +14,8 @@
         public const string Phone = "Telefon formatı geçersiz.";
 
         public const string TcIdentity = "T.C. Kimlik No 11 haneli ve sadece rakam olmalıdır.";
+
+        public const string ExpiryBeforePublish = "Bitiş tarihi yayın tarihinden önce olamaz.";
+        public const string PublishDateRequired = "Yayın tarihi alanı zorunludur.";
     }
 }
