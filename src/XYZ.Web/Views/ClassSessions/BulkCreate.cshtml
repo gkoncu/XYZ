@@ -1,0 +1,100 @@
+﻿﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model XYZ.Web.Models.ClassSessions.BulkCreateClassSessionsVm
+
+@{
+    ViewData["Title"] = "Toplu Seans Oluştur";
+    var classes = ViewBag.Classes as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<h2 class="h4 mb-3">Toplu Seans Oluştur</h2>
+
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger mb-3">@err</div>
+}
+
+<form asp-action="BulkCreate" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="col-md-6">
+        <label asp-for="ClassId" class="form-label small">Sınıf</label>
+        <select asp-for="ClassId" class="form-select form-select-sm" asp-items="classes">
+            <option value="0">Sınıf seçiniz</option>
+        </select>
+        <span asp-validation-for="ClassId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="FromDate" class="form-label small">Başlangıç Tarihi</label>
+        <input asp-for="FromDate" type="date" class="form-control form-control-sm" />
+        <span asp-validation-for="FromDate" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="ToDate" class="form-label small">Bitiş Tarihi</label>
+        <input asp-for="ToDate" type="date" class="form-control form-control-sm" />
+        <span asp-validation-for="ToDate" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="StartTime" class="form-label small">Başlangıç</label>
+        <input asp-for="StartTime" type="time" class="form-control form-control-sm" />
+        <span asp-validation-for="StartTime" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="EndTime" class="form-label small">Bitiş</label>
+        <input asp-for="EndTime" type="time" class="form-control form-control-sm" />
+        <span asp-validation-for="EndTime" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Title" class="form-label small">Başlık</label>
+        <input asp-for="Title" class="form-control form-control-sm" />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Location" class="form-label small">Konum (opsiyonel)</label>
+        <input asp-for="Location" class="form-control form-control-sm" />
+        <span asp-validation-for="Location" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label small">Açıklama (opsiyonel)</label>
+        <textarea asp-for="Description" rows="2" class="form-control form-control-sm"></textarea>
+        <span asp-validation-for="Description" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="GenerateAttendance" class="form-check-input" />
+            <label asp-for="GenerateAttendance" class="form-check-label">
+                Yoklama listesini otomatik oluştur (Attendance seed)
+            </label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label small">Günler</label>
+        <div class="d-flex flex-wrap gap-3">
+            <div class="form-check"><input asp-for="Monday" class="form-check-input" /><label asp-for="Monday" class="form-check-label">Pzt</label></div>
+            <div class="form-check"><input asp-for="Tuesday" class="form-check-input" /><label asp-for="Tuesday" class="form-check-label">Sal</label></div>
+            <div class="form-check"><input asp-for="Wednesday" class="form-check-input" /><label asp-for="Wednesday" class="form-check-label">Çar</label></div>
+            <div class="form-check"><input asp-for="Thursday" class="form-check-input" /><label asp-for="Thursday" class="form-check-label">Per</label></div>
+            <div class="form-check"><input asp-for="Friday" class="form-check-input" /><label asp-for="Friday" class="form-check-label">Cum</label></div>
+            <div class="form-check"><input asp-for="Saturday" class="form-check-input" /><label asp-for="Saturday" class="form-check-label">Cmt</label></div>
+            <div class="form-check"><input asp-for="Sunday" class="form-check-input" /><label asp-for="Sunday" class="form-check-label">Paz</label></div>
+        </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">Toplu Oluştur</button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

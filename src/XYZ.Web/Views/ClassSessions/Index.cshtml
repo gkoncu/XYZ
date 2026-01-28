@@ -16,6 +16,13 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
                 Sınıflara ait antrenmanları tarih aralığına göre listeleyebilirsiniz.
             </p>
         </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Create"
+               class="btn btn-primary btn-sm">
+                + Yeni Seans Oluştur
+            </a>
+        </div>
     </div>
 
     <form asp-action="Index"
@@ -48,6 +55,11 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
 </section>
 
 <section>
+    @if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+    {
+        <div class="alert alert-danger mb-3">@err</div>
+    }
+
     @if (Model.Items == null || !Model.Items.Any())
     {
         <div class="alert alert-info">
