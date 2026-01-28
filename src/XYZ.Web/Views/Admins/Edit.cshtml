@@ -31,10 +31,13 @@
             <span asp-validation-for="LastName" class="text-danger small"></span>
         </div>
 
-        <div class="col-md-6">
+        @if(User.IsInRole("SuperAdmin"))
+            {                
+            <div class="col-md-6">
             <label class="form-label small">Kulüp</label>
             <input class="form-control form-control-sm" value="@Model.TenantName" disabled />
         </div>
+            }
 
         <div class="col-md-6">
             <label asp-for="Email" class="form-label small"></label>
@@ -52,11 +55,6 @@
             <label asp-for="IdentityNumber" class="form-label small"></label>
             <input asp-for="IdentityNumber" class="form-control form-control-sm" />
             <span asp-validation-for="IdentityNumber" class="text-danger small"></span>
-        </div>
-
-        <div class="col-md-4">
-            <label asp-for="IsActive" class="form-label small"></label>
-            <input asp-for="IsActive" class="form-control form-control-sm" disabled />
         </div>
 
         <div class="col-md-12">

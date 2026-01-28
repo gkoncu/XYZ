@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Globalization;
 using System.Text;
 using XYZ.API.HostedServices;
 using XYZ.API.Services.Auth;
@@ -83,8 +84,13 @@ builder.Services.AddAuthorization();
 var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginCommand).Assembly;
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
+
+ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("tr-TR");
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(appAssembly);
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
 
 // --- IHttpContextAccessor + CurrentUserService ---
 builder.Services.AddHttpContextAccessor();
@@ -144,6 +150,7 @@ builder.Services.AddSwaggerGen(c =>
         { jwtSecurityScheme, Array.Empty<string>() }
     });
 });
+
 
 var app = builder.Build();
 
