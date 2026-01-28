@@ -1,4 +1,4 @@
-﻿﻿@using System
+﻿﻿﻿@using System
 @model IList<XYZ.Web.Models.Attendance.TodaySessionViewModel>
 
 @{
@@ -11,42 +11,98 @@
         selectedDate = DateOnly.FromDateTime(DateTime.Today);
     }
 
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var yesterday = today.AddDays(-1);
+    var tomorrow = today.AddDays(1);
+
     var prevDate = selectedDate.AddDays(-1);
     var nextDate = selectedDate.AddDays(1);
+
+    string ChipClass(bool active) => active ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary";
 }
 
-<div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-    <div>
-        <h2 class="mb-0">Yoklama Antrenmanları</h2>
-        <small class="text-muted">
-            @selectedDate.ToString("dd.MM.yyyy") tarihindeki planlanmış antrenmanlar
-        </small>
+<section class="mb-3">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+        <div>
+            <h2 class="mb-0">Yoklama Antrenmanları</h2>
+            <small class="text-muted">
+                @selectedDate.ToString("dd.MM.yyyy") tarihindeki planlanmış antrenmanlar
+            </small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary d-md-none"
+                    data-bs-toggle="offcanvas" data-bs-target="#attDatePicker" aria-controls="attDatePicker">
+                Tarih Seç
+            </button>
+
+            <form method="get" class="d-none d-md-flex align-items-center gap-2">
+                <input type="date"
+                       name="date"
+                       class="form-control"
+                       style="min-width: 180px;"
+                       value="@selectedDate.ToString("yyyy-MM-dd")" />
+                <button type="submit" class="btn btn-primary">
+                    Tarihi Güncelle
+                </button>
+            </form>
+        </div>
     </div>
 
-    <form method="get" class="d-flex align-items-center gap-2">
-        <input type="date"
-               name="date"
-               class="form-control"
-               style="min-width: 180px;"
-               value="@selectedDate.ToString("yyyy-MM-dd")" />
-        <button type="submit" class="btn btn-primary">
-            Tarihi Güncelle
-        </button>
-    </form>
-</div>
+    <!-- Quick chips -->
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <a asp-action="Index" asp-route-date="@yesterday.ToString("yyyy-MM-dd")" class="@ChipClass(selectedDate == yesterday)">
+            Dün
+        </a>
 
-<div class="d-flex justify-content-end mb-3 gap-2">
-    <a asp-action="Index"
-       asp-route-date="@prevDate.ToString("yyyy-MM-dd")"
-       class="btn btn-outline-secondary btn-sm">
-        &laquo; Önceki Gün (@prevDate.ToString("dd.MM"))
-    </a>
+        <a asp-action="Index" asp-route-date="@today.ToString("yyyy-MM-dd")" class="@ChipClass(selectedDate == today)">
+            Bugün
+        </a>
 
-    <a asp-action="Index"
-       asp-route-date="@nextDate.ToString("yyyy-MM-dd")"
-       class="btn btn-outline-secondary btn-sm">
-        Sonraki Gün (@nextDate.ToString("dd.MM")) &raquo;
-    </a>
+        <a asp-action="Index" asp-route-date="@tomorrow.ToString("yyyy-MM-dd")" class="@ChipClass(selectedDate == tomorrow)">
+            Yarın
+        </a>
+
+        <span class="ms-md-auto d-flex gap-2">
+            <a asp-action="Index"
+               asp-route-date="@prevDate.ToString("yyyy-MM-dd")"
+               class="btn btn-outline-secondary btn-sm">
+                &laquo; Önceki Gün (@prevDate.ToString("dd.MM"))
+            </a>
+
+            <a asp-action="Index"
+               asp-route-date="@nextDate.ToString("yyyy-MM-dd")"
+               class="btn btn-outline-secondary btn-sm">
+                Sonraki Gün (@nextDate.ToString("dd.MM")) &raquo;
+            </a>
+        </span>
+    </div>
+</section>
+
+<!-- Mobile offcanvas date picker -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="attDatePicker" aria-labelledby="attDatePickerLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="attDatePickerLabel">Tarih Seç</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="get" class="row g-2">
+            <div class="col-12">
+                <label class="form-label small mb-1">Tarih</label>
+                <input type="date"
+                       name="date"
+                       class="form-control"
+                       value="@selectedDate.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary flex-fill" data-bs-dismiss="offcanvas">Uygula</button>
+                <a asp-action="Index" asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary flex-fill">
+                    Bugün
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 
 @if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))

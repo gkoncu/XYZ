@@ -1,4 +1,4 @@
-﻿﻿@using System
+﻿﻿﻿﻿@using System
 @using System.Linq
 @{
     var primaryColor = ViewData["PrimaryColor"] as string ?? "#3B82F6";
@@ -77,18 +77,37 @@
                             <a class="nav-link" asp-controller="@dashboardController" asp-action="Index">Dashboard</a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Students" asp-action="Index">Öğrenciler</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Payments" asp-action="Index">Ödemeler</a>
-                        </li>
-
+                        @* =====================================================
+                           Admin / Coach / SuperAdmin Menüsü
+                           ===================================================== *@
                         @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Attendance" asp-action="Index">Antrenmanlar</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    Operasyon
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Students" asp-action="Index">Öğrenciler</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Classes" asp-action="Index">Sınıflar</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ClassSessions" asp-action="Index">Seanslar</a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Attendance" asp-action="Index">Yoklama</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Payments" asp-action="Index">Ödemeler</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ProgressRecords" asp-action="Index">Gelişim Kayıtları</a>
+                                    </li>
+                                </ul>
                             </li>
 
                             <li class="nav-item dropdown">
@@ -127,19 +146,46 @@
                                     }
                                 </ul>
                             </li>
-                        }
 
-                        @if (User.IsInRole("SuperAdmin"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Tenants" asp-action="Index">Kulüpler</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    Kulüp
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Branches" asp-action="Index">Şubeler</a>
+                                    </li>
+
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Coaches" asp-action="Index">Koçlar</a>
+                                        </li>
+                                    }
+
+                                    @if (User.IsInRole("SuperAdmin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Tenants" asp-action="Index">Kulüpler</a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admins" asp-action="Index">Adminler</a>
+                                        </li>
+                                    }
+                                </ul>
                             </li>
                         }
-
-                        @if (User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin"))
+                        @* =====================================================
+                           Student Menüsü
+                           ===================================================== *@
+                        else if (User.IsInRole("Student"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Branches" asp-action="Index">Şubeler</a>
+                                <a class="nav-link" asp-controller="Payments" asp-action="My">Ödemelerim</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="PaymentPlans" asp-action="My">Ödeme Planım</a>
                             </li>
                         }
 
@@ -218,42 +264,20 @@
 
             @if (!string.IsNullOrWhiteSpace(devSetupUrl))
             {
-                <div class="container-fluid mb-3">
-                    <div class="alert alert-warning d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
-                        <div>
-                            <strong>DEV:</strong> Yeni kullanıcı için şifre belirleme linki hazır.
-                            @if (!string.IsNullOrWhiteSpace(devPasswordUserId))
-                            {
-                                <span class="ms-1 text-muted">(UserId: @devPasswordUserId)</span>
-                            }
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <a class="btn btn-sm btn-outline-dark" href="@devSetupUrl" target="_blank" rel="noopener noreferrer">
-                                Linki Aç
-                            </a>
-
-                            <button type="button" class="btn btn-sm btn-dark"
-                                    onclick="navigator.clipboard.writeText('@devSetupUrl'); this.innerText='Kopyalandı'; setTimeout(()=>this.innerText='Kopyala',1200);">
-                                Kopyala
-                            </button>
-                        </div>
-                    </div>
+                <div class="alert alert-warning small">
+                    <div class="fw-semibold">Dev Setup</div>
+                    <div>Şifre belirleme linki: <a href="@devSetupUrl" target="_blank">@devSetupUrl</a></div>
+                    <div>UserId: @devPasswordUserId</div>
                 </div>
-            }   
+            }
+
             @RenderBody()
         </main>
     </div>
 
-    <footer class="app-footer border-top">
-        <div class="container-fluid d-flex justify-content-between small text-muted py-2">
-            <span>&copy; @DateTime.Now.Year - @tenantName</span>
-            <span>Powered by XYZ</span>
-        </div>
-    </footer>
-
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

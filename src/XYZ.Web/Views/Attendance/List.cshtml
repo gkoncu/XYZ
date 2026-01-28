@@ -1,250 +1,363 @@
-﻿﻿@using XYZ.Application.Common.Models
-@using XYZ.Application.Features.Attendances.Queries.GetAttendanceList
-@model PaginationResult<AttendanceListItemDto>
+﻿﻿@using XYZ.Domain.Enums
+@model XYZ.Application.Common.Models.PaginationResult<XYZ.Application.Features.Attendances.Queries.GetAttendanceList.AttendanceListItemDto>
 
 @{
     ViewData["Title"] = "Yoklama Listesi";
 
-    var studentId = ViewBag.StudentId;
-    var classId = ViewBag.ClassId;
-    var classSessionId = ViewBag.ClassSessionId;
-    var from = ViewBag.From as string;
-    var to = ViewBag.To as string;
-    var status = ViewBag.Status as int?;
+    var q = ViewBag.Q as string ?? "";
+    var statusFilter = ViewBag.Status as string ?? "";
+    var classId = ViewBag.ClassId as int?;
+    var studentId = ViewBag.StudentId as int?;
+
+    string StatusText(AttendanceStatus s) => s switch
+    {
+        AttendanceStatus.Unknown => "Bilinmiyor",
+        AttendanceStatus.Present => "Katıldı",
+        AttendanceStatus.Absent => "Katılmadı",
+        AttendanceStatus.Excused => "İzinli",
+        AttendanceStatus.Late => "Geç Kaldı",
+        _ => "Bilinmiyor"
+    };
+
+    string BadgeClass(AttendanceStatus s) => s switch
+    {
+        AttendanceStatus.Present => "badge bg-success",
+        AttendanceStatus.Absent => "badge bg-danger",
+        AttendanceStatus.Excused => "badge bg-secondary",
+        AttendanceStatus.Late => "badge bg-warning text-dark",
+        _ => "badge bg-light text-dark border"
+    };
+
+    string ChipClass(string key) => statusFilter == key
+        ? "btn btn-sm btn-primary"
+        : "btn btn-sm btn-outline-secondary";
 }
 
 <section class="mb-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
             <h2 class="h4 mb-1">Yoklama Listesi</h2>
-            <p class="text-muted small mb-0">
-                Öğrenci, sınıf, tarih aralığı ve duruma göre yoklama kayıtlarını filtreleyebilirsiniz.
-            </p>
+            <div class="text-muted small">
+                Yoklama kayıtlarını filtreleyin ve seansa hızlıca gidin.
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary d-md-none"
+                    data-bs-toggle="offcanvas" data-bs-target="#attListFilters" aria-controls="attListFilters">
+                Filtreler
+            </button>
+
+            <a asp-action="List" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex">
+                Sıfırla
+            </a>
         </div>
     </div>
 
-    <div class="card-surface mb-3">
-        <form asp-action="List" asp-controller="Attendance" method="get" class="row g-2 align-items-end">
-            <div class="col-12 col-md-2">
-                <label class="form-label form-label-sm">Öğrenci Id</label>
-                <input type="number"
-                       name="studentId"
-                       value="@studentId"
-                       class="form-control form-control-sm"
-                       placeholder="Öğrenci Id" />
+    <!-- Quick chips -->
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <a class="@ChipClass("")"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="">
+            Tümü
+        </a>
+
+        <a class="@ChipClass(nameof(AttendanceStatus.Unknown))"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="@nameof(AttendanceStatus.Unknown)">
+            Bilinmiyor
+        </a>
+
+        <a class="@ChipClass(nameof(AttendanceStatus.Present))"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="@nameof(AttendanceStatus.Present)">
+            Katıldı
+        </a>
+
+        <a class="@ChipClass(nameof(AttendanceStatus.Absent))"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="@nameof(AttendanceStatus.Absent)">
+            Katılmadı
+        </a>
+
+        <a class="@ChipClass(nameof(AttendanceStatus.Excused))"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="@nameof(AttendanceStatus.Excused)">
+            İzinli
+        </a>
+
+        <a class="@ChipClass(nameof(AttendanceStatus.Late))"
+           asp-action="List"
+           asp-route-q="@q"
+           asp-route-classId="@classId"
+           asp-route-studentId="@studentId"
+           asp-route-status="@nameof(AttendanceStatus.Late)">
+            Geç
+        </a>
+    </div>
+
+    <!-- Desktop filters -->
+    <form method="get" class="card card-body mt-3 d-none d-md-block">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label">Arama</label>
+                <input class="form-control" name="q" value="@q" placeholder="Öğrenci / Sınıf" />
             </div>
 
-            <div class="col-12 col-md-2">
-                <label class="form-label form-label-sm">Sınıf Id</label>
-                <input type="number"
-                       name="classId"
-                       value="@classId"
-                       class="form-control form-control-sm"
-                       placeholder="Sınıf Id" />
-            </div>
-
-            <div class="col-12 col-md-2">
-                <label class="form-label form-label-sm">Seans Id</label>
-                <input type="number"
-                       name="classSessionId"
-                       value="@classSessionId"
-                       class="form-control form-control-sm"
-                       placeholder="Seans Id" />
-            </div>
-
-            <div class="col-6 col-md-2">
-                <label class="form-label form-label-sm">Başlangıç Tarihi</label>
-                <input type="date"
-                       name="from"
-                       value="@from"
-                       class="form-control form-control-sm" />
-            </div>
-
-            <div class="col-6 col-md-2">
-                <label class="form-label form-label-sm">Bitiş Tarihi</label>
-                <input type="date"
-                       name="to"
-                       value="@to"
-                       class="form-control form-control-sm" />
-            </div>
-
-            <div class="col-12 col-md-2">
-                <label class="form-label form-label-sm">Durum</label>
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">Tümü</option>
-                    <option value="1" selected="@(status == 1 ? "selected" : "")">Katıldı</option>
-                    <option value="2" selected="@(status == 2 ? "selected" : "")">Gelmedi</option>
-                    <option value="3" selected="@(status == 3 ? "selected" : "")">İzinli</option>
-                    <option value="4" selected="@(status == 4 ? "selected" : "")">Geç</option>
+            <div class="col-md-3">
+                <label class="form-label">Durum</label>
+                <select class="form-select" name="status">
+                    <option value="" selected=@(string.IsNullOrWhiteSpace(statusFilter))>Tümü</option>
+                    <option value=@nameof(AttendanceStatus.Unknown) selected=@(statusFilter == nameof(AttendanceStatus.Unknown))>Bilinmiyor</option>
+                    <option value=@nameof(AttendanceStatus.Present) selected=@(statusFilter == nameof(AttendanceStatus.Present))>Katıldı</option>
+                    <option value=@nameof(AttendanceStatus.Absent) selected=@(statusFilter == nameof(AttendanceStatus.Absent))>Katılmadı</option>
+                    <option value=@nameof(AttendanceStatus.Excused) selected=@(statusFilter == nameof(AttendanceStatus.Excused))>İzinli</option>
+                    <option value=@nameof(AttendanceStatus.Late) selected=@(statusFilter == nameof(AttendanceStatus.Late))>Geç Kaldı</option>
                 </select>
             </div>
 
-            <div class="col-12 col-md-2 mt-2 mt-md-0">
-                <button type="submit" class="btn btn-sm btn-primary w-100 mb-1">
-                    Filtrele
-                </button>
-                <a asp-action="List"
-                   asp-controller="Attendance"
-                   class="btn btn-sm btn-outline-secondary w-100">
-                    Temizle
-                </a>
-            </div>
-        </form>
-
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <div class="small text-muted">
-                Toplam @Model.TotalCount kayıt · Sayfa @Model.PageNumber / @Model.TotalPages
+            <div class="col-md-3 text-end">
+                <button class="btn btn-primary" type="submit">Uygula</button>
+                <a class="btn btn-outline-secondary" asp-action="List">Sıfırla</a>
             </div>
         </div>
-    </div>
 
-    <div class="card-surface">
-        <div class="table-responsive">
-            <table class="table table-modern align-middle mb-0">
-                <thead>
+        @if (classId.HasValue)
+        {
+            <input type="hidden" name="classId" value="@classId.Value" />
+        }
+        @if (studentId.HasValue)
+        {
+            <input type="hidden" name="studentId" value="@studentId.Value" />
+        }
+    </form>
+</section>
+
+<!-- Mobile filters -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="attListFilters" aria-labelledby="attListFiltersLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="attListFiltersLabel">Filtreler</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="get" class="row g-2">
+            <div class="col-12">
+                <label class="form-label small mb-1">Arama</label>
+                <input class="form-control" name="q" value="@q" placeholder="Öğrenci / Sınıf" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label small mb-1">Durum</label>
+                <select class="form-select" name="status">
+                    <option value="" selected=@(string.IsNullOrWhiteSpace(statusFilter))>Tümü</option>
+                    <option value=@nameof(AttendanceStatus.Unknown) selected=@(statusFilter == nameof(AttendanceStatus.Unknown))>Bilinmiyor</option>
+                    <option value=@nameof(AttendanceStatus.Present) selected=@(statusFilter == nameof(AttendanceStatus.Present))>Katıldı</option>
+                    <option value=@nameof(AttendanceStatus.Absent) selected=@(statusFilter == nameof(AttendanceStatus.Absent))>Katılmadı</option>
+                    <option value=@nameof(AttendanceStatus.Excused) selected=@(statusFilter == nameof(AttendanceStatus.Excused))>İzinli</option>
+                    <option value=@nameof(AttendanceStatus.Late) selected=@(statusFilter == nameof(AttendanceStatus.Late))>Geç Kaldı</option>
+                </select>
+            </div>
+
+            @if (classId.HasValue)
+            {
+                <input type="hidden" name="classId" value="@classId.Value" />
+            }
+            @if (studentId.HasValue)
+            {
+                <input type="hidden" name="studentId" value="@studentId.Value" />
+            }
+
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button class="btn btn-primary flex-fill" type="submit" data-bs-dismiss="offcanvas">Uygula</button>
+                <a class="btn btn-outline-secondary flex-fill" asp-action="List">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<section class="card-surface">
+    <!-- Desktop table -->
+    <div class="table-responsive d-none d-md-block">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tarih</th>
+                    <th>Sınıf</th>
+                    <th>Öğrenci</th>
+                    <th>Durum</th>
+                    <th>Puan</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model?.Items is null || Model.Items.Count == 0)
+                {
                     <tr>
-                        <th>Tarih</th>
-                        <th>Sınıf</th>
-                        <th>Öğrenci</th>
-                        <th>Durum</th>
-                        <th>Puan</th>
-                        <th>Not</th>
-                        <th>Koç Notu</th>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            Kayıt bulunamadı.
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Count == 0)
+                }
+                else
+                {
+                    foreach (var a in Model.Items)
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                Kriterlere uygun yoklama kaydı bulunamadı.
+                            <td>@a.SessionDate.ToString("dd.MM.yyyy")</td>
+
+                            <td>
+                                <a class="text-decoration-none"
+                                   asp-controller="Classes" asp-action="Details" asp-route-id="@a.ClassId">
+                                    @a.ClassName
+                                </a>
+                            </td>
+
+                            <td>
+                                <a class="text-decoration-none"
+                                   asp-controller="Students" asp-action="Details" asp-route-id="@a.StudentId">
+                                    @a.StudentFullName
+                                </a>
+                            </td>
+
+                            <td>
+                                <span class="@BadgeClass(a.Status)">@StatusText(a.Status)</span>
+                            </td>
+
+                            <td>@(a.Score.HasValue? a.Score.Value.ToString() : "-")</td>
+
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-controller="Attendance" asp-action="Session" asp-route-id="@a.ClassSessionId">
+                                    Seansa Git
+                                </a>
                             </td>
                         </tr>
                     }
-                    else
-                    {
-                        foreach (var a in Model.Items)
-                        {
-                            <tr>
-                                <td>
-                                    @a.SessionDate.ToString("dd.MM.yyyy")
-                                </td>
-                                <td>
-                                    <div class="fw-semibold">@a.ClassName</div>
-                                    <div class="small text-muted">Id: @a.ClassId</div>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold">@a.StudentFullName</div>
-                                    <div class="small text-muted">Id: @a.StudentId</div>
-                                </td>
-                                <td>
-                                    @{
-                                        string statusText = a.Status switch
-                                        {
-                                            XYZ.Domain.Enums.AttendanceStatus.Present => "Katıldı",
-                                            XYZ.Domain.Enums.AttendanceStatus.Absent => "Gelmedi",
-                                            XYZ.Domain.Enums.AttendanceStatus.Excused => "İzinli",
-                                            XYZ.Domain.Enums.AttendanceStatus.Late => "Geç",
-                                            _ => "Bilinmiyor"
-                                        };
+                }
+            </tbody>
+        </table>
+    </div>
 
-                                        string statusClass = a.Status switch
-                                        {
-                                            XYZ.Domain.Enums.AttendanceStatus.Present => "badge-soft-success",
-                                            XYZ.Domain.Enums.AttendanceStatus.Absent => "badge-soft-danger",
-                                            XYZ.Domain.Enums.AttendanceStatus.Excused => "badge-soft-warning",
-                                            XYZ.Domain.Enums.AttendanceStatus.Late => "badge-soft-info",
-                                            _ => "badge-soft-muted"
-                                        };
-                                    }
-                                    <span class="badge-soft @statusClass">@statusText</span>
-                                </td>
-                                <td>
-                                    @if (a.Score.HasValue)
-                                    {
-                                        @a.Score
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(a.Note))
-                                    {
-                                        <span>@a.Note</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(a.CoachComment))
-                                    {
-                                        <span>@a.CoachComment</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">-</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @if (Model.TotalPages > 1)
+    <!-- Mobile cards -->
+    <div class="d-md-none">
+        @if (Model?.Items is null || Model.Items.Count == 0)
         {
-            <nav class="mt-3">
-                <ul class="pagination pagination-modern justify-content-end mb-0">
-                    @{
-                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
-                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
-                    }
-                    <li class="page-item @prevDisabled">
-                        <a class="page-link"
-                           asp-action="List"
-                           asp-route-pageNumber="@(Model.PageNumber - 1)"
-                           asp-route-studentId="@studentId"
-                           asp-route-classId="@classId"
-                           asp-route-classSessionId="@classSessionId"
-                           asp-route-from="@from"
-                           asp-route-to="@to"
-                           asp-route-status="@status">Önceki</a>
-                    </li>
+            <div class="text-center text-muted py-4">Kayıt bulunamadı.</div>
+        }
+        else
+        {
+            <div class="vstack gap-3 p-3">
+                @foreach (var a in Model.Items)
+                {
+                    <div class="card border shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="fw-semibold">@a.StudentFullName</div>
+                                    <div class="small text-muted">@a.ClassName</div>
+                                    <div class="small text-muted">@a.SessionDate.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <span class="@BadgeClass(a.Status)">@StatusText(a.Status)</span>
+                            </div>
 
-                    @for (var i = 1; i <= Model.TotalPages; i++)
-                    {
-                        var active = i == Model.PageNumber ? "active" : "";
-                        <li class="page-item @active">
-                            <a class="page-link"
-                               asp-action="List"
-                               asp-route-pageNumber="@i"
-                               asp-route-studentId="@studentId"
-                               asp-route-classId="@classId"
-                               asp-route-classSessionId="@classSessionId"
-                               asp-route-from="@from"
-                               asp-route-to="@to"
-                               asp-route-status="@status">@i</a>
-                        </li>
-                    }
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <div class="small text-muted">Puan</div>
+                                    <div>@(a.Score.HasValue? a.Score.Value.ToString() : "-")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small text-muted">Not</div>
+                                    <div class="text-truncate">@(!string.IsNullOrWhiteSpace(a.Note) ? a.Note : "-")</div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="small text-muted">Koç Yorumu</div>
+                                    <div class="text-truncate">@(!string.IsNullOrWhiteSpace(a.CoachComment) ? a.CoachComment : "-")</div>
+                                </div>
+                            </div>
 
-                    <li class="page-item @nextDisabled">
-                        <a class="page-link"
-                           asp-action="List"
-                           asp-route-pageNumber="@(Model.PageNumber + 1)"
-                           asp-route-studentId="@studentId"
-                           asp-route-classId="@classId"
-                           asp-route-classSessionId="@classSessionId"
-                           asp-route-from="@from"
-                           asp-route-to="@to"
-                           asp-route-status="@status">Sonraki</a>
-                    </li>
-                </ul>
-            </nav>
+                            <div class="d-grid gap-2 mt-3">
+                                <a class="btn btn-outline-secondary"
+                                   asp-controller="Students" asp-action="Details" asp-route-id="@a.StudentId">
+                                    Öğrenci
+                                </a>
+
+                                <a class="btn btn-outline-secondary"
+                                   asp-controller="Classes" asp-action="Details" asp-route-id="@a.ClassId">
+                                    Sınıf
+                                </a>
+
+                                <a class="btn btn-primary"
+                                   asp-controller="Attendance" asp-action="Session" asp-route-id="@a.ClassSessionId">
+                                    Seansa Git
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
         }
     </div>
 </section>
+
+@if (Model is not null && Model.TotalPages > 1)
+{
+    <nav class="mt-3" aria-label="Sayfalama">
+        <ul class="pagination justify-content-center flex-wrap">
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="List"
+                   asp-route-page="@(Model.PageNumber - 1)"
+                   asp-route-q="@q"
+                   asp-route-status="@statusFilter"
+                   asp-route-classId="@classId"
+                   asp-route-studentId="@studentId">
+                    Önceki
+                </a>
+            </li>
+
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="List"
+                       asp-route-page="@p"
+                       asp-route-q="@q"
+                       asp-route-status="@statusFilter"
+                       asp-route-classId="@classId"
+                       asp-route-studentId="@studentId">
+                        @p
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="List"
+                   asp-route-page="@(Model.PageNumber + 1)"
+                   asp-route-q="@q"
+                   asp-route-status="@statusFilter"
+                   asp-route-classId="@classId"
+                   asp-route-studentId="@studentId">
+                    Sonraki
+                </a>
+            </li>
+        </ul>
+    </nav>
+}
+

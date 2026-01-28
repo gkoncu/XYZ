@@ -1,32 +1,54 @@
-﻿@using XYZ.Domain.Enums
+﻿﻿@using XYZ.Domain.Enums
 @model XYZ.Web.Models.Attendance.SessionAttendanceViewModel
 
 @{
     ViewData["Title"] = "Yoklama - " + Model.ClassName;
 
-    var presentValue = (int)AttendanceStatus.Present; // 1
-    var absentValue = (int)AttendanceStatus.Absent;   // 2
-    var excusedValue = (int)AttendanceStatus.Excused; // 3
+    // Enum değerleri
+    var unknownValue = (int)AttendanceStatus.Unknown;
+    var presentValue = (int)AttendanceStatus.Present;
+    var absentValue = (int)AttendanceStatus.Absent;
+    var excusedValue = (int)AttendanceStatus.Excused;
+    var lateValue = (int)AttendanceStatus.Late;
+
+    string StatusText(int v) => v switch
+    {
+        0 => "Bilinmiyor",
+        1 => "Katıldı",
+        2 => "Katılmadı",
+        3 => "İzinli",
+        4 => "Geç Kaldı",
+        _ => "Bilinmiyor"
+    };
+
+    string BadgeClass(int v) => v switch
+    {
+        1 => "badge bg-success",
+        2 => "badge bg-danger",
+        3 => "badge bg-secondary",
+        4 => "badge bg-warning text-dark",
+        _ => "badge bg-light text-dark border"
+    };
+
+    // küçük yardımcı: mobil kart vurgu
+    string CardHintClass(int v) => v == 0 ? "border-warning" : "border";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
     <div>
         <h2 class="mb-0">@Model.ClassName</h2>
         <small class="text-muted">
             @Model.Date.ToString("dd.MM.yyyy") |
             @Model.StartTime.ToString("hh\\:mm") - @Model.EndTime.ToString("hh\\:mm")
         </small>
+
         @if (!string.IsNullOrWhiteSpace(Model.Title))
         {
-            <div class="small text-muted">
-                @Model.Title
-            </div>
+            <div class="small text-muted">@Model.Title</div>
         }
         @if (!string.IsNullOrWhiteSpace(Model.Location))
         {
-            <div class="small text-muted">
-                Konum: @Model.Location
-            </div>
+            <div class="small text-muted">Konum: @Model.Location</div>
         }
     </div>
 
@@ -53,7 +75,72 @@
 }
 else
 {
-    <form asp-action="Session" method="post">
+    <!-- Summary + Bulk -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <div>
+                    <div class="fw-semibold">Yoklama Özeti</div>
+                    <div class="small text-muted">
+                        Varsayılan durum <strong>Bilinmiyor</strong> (Unknown). Bilinmiyor kalanları sıfırlamak hedef.
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="bulkSet(@presentValue)">
+                        Herkesi Katıldı
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkSet(@absentValue)">
+                        Herkesi Katılmadı
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="bulkSet(@unknownValue)">
+                        Herkesi Bilinmiyor
+                    </button>
+                </div>
+            </div>
+
+            <hr class="my-3" />
+
+            <!-- counts -->
+            <div class="row g-2">
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">Toplam</div>
+                    <div class="fw-semibold" id="cnt_total">@Model.Students.Count</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">Katıldı</div>
+                    <div class="fw-semibold" id="cnt_present">0</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">Geç</div>
+                    <div class="fw-semibold" id="cnt_late">0</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">İzinli</div>
+                    <div class="fw-semibold" id="cnt_excused">0</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">Katılmadı</div>
+                    <div class="fw-semibold" id="cnt_absent">0</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <div class="small text-muted">Bilinmiyor</div>
+                    <div class="fw-semibold text-warning" id="cnt_unknown">0</div>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="bulkSetOnlyUnknown(@presentValue)">
+                    Sadece Bilinmiyorları Katıldı Yap
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="scrollToUnknown()">
+                    Bilinmiyor Kalanlara Git
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Session" method="post" id="attForm">
         @Html.AntiForgeryToken()
 
         <input type="hidden" asp-for="SessionId" />
@@ -63,16 +150,18 @@ else
             <div class="card-header bg-white border-0">
                 <h5 class="mb-0">Öğrenci Yoklama Listesi</h5>
                 <small class="text-muted">
-                    Her öğrenci için durum, puan ve notları güncelleyip kaydedin.
+                    Durum, puan ve notları güncelleyip kaydedin.
                 </small>
             </div>
+
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Desktop table -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-striped align-middle mb-0">
                         <thead>
                             <tr>
                                 <th style="min-width: 180px;">Öğrenci</th>
-                                <th style="min-width: 260px;">Durum</th>
+                                <th style="min-width: 340px;">Durum</th>
                                 <th style="width: 120px;">Puan</th>
                                 <th style="min-width: 180px;">Not</th>
                                 <th style="min-width: 200px;">Koç Yorumu</th>
@@ -81,39 +170,67 @@ else
                         <tbody>
                             @for (int i = 0; i < Model.Students.Count; i++)
                             {
-                                <tr>
+                                var st = Model.Students[i];
+                                var current = st.Status;
+
+                                <tr data-student-id="@st.StudentId">
                                     <td>
-                                        <strong>@Model.Students[i].FullName</strong>
+                                        <strong>@st.FullName</strong>
+                                        <div class="small text-muted">ID: @st.StudentId</div>
+
                                         <input type="hidden" asp-for="Students[@i].AttendanceId" />
                                         <input type="hidden" asp-for="Students[@i].StudentId" />
                                     </td>
+
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input"
+                                                <input class="form-check-input status-radio"
                                                        type="radio"
                                                        asp-for="Students[@i].Status"
-                                                       value="@presentValue" />
+                                                       value="@unknownValue"
+                                                       data-student-id="@st.StudentId" />
+                                                <label class="form-check-label">Bilinmiyor</label>
+                                            </div>
+
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio"
+                                                       type="radio"
+                                                       asp-for="Students[@i].Status"
+                                                       value="@presentValue"
+                                                       data-student-id="@st.StudentId" />
                                                 <label class="form-check-label">Katıldı</label>
                                             </div>
 
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input"
+                                                <input class="form-check-input status-radio"
                                                        type="radio"
                                                        asp-for="Students[@i].Status"
-                                                       value="@excusedValue" />
+                                                       value="@lateValue"
+                                                       data-student-id="@st.StudentId" />
+                                                <label class="form-check-label">Geç</label>
+                                            </div>
+
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio"
+                                                       type="radio"
+                                                       asp-for="Students[@i].Status"
+                                                       value="@excusedValue"
+                                                       data-student-id="@st.StudentId" />
                                                 <label class="form-check-label">İzinli</label>
                                             </div>
 
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input"
+                                                <input class="form-check-input status-radio"
                                                        type="radio"
                                                        asp-for="Students[@i].Status"
-                                                       value="@absentValue" />
+                                                       value="@absentValue"
+                                                       data-student-id="@st.StudentId" />
                                                 <label class="form-check-label">Katılmadı</label>
                                             </div>
                                         </div>
                                     </td>
+
                                     <td>
                                         <input asp-for="Students[@i].Score"
                                                class="form-control form-control-sm text-center"
@@ -121,11 +238,13 @@ else
                                                min="0"
                                                max="100" />
                                     </td>
+
                                     <td>
                                         <textarea asp-for="Students[@i].Note"
                                                   class="form-control form-control-sm"
                                                   rows="1"></textarea>
                                     </td>
+
                                     <td>
                                         <textarea asp-for="Students[@i].CoachComment"
                                                   class="form-control form-control-sm"
@@ -136,12 +255,322 @@ else
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Mobile cards -->
+                <div class="d-md-none">
+                    <div class="vstack gap-3" id="mobileCards">
+                        @for (int i = 0; i < Model.Students.Count; i++)
+                        {
+                            var st = Model.Students[i];
+                            var current = st.Status;
+
+                            <div class="card shadow-sm @CardHintClass(current)" id="card_@st.StudentId" data-student-id="@st.StudentId">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <div class="fw-semibold">@st.FullName</div>
+                                            <div class="small text-muted">ID: @st.StudentId</div>
+                                        </div>
+                                        <span class="@BadgeClass(current)" id="badge_@st.StudentId">@StatusText(current)</span>
+                                    </div>
+
+                                    <input type="hidden" asp-for="Students[@i].AttendanceId" />
+                                    <input type="hidden" asp-for="Students[@i].StudentId" />
+
+                                    <!-- Hidden status binding for JS bulk/set -->
+                                    <input type="hidden"
+                                           asp-for="Students[@i].Status"
+                                           id="status_@st.StudentId"
+                                           class="status-hidden"
+                                           data-student-id="@st.StudentId" />
+
+                                    <div class="mt-3">
+                                        <div class="fw-semibold small mb-2">Durum</div>
+
+                                        <div class="d-grid gap-2">
+                                            <div class="btn-group w-100" role="group">
+                                                <button type="button" class="btn btn-outline-secondary status-btn"
+                                                        data-student-id="@st.StudentId" data-status="@unknownValue"
+                                                        onclick="setStatus(@st.StudentId, @unknownValue)">
+                                                    Bilinmiyor
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary status-btn"
+                                                        data-student-id="@st.StudentId" data-status="@presentValue"
+                                                        onclick="setStatus(@st.StudentId, @presentValue)">
+                                                    Katıldı
+                                                </button>
+                                            </div>
+
+                                            <div class="btn-group w-100" role="group">
+                                                <button type="button" class="btn btn-outline-secondary status-btn"
+                                                        data-student-id="@st.StudentId" data-status="@lateValue"
+                                                        onclick="setStatus(@st.StudentId, @lateValue)">
+                                                    Geç
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary status-btn"
+                                                        data-student-id="@st.StudentId" data-status="@excusedValue"
+                                                        onclick="setStatus(@st.StudentId, @excusedValue)">
+                                                    İzinli
+                                                </button>
+                                            </div>
+
+                                            <button type="button" class="btn btn-outline-secondary status-btn"
+                                                    data-student-id="@st.StudentId" data-status="@absentValue"
+                                                    onclick="setStatus(@st.StudentId, @absentValue)">
+                                                Katılmadı
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2 mt-3">
+                                        <div class="col-4">
+                                            <label class="form-label small mb-1">Puan</label>
+                                            <input asp-for="Students[@i].Score" class="form-control form-control-sm text-center" type="number" min="0" max="100" />
+                                        </div>
+                                        <div class="col-8">
+                                            <label class="form-label small mb-1">Not</label>
+                                            <input asp-for="Students[@i].Note" class="form-control form-control-sm" />
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small mb-1">Koç Yorumu</label>
+                                            <input asp-for="Students[@i].CoachComment" class="form-control form-control-sm" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
             </div>
-            <div class="card-footer bg-white border-0 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">
+
+            <div class="card-footer bg-white border-0 d-none d-md-flex justify-content-end">
+                <button type="submit" class="btn btn-primary" id="btnSaveDesktop">
                     Yoklamayı Kaydet
                 </button>
             </div>
         </div>
+
+        <!-- Mobile sticky save bar -->
+        <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
+            <div class="container-fluid py-2">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill" id="btnSaveMobile">Kaydet</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Seanslar</a>
+                </div>
+            </div>
+        </div>
     </form>
+
+    <script>
+        const STATUS = {
+            Unknown: @unknownValue,
+            Present: @presentValue,
+            Absent: @absentValue,
+            Excused: @excusedValue,
+            Late: @lateValue
+        };
+
+        function statusMeta(v) {
+            const map = {
+                0: { text: 'Bilinmiyor', cls: 'badge bg-light text-dark border', btn: 'btn-outline-secondary', btnActive: 'btn-outline-warning' },
+                1: { text: 'Katıldı', cls: 'badge bg-success', btn: 'btn-outline-secondary', btnActive: 'btn-success' },
+                2: { text: 'Katılmadı', cls: 'badge bg-danger', btn: 'btn-outline-secondary', btnActive: 'btn-danger' },
+                3: { text: 'İzinli', cls: 'badge bg-secondary', btn: 'btn-outline-secondary', btnActive: 'btn-secondary' },
+                4: { text: 'Geç Kaldı', cls: 'badge bg-warning text-dark', btn: 'btn-outline-secondary', btnActive: 'btn-warning' }
+            };
+            return map[v] || map[0];
+        }
+
+        function getCurrentStatus(studentId) {
+            // Mobil hidden
+            const hidden = document.getElementById('status_' + studentId);
+            if (hidden) return parseInt(hidden.value || STATUS.Unknown, 10);
+
+            // Desktop radios (checked)
+            const checked = document.querySelector(`.status-radio[data-student-id="${studentId}"]:checked`);
+            if (checked) return parseInt(checked.value, 10);
+
+            return STATUS.Unknown;
+        }
+
+        function setDesktopRadio(studentId, statusVal) {
+            const radio = document.querySelector(`.status-radio[data-student-id="${studentId}"][value="${statusVal}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        function setMobileHidden(studentId, statusVal) {
+            const input = document.getElementById('status_' + studentId);
+            if (input) input.value = statusVal;
+        }
+
+        function updateMobileButtons(studentId, statusVal) {
+            const buttons = document.querySelectorAll(`.status-btn[data-student-id="${studentId}"]`);
+            buttons.forEach(b => {
+                const v = parseInt(b.getAttribute('data-status'), 10);
+                const meta = statusMeta(v);
+                b.className = 'btn ' + meta.btn; // reset
+            });
+
+            const active = document.querySelector(`.status-btn[data-student-id="${studentId}"][data-status="${statusVal}"]`);
+            if (active) {
+                const meta = statusMeta(statusVal);
+                active.className = 'btn ' + meta.btnActive;
+            }
+        }
+
+        function updateBadgeAndCard(studentId, statusVal) {
+            const badge = document.getElementById('badge_' + studentId);
+            if (badge) {
+                const meta = statusMeta(statusVal);
+                badge.className = meta.cls;
+                badge.textContent = meta.text;
+            }
+
+            const card = document.getElementById('card_' + studentId);
+            if (card) {
+                // Unknown -> uyarı border
+                card.classList.remove('border-warning');
+                if (statusVal === STATUS.Unknown) card.classList.add('border-warning');
+            }
+        }
+
+        function updateCounts() {
+            let total = 0, unk = 0, pre = 0, abs = 0, exc = 0, late = 0;
+
+            const studentIds = Array.from(document.querySelectorAll('[data-student-id]'))
+                .map(x => x.getAttribute('data-student-id'))
+                .filter(x => x && /^\d+$/.test(x));
+
+            // unique
+            const unique = Array.from(new Set(studentIds));
+
+            unique.forEach(idStr => {
+                const id = parseInt(idStr, 10);
+                const s = getCurrentStatus(id);
+                total++;
+
+                if (s === STATUS.Unknown) unk++;
+                else if (s === STATUS.Present) pre++;
+                else if (s === STATUS.Absent) abs++;
+                else if (s === STATUS.Excused) exc++;
+                else if (s === STATUS.Late) late++;
+            });
+
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            set('cnt_total', total);
+            set('cnt_unknown', unk);
+            set('cnt_present', pre);
+            set('cnt_absent', abs);
+            set('cnt_excused', exc);
+            set('cnt_late', late);
+        }
+
+        function setStatus(studentId, statusVal) {
+            // Mobil & desktop senkron
+            setMobileHidden(studentId, statusVal);
+            setDesktopRadio(studentId, statusVal);
+
+            updateBadgeAndCard(studentId, statusVal);
+            updateMobileButtons(studentId, statusVal);
+            updateCounts();
+        }
+
+        function bulkSet(statusVal) {
+            // Mobil hidden inputs
+            const inputs = document.querySelectorAll('input.status-hidden');
+            inputs.forEach(i => {
+                const sid = parseInt(i.getAttribute('data-student-id'), 10);
+                i.value = statusVal;
+                updateBadgeAndCard(sid, parseInt(statusVal, 10));
+                updateMobileButtons(sid, parseInt(statusVal, 10));
+            });
+
+            // Desktop radios
+            const rows = document.querySelectorAll('.status-radio');
+            // set checked for each student
+            const studentIds = Array.from(new Set(Array.from(rows).map(r => r.getAttribute('data-student-id'))));
+            studentIds.forEach(idStr => setDesktopRadio(parseInt(idStr, 10), parseInt(statusVal, 10)));
+
+            updateCounts();
+        }
+
+        function bulkSetOnlyUnknown(statusVal) {
+            // Mobil
+            const inputs = document.querySelectorAll('input.status-hidden');
+            inputs.forEach(i => {
+                const sid = parseInt(i.getAttribute('data-student-id'), 10);
+                const cur = parseInt(i.value || STATUS.Unknown, 10);
+                if (cur === STATUS.Unknown) {
+                    i.value = statusVal;
+                    updateBadgeAndCard(sid, parseInt(statusVal, 10));
+                    updateMobileButtons(sid, parseInt(statusVal, 10));
+                }
+            });
+
+            // Desktop: sadece unknown olanlar için - checked değerini okumak zor, ama binding zaten var.
+            // Pratik: radyo checked olmayanları Unknown varsay, Unknown ise set et.
+            const studentIds = Array.from(new Set(Array.from(document.querySelectorAll('.status-radio'))
+                .map(r => r.getAttribute('data-student-id'))));
+
+            studentIds.forEach(idStr => {
+                const sid = parseInt(idStr, 10);
+                const cur = getCurrentStatus(sid);
+                if (cur === STATUS.Unknown) setDesktopRadio(sid, parseInt(statusVal, 10));
+            });
+
+            updateCounts();
+        }
+
+        function scrollToUnknown() {
+            // Mobil: ilk border-warning karta
+            const card = document.querySelector('#mobileCards .card.border-warning');
+            if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+
+            // Desktop: ilk satırda Unknown seçili olanı bul
+            const unknownChecked = document.querySelector(`.status-radio[value="${STATUS.Unknown}"]:checked`);
+            if (unknownChecked) {
+                const tr = unknownChecked.closest('tr');
+                if (tr) tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Desktop radio change -> updateCounts
+        document.addEventListener('change', function (e) {
+            const t = e.target;
+            if (t && t.classList.contains('status-radio')) {
+                const sid = parseInt(t.getAttribute('data-student-id'), 10);
+                const val = parseInt(t.value, 10);
+                updateBadgeAndCard(sid, val);
+                updateMobileButtons(sid, val);
+                updateCounts();
+            }
+        });
+
+        function init() {
+            // mobil
+            const inputs = document.querySelectorAll('input.status-hidden');
+            inputs.forEach(i => {
+                const sid = parseInt(i.getAttribute('data-student-id'), 10);
+                const val = parseInt(i.value || STATUS.Unknown, 10);
+                updateBadgeAndCard(sid, val);
+                updateMobileButtons(sid, val);
+            });
+
+            updateCounts();
+
+            const form = document.getElementById('attForm');
+            const btnD = document.getElementById('btnSaveDesktop');
+            const btnM = document.getElementById('btnSaveMobile');
+
+            if (form) {
+                form.addEventListener('submit', function () {
+                    if (btnD) { btnD.disabled = true; btnD.textContent = 'Kaydediliyor...'; }
+                    if (btnM) { btnM.disabled = true; btnM.textContent = 'Kaydediliyor...'; }
+                });
+            }
+        }
+
+        init();
+    </script>
 }

@@ -1,18 +1,53 @@
-﻿@model PaymentDetailDto
+﻿﻿@using XYZ.Domain.Enums
+@model PaymentDetailDto
 @{
     ViewData["Title"] = "Ödeme Detayı";
 
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+    var isStudent = User.IsInRole("Student");
+
+    var backAction = isStudent ? "My" : "Index";
+    var backRouteStudentId = isStudent ? (int?)null : Model.StudentId;
+
+    string StatusBadgeClass(PaymentStatus s) => s switch
+    {
+        PaymentStatus.Pending => "badge bg-warning text-dark",
+        PaymentStatus.Overdue => "badge bg-danger",
+        PaymentStatus.Paid => "badge bg-success",
+        PaymentStatus.Cancelled => "badge bg-secondary",
+        _ => "badge bg-secondary"
+    };
 }
 
-<section class="mb-3 d-flex justify-content-between align-items-center">
-    <a asp-action="Index"
-       asp-route-studentId="@Model.StudentId"
-       class="text-muted small text-decoration-none">&larr; Ödeme listesine dön</a>
+<section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a asp-action="@backAction"
+       asp-route-studentId="@backRouteStudentId"
+       class="text-muted small text-decoration-none">
+        &larr; Ödeme listesine dön
+    </a>
+
+    <div class="d-flex gap-2">
+        <a asp-controller="PaymentPlans"
+           asp-action="Student"
+           asp-route-studentId="@Model.StudentId"
+           class="btn btn-sm btn-outline-primary">
+            Ödeme Planı
+        </a>
+
+        @if (!isStudent)
+        {
+            <a asp-controller="Students"
+               asp-action="Details"
+               asp-route-id="@Model.StudentId"
+               class="btn btn-sm btn-outline-secondary">
+                Öğrenci Detayı
+            </a>
+        }
+    </div>
 
     @if (isAdmin)
     {
-        <div class="btn-group btn-group-sm">
+        <div class="btn-group btn-group-sm d-none d-md-inline-flex">
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-outline-primary">
@@ -33,6 +68,16 @@
     }
 </section>
 
+@if (TempData["ErrorMessage"] is string error && !string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (TempData["SuccessMessage"] is string success && !string.IsNullOrWhiteSpace(success))
+{
+    <div class="alert alert-success">@success</div>
+}
+
 <section class="detail-grid">
     <div class="card-surface">
         <h2 class="h5 mb-3">Ödeme Bilgileri</h2>
@@ -47,8 +92,13 @@
             <dt class="col-4 text-muted">İndirim</dt>
             <dd class="col-8">@(Model.DiscountAmount.HasValue? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
 
+            <dt class="col-4 text-muted">Net</dt>
+            <dd class="col-8 fw-semibold">@((Model.Amount - (Model.DiscountAmount ?? 0m)).ToString("C2"))</dd>
+
             <dt class="col-4 text-muted">Durum</dt>
-            <dd class="col-8">@Model.Status.ToDisplayName()</dd>
+            <dd class="col-8">
+                <span class="@StatusBadgeClass(Model.Status)">@Model.Status.ToDisplayName()</span>
+            </dd>
 
             <dt class="col-4 text-muted">Vade</dt>
             <dd class="col-8">@Model.DueDate.ToString("dd.MM.yyyy")</dd>
@@ -63,4 +113,83 @@
             }
         </dl>
     </div>
+
+    @if (isAdmin)
+    {
+        <div class="card-surface">
+            <h2 class="h5 mb-3">Durum İşlemleri</h2>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="small text-muted">
+                    Bu sayfadan hızlıca "ödendi" olarak değiştirebilirsiniz. Daha fazla seçenek için "Düzenle" butonunu kullanın.
+                </div>
+
+                @if (Model.Status == PaymentStatus.Paid)
+                {
+                    <button class="btn btn-success" type="button" disabled>
+                        Ödendi
+                    </button>
+                }
+                else if (Model.Status == PaymentStatus.Cancelled)
+                {
+                    <button class="btn btn-secondary" type="button" disabled>
+                        İptal edildi
+                    </button>
+                }
+                else
+                {
+                    <form asp-action="MarkPaid" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success">
+                            Ödendi Olarak İşaretle
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <div class="small text-muted mt-2">
+                Not: Bu işlem sadece <strong>Admin</strong> kullanıcıları için görünür.
+            </div>
+        </div>
+    }
+
+    @if (isAdmin)
+    {
+        <!-- Mobile sticky action bar (admin only) -->
+        <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top" style="z-index: 1020;">
+            <div class="container-fluid py-2">
+                <div class="d-flex gap-2">
+                    @if (Model.Status != PaymentStatus.Paid && Model.Status != PaymentStatus.Cancelled)
+                    {
+                        <form asp-action="MarkPaid" method="post" class="flex-fill">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success w-100">
+                                Ödendi
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-success flex-fill" disabled>
+                            @(Model.Status == PaymentStatus.Paid ? "Ödendi" : "İptal")
+                        </button>
+                    }
+
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-fill">Düzenle</a>
+                    <form asp-action="Delete" method="post" class="flex-fill">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="studentId" value="@Model.StudentId" />
+                        <button type="submit"
+                                class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Bu ödemeyi silmek istediğinize emin misiniz?');">
+                            Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
 </section>
