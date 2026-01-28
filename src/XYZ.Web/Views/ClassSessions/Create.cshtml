@@ -1,0 +1,91 @@
+﻿﻿﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model XYZ.Web.Models.ClassSessions.CreateClassSessionVm
+
+@{
+    ViewData["Title"] = "Seans Oluştur";
+    var classes = ViewBag.Classes as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<h2 class="h4 mb-3">Yeni Seans</h2>
+
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger mb-3">@err</div>
+}
+
+<form asp-action="Create" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="col-md-6">
+        <label asp-for="ClassId" class="form-label small">Sınıf</label>
+        <select asp-for="ClassId"
+                class="form-select form-select-sm"
+                asp-items="classes">
+            <option value="0">Sınıf seçiniz</option>
+        </select>
+        <span asp-validation-for="ClassId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Date" class="form-label small">Tarih</label>
+        <input asp-for="Date" type="date" class="form-control form-control-sm" />
+        <span asp-validation-for="Date" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="StartTime" class="form-label small">Başlangıç</label>
+        <input asp-for="StartTime" type="time" class="form-control form-control-sm" />
+        <span asp-validation-for="StartTime" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="EndTime" class="form-label small">Bitiş</label>
+        <input asp-for="EndTime" type="time" class="form-control form-control-sm" />
+        <span asp-validation-for="EndTime" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Title" class="form-label small">Başlık</label>
+        <input asp-for="Title" class="form-control form-control-sm"
+               placeholder="Örn: Kondisyon / Teknik / Maç Hazırlığı" />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Location" class="form-label small">Konum (opsiyonel)</label>
+        <input asp-for="Location" class="form-control form-control-sm"
+               placeholder="Örn: Salon 1 / Saha A" />
+        <span asp-validation-for="Location" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label small">Açıklama (opsiyonel)</label>
+        <textarea asp-for="Description" rows="3" class="form-control form-control-sm"
+                  placeholder="Antrenman içeriği, notlar, ekipman vb."></textarea>
+        <span asp-validation-for="Description" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="GenerateAttendance" class="form-check-input" />
+            <label asp-for="GenerateAttendance" class="form-check-label">
+                Yoklama listesini otomatik oluştur (Attendance seed)
+            </label>
+        </div>
+        <span asp-validation-for="GenerateAttendance" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+            Kaydet
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            İptal
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

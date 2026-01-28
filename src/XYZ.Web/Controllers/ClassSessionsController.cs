@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,12 +10,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Logging;
 using XYZ.Application.Common.Models;
-using XYZ.Application.Features.Classes.Queries.GetAllClasses;
 using XYZ.Application.Features.ClassSessions.Commands.CreateClassSession;
 using XYZ.Application.Features.ClassSessions.Commands.UpdateClassSession;
 using XYZ.Application.Features.ClassSessions.Queries.GetClassSessionById;
@@ -25,15 +24,11 @@ namespace XYZ.Web.Controllers
     [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public class ClassSessionsController : Controller
     {
-        private readonly IApiClient _apiClient;
-        private readonly ILogger<ClassSessionsController> _logger;
+        private readonly IApiClient _api;
 
-        public ClassSessionsController(
-            IApiClient apiClient,
-            ILogger<ClassSessionsController> logger)
+        public ClassSessionsController(IApiClient api)
         {
-            _apiClient = apiClient;
-            _logger = logger;
+            _api = api;
         }
 
         [HttpGet]
@@ -52,10 +47,6 @@ namespace XYZ.Web.Controllers
 
             ViewBag.From = effectiveFrom.ToString("yyyy-MM-dd");
             ViewBag.To = effectiveTo.ToString("yyyy-MM-dd");
-            ViewBag.ClassId = classId;
-            ViewBag.BranchId = branchId;
-            ViewBag.Status = status?.ToString();
-
             ViewBag.Classes = await LoadClassesSelectListAsync(selectedClassId: classId, ct: ct);
             ViewBag.Statuses = LoadSessionStatusSelectList(selected: status);
 
@@ -69,27 +60,30 @@ namespace XYZ.Web.Controllers
 
             try
             {
-                var path =
-                    $"classsessions?from={effectiveFrom:yyyy-MM-dd}" +
-                    $"&to={effectiveTo:yyyy-MM-dd}" +
-                    $"&pageNumber={pageNumber}" +
-                    $"&pageSize={pageSize}";
+                var query = new Dictionary<string, string?>
+                {
+                    ["From"] = effectiveFrom.ToString("yyyy-MM-dd"),
+                    ["To"] = effectiveTo.ToString("yyyy-MM-dd"),
+                    ["PageNumber"] = pageNumber.ToString(),
+                    ["PageSize"] = pageSize.ToString(),
+                    ["OnlyActive"] = "true",
+                    ["SortBy"] = "Date",
+                    ["SortDir"] = "asc"
+                };
 
-                if (classId.HasValue) path += $"&classId={classId.Value}";
-                if (branchId.HasValue) path += $"&branchId={branchId.Value}";
-                if (status.HasValue) path += $"&status={status.Value}";
+                if (classId.HasValue) query["ClassId"] = classId.Value.ToString();
+                if (branchId.HasValue) query["BranchId"] = branchId.Value.ToString();
+                if (status.HasValue) query["Status"] = status.Value.ToString();
 
-                var response = await _apiClient.GetAsync(path, ct);
+                var url = QueryHelpers.AddQueryString("classsessions", query);
+
+                var response = await _api.GetAsync(url, ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError(
-                        "classsessions isteği başarısız. StatusCode: {StatusCode}",
-                        response.StatusCode);
-
                     TempData["ErrorMessage"] = "Seanslar yüklenirken bir hata oluştu.";
                     return View(emptyModel);
                 }
@@ -97,17 +91,10 @@ namespace XYZ.Web.Controllers
                 var result = await response.Content
                     .ReadFromJsonAsync<PaginationResult<ClassSessionListItemDto>>(cancellationToken: ct);
 
-                if (result is null)
-                {
-                    TempData["ErrorMessage"] = "Seans verileri çözümlenemedi.";
-                    return View(emptyModel);
-                }
-
-                return View(result);
+                return View(result ?? emptyModel);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seanslar alınırken beklenmeyen hata oluştu.");
                 TempData["ErrorMessage"] = "Seanslar yüklenirken beklenmeyen bir hata oluştu.";
                 return View(emptyModel);
             }
@@ -118,7 +105,7 @@ namespace XYZ.Web.Controllers
         {
             try
             {
-                var response = await _apiClient.GetAsync($"classsessions/{id}", ct);
+                var response = await _api.GetAsync($"classsessions/{id}", ct);
 
                 if (response.StatusCode == HttpStatusCode.NotFound)
                     return NotFound();
@@ -128,11 +115,6 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError(
-                        "classsessions/{Id} isteği başarısız. StatusCode: {StatusCode}",
-                        id,
-                        response.StatusCode);
-
                     TempData["ErrorMessage"] = "Seans detayı yüklenirken bir hata oluştu.";
                     return RedirectToAction(nameof(Index));
                 }
@@ -148,9 +130,8 @@ namespace XYZ.Web.Controllers
 
                 return View(dto);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seans detayı alınırken beklenmeyen hata oluştu.");
                 TempData["ErrorMessage"] = "Seans detayı yüklenirken beklenmeyen bir hata oluştu.";
                 return RedirectToAction(nameof(Index));
             }
@@ -201,7 +182,7 @@ namespace XYZ.Web.Controllers
                     GenerateAttendance: vm.GenerateAttendance
                 );
 
-                var response = await _apiClient.PostAsJsonAsync("classsessions", cmd, ct);
+                var response = await _api.PostAsJsonAsync("classsessions", cmd, ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
@@ -212,14 +193,13 @@ namespace XYZ.Web.Controllers
                     return View(vm);
                 }
 
-                var newId = await response.Content.ReadFromJsonAsync<int>(cancellationToken: ct);
+                var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: ct);
 
                 TempData["SuccessMessage"] = "Seans oluşturuldu.";
-                return RedirectToAction(nameof(Details), new { id = newId });
+                return RedirectToAction(nameof(Details), new { id });
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seans oluşturulurken beklenmeyen hata oluştu.");
                 TempData["ErrorMessage"] = "Seans oluşturulurken beklenmeyen bir hata oluştu.";
                 return View(vm);
             }
@@ -230,7 +210,7 @@ namespace XYZ.Web.Controllers
         {
             try
             {
-                var response = await _apiClient.GetAsync($"classsessions/{id}", ct);
+                var response = await _api.GetAsync($"classsessions/{id}", ct);
 
                 if (response.StatusCode == HttpStatusCode.NotFound)
                     return NotFound();
@@ -240,7 +220,7 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Seans detayı alınamadı.";
+                    TempData["ErrorMessage"] = "Seans düzenleme sayfası yüklenemedi.";
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
@@ -255,8 +235,8 @@ namespace XYZ.Web.Controllers
                 {
                     SessionId = dto.Id,
                     Date = dto.Date.ToString("yyyy-MM-dd"),
-                    StartTime = dto.StartTime.ToString("HH:mm"),
-                    EndTime = dto.EndTime.ToString("HH:mm"),
+                    StartTime = dto.StartTime.ToString("HH\\:mm"),
+                    EndTime = dto.EndTime.ToString("HH\\:mm"),
                     Title = dto.Title,
                     Description = dto.Description,
                     Location = dto.Location,
@@ -265,9 +245,8 @@ namespace XYZ.Web.Controllers
 
                 return View(vm);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seans düzenleme sayfası açılırken hata oluştu.");
                 TempData["ErrorMessage"] = "Seans düzenleme sayfası yüklenemedi.";
                 return RedirectToAction(nameof(Details), new { id });
             }
@@ -297,7 +276,7 @@ namespace XYZ.Web.Controllers
                     CoachNote = vm.CoachNote
                 };
 
-                var response = await _apiClient.PutAsJsonAsync($"classsessions/{vm.SessionId}", cmd, ct);
+                var response = await _api.PutAsJsonAsync($"classsessions/{vm.SessionId}", cmd, ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
@@ -311,9 +290,8 @@ namespace XYZ.Web.Controllers
                 TempData["SuccessMessage"] = "Seans güncellendi.";
                 return RedirectToAction(nameof(Details), new { id = vm.SessionId });
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seans güncellenirken beklenmeyen hata oluştu.");
                 TempData["ErrorMessage"] = "Seans güncellenirken beklenmeyen bir hata oluştu.";
                 return View(vm);
             }
@@ -325,7 +303,7 @@ namespace XYZ.Web.Controllers
         {
             try
             {
-                var response = await _apiClient.DeleteAsync($"classsessions/{id}", ct);
+                var response = await _api.DeleteAsync($"classsessions/{id}", ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     return RedirectToAction("Login", "Account");
@@ -339,9 +317,8 @@ namespace XYZ.Web.Controllers
                 TempData["SuccessMessage"] = "Seans silindi.";
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Seans silinirken hata oluştu.");
                 TempData["ErrorMessage"] = "Seans silinirken beklenmeyen bir hata oluştu.";
                 return RedirectToAction(nameof(Details), new { id });
             }
@@ -351,6 +328,7 @@ namespace XYZ.Web.Controllers
         public async Task<IActionResult> BulkCreate(int classId, CancellationToken ct = default)
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
+
             var vm = new BulkCreateClassSessionsVm
             {
                 ClassId = classId,
@@ -390,8 +368,8 @@ namespace XYZ.Web.Controllers
                     .Select(x => $"{x.Date:yyyy-MM-dd}|{x.StartTime:HH\\:mm}")
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                int created = 0;
-                int skipped = 0;
+                var created = 0;
+                var skipped = 0;
 
                 for (var d = fromDate; d <= toDate; d = d.AddDays(1))
                 {
@@ -416,67 +394,60 @@ namespace XYZ.Web.Controllers
                         GenerateAttendance: vm.GenerateAttendance
                     );
 
-                    var resp = await _apiClient.PostAsJsonAsync("classsessions", cmd, ct);
-
-                    if (resp.StatusCode == HttpStatusCode.Unauthorized)
-                        return RedirectToAction("Login", "Account");
-
-                    if (!resp.IsSuccessStatusCode)
-                    {
-                        TempData["ErrorMessage"] = $"Program oluşturma sırasında hata oluştu. Oluşan: {created}, Atlanan: {skipped}.";
-                        return View(vm);
-                    }
-
-                    created++;
+                    var resp = await _api.PostAsJsonAsync("classsessions", cmd, ct);
+                    if (resp.IsSuccessStatusCode) created++;
                 }
 
-                TempData["SuccessMessage"] = $"Program oluşturuldu. Oluşan: {created}, Atlanan: {skipped}.";
-                return RedirectToAction(nameof(Index),
-                    new
-                    {
-                        classId = vm.ClassId,
-                        from = fromDate.ToString("yyyy-MM-dd"),
-                        to = toDate.ToString("yyyy-MM-dd")
-                    });
+                TempData["SuccessMessage"] = $"Toplu oluşturma tamamlandı. Oluşturulan: {created}, Atlanan: {skipped}.";
+                return RedirectToAction(nameof(Index), new { classId = vm.ClassId, from = fromDate, to = toDate });
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Bulk seans oluşturma sırasında hata oluştu.");
-                TempData["ErrorMessage"] = "Program oluşturulurken beklenmeyen bir hata oluştu.";
+                TempData["ErrorMessage"] = "Toplu seans oluşturma sırasında hata oluştu.";
                 return View(vm);
             }
         }
----
-        private static bool TryParseDateTime(
-            string dateStr,
-            string startStr,
-            string endStr,
-            out DateOnly date,
-            out TimeOnly start,
-            out TimeOnly end)
+
+        private async Task<List<SelectListItem>> LoadClassesSelectListAsync(int? selectedClassId, CancellationToken ct)
+        {
+            var result = await _api.GetClassesAsync(searchTerm: null, branchId: null, isActive: true, pageNumber: 1, pageSize: 200, ct);
+
+            return result.Items
+                .Select(c => new SelectListItem(c.Name, c.Id.ToString(), selectedClassId == c.Id))
+                .ToList();
+        }
+
+        private bool TryParseDateTime(string dateStr, string startStr, string endStr, out DateOnly date, out TimeOnly start, out TimeOnly end)
         {
             date = default;
             start = default;
             end = default;
 
             if (!DateOnly.TryParseExact(dateStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
-                return Fail("Tarih formatı hatalı. Örn: 2026-01-28");
-
-            if (!TimeOnly.TryParseExact(startStr, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out start))
-                return Fail("Başlangıç saati formatı hatalı. Örn: 18:00");
-
-            if (!TimeOnly.TryParseExact(endStr, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out end))
-                return Fail("Bitiş saati formatı hatalı. Örn: 19:00");
-
-            if (end <= start)
-                return Fail("Bitiş saati, başlangıç saatinden büyük olmalı.");
-
-            return true;
-
-            static bool Fail(string _)
             {
+                ModelState.AddModelError(nameof(CreateClassSessionVm.Date), "Tarih formatı hatalı. Örn: 2026-02-28");
                 return false;
             }
+
+            if (!TimeOnly.TryParseExact(startStr, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out start))
+            {
+                ModelState.AddModelError(nameof(CreateClassSessionVm.StartTime), "Başlangıç saati formatı hatalı. Örn: 18:00");
+                return false;
+            }
+
+            if (!TimeOnly.TryParseExact(endStr, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out end))
+            {
+                ModelState.AddModelError(nameof(CreateClassSessionVm.EndTime), "Bitiş saati formatı hatalı. Örn: 19:00");
+                return false;
+            }
+
+            if (end <= start)
+            {
+                ModelState.AddModelError(nameof(CreateClassSessionVm.EndTime), "Bitiş saati başlangıçtan büyük olmalı.");
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryParseBulk(
@@ -487,33 +458,33 @@ namespace XYZ.Web.Controllers
             out TimeOnly end,
             out HashSet<DayOfWeek> daySet)
         {
-            fromDate = default;
-            toDate = default;
-            start = default;
-            end = default;
             daySet = new HashSet<DayOfWeek>();
 
             if (!DateOnly.TryParseExact(vm.FromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate))
             {
-                ModelState.AddModelError(nameof(vm.FromDate), "Başlangıç tarihi formatı hatalı. Örn: 2026-01-28");
+                ModelState.AddModelError(nameof(vm.FromDate), "Başlangıç tarihi formatı hatalı. Örn: 2026-02-01");
+                toDate = default; start = default; end = default;
                 return false;
             }
 
             if (!DateOnly.TryParseExact(vm.ToDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate))
             {
                 ModelState.AddModelError(nameof(vm.ToDate), "Bitiş tarihi formatı hatalı. Örn: 2026-02-28");
+                start = default; end = default;
                 return false;
             }
 
             if (toDate < fromDate)
             {
                 ModelState.AddModelError(nameof(vm.ToDate), "Bitiş tarihi başlangıçtan küçük olamaz.");
+                start = default; end = default;
                 return false;
             }
 
             if (!TimeOnly.TryParseExact(vm.StartTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out start))
             {
                 ModelState.AddModelError(nameof(vm.StartTime), "Başlangıç saati formatı hatalı. Örn: 18:00");
+                end = default;
                 return false;
             }
 
@@ -546,28 +517,6 @@ namespace XYZ.Web.Controllers
             return true;
         }
 
-        private async Task<List<SelectListItem>> LoadClassesSelectListAsync(int? selectedClassId, CancellationToken ct)
-        {
-            try
-            {
-                var response = await _apiClient.GetAsync("classes?pageNumber=1&pageSize=500", ct);
-                if (!response.IsSuccessStatusCode)
-                    return new List<SelectListItem>();
-
-                var result = await response.Content.ReadFromJsonAsync<PaginationResult<ClassListItemDto>>(cancellationToken: ct);
-                if (result?.Items is null)
-                    return new List<SelectListItem>();
-
-                return result.Items
-                    .Select(c => new SelectListItem(c.Name, c.Id.ToString(), selectedClassId == c.Id))
-                    .ToList();
-            }
-            catch
-            {
-                return new List<SelectListItem>();
-            }
-        }
-
         private static List<SelectListItem> LoadSessionStatusSelectList(SessionStatus? selected)
         {
             var items = new List<SelectListItem>
@@ -585,10 +534,18 @@ namespace XYZ.Web.Controllers
 
         private async Task<List<ClassSessionListItemDto>> GetExistingSessionsAsync(int classId, DateOnly from, DateOnly to, CancellationToken ct)
         {
-            var response = await _apiClient.GetAsync(
-                $"classsessions?classId={classId}&from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&pageNumber=1&pageSize=2000",
-                ct);
+            var query = new Dictionary<string, string?>
+            {
+                ["ClassId"] = classId.ToString(),
+                ["From"] = from.ToString("yyyy-MM-dd"),
+                ["To"] = to.ToString("yyyy-MM-dd"),
+                ["PageNumber"] = "1",
+                ["PageSize"] = "200"
+            };
 
+            var url = QueryHelpers.AddQueryString("classsessions", query);
+
+            var response = await _api.GetAsync(url, ct);
             if (!response.IsSuccessStatusCode)
                 return new List<ClassSessionListItemDto>();
 
