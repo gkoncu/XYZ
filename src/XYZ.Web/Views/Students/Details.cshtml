@@ -44,26 +44,29 @@
                asp-action="Student"
                asp-route-studentId="@Model.Id"
                class="btn btn-sm btn-outline-primary">
-                Gelişim Kayıtları
+                Gelişim
             </a>
 
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-sm btn-outline-secondary">
-                Düzenle
-            </a>
+            @if (isAdmin)
+            {
+                <a asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-sm btn-outline-secondary">
+                    Düzenle
+                </a>
 
-            <form asp-action="Delete"
-                  asp-route-id="@Model.Id"
-                  method="post"
-                  class="d-inline">
-                @Html.AntiForgeryToken()
-                <button type="submit"
-                        class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
-                    Sil
-                </button>
-            </form>
+                <form asp-action="Delete"
+                      asp-route-id="@Model.Id"
+                      method="post"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
+                        Sil
+                    </button>
+                </form>
+            }
         </div>
     }
 </section>
@@ -139,6 +142,7 @@
 }
 
 <section class="detail-grid">
+    <!-- LEFT: Öğrenci Bilgileri -->
     <div class="card-surface">
         <h2 class="h5 mb-3">Öğrenci Bilgileri</h2>
 
@@ -231,50 +235,156 @@
         }
     </div>
 
-    <div class="card-surface">
-        <h2 class="h6 mb-3">Özet</h2>
-        <dl class="row small mb-0">
-            <dt class="col-5 text-muted">Kayıt Tarihi</dt>
-            <dd class="col-7">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <!-- RIGHT: Hızlı İşlemler + Özet -->
+    <div class="vstack gap-3">
+        @if (canManageStudent)
+        {
+            <div class="card-surface d-none d-md-block">
+                <h2 class="h6 mb-3">Hızlı İşlemler</h2>
 
-            @if (Model.UpdatedAt.HasValue)
-            {
-                <dt class="col-5 text-muted">Son Güncelleme</dt>
-                <dd class="col-7">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
-            }
-        </dl>
+                <div class="d-grid gap-2">
+                    <a asp-controller="Attendance"
+                       asp-action="List"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-outline-primary">
+                        Yoklama Geçmişi
+                    </a>
 
-        <hr class="my-4" />
+                    <a asp-controller="Documents"
+                       asp-action="Student"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-outline-primary">
+                        Belgeler
+                    </a>
 
-        <h2 class="h6 mb-2">Ödemeler ve Plan</h2>
-        <p class="small text-muted mb-3">
-            Yeni ödeme üretimi <strong>Ödeme Planı</strong> üzerinden yapılır. Ödeme listesi planın oluşturduğu taksitleri gösterir.
-        </p>
+                    <a asp-controller="Payments"
+                       asp-action="Index"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-outline-primary">
+                        Ödemeler
+                    </a>
 
-        <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Payments"
-               asp-action="Index"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Ödemeleri Gör
-            </a>
+                    <div class="d-flex gap-2">
+                        <a asp-controller="Payments"
+                           asp-action="Index"
+                           asp-route-studentId="@Model.Id"
+                           asp-route-status="Pending"
+                           class="btn btn-outline-secondary w-100">
+                            Beklemede
+                        </a>
+                        <a asp-controller="Payments"
+                           asp-action="Index"
+                           asp-route-studentId="@Model.Id"
+                           asp-route-status="Overdue"
+                           class="btn btn-outline-secondary w-100">
+                            Gecikmiş
+                        </a>
+                    </div>
 
-            <a asp-controller="PaymentPlans"
-               asp-action="Student"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Ödeme Planını Gör
-            </a>
+                    <a asp-controller="PaymentPlans"
+                       asp-action="Student"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-outline-primary">
+                        Ödeme Planı
+                    </a>
 
-            @if (isAdmin)
-            {
-                <a asp-controller="PaymentPlans"
-                   asp-action="Create"
+                    <a asp-controller="ProgressRecords"
+                       asp-action="Student"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-outline-primary">
+                        Gelişim Kayıtları
+                    </a>
+                </div>
+
+                @if (isAdmin)
+                {
+                    <hr class="my-3" />
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-outline-secondary">
+                            Düzenle
+                        </a>
+
+                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
+                                Sil
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="card-surface">
+            <h2 class="h6 mb-3">Özet</h2>
+            <dl class="row small mb-0">
+                <dt class="col-5 text-muted">Kayıt Tarihi</dt>
+                <dd class="col-7">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <dt class="col-5 text-muted">Son Güncelleme</dt>
+                    <dd class="col-7">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
+                }
+            </dl>
+
+            <hr class="my-4" />
+
+            <h2 class="h6 mb-2">Ödemeler ve Plan</h2>
+            <p class="small text-muted mb-3">
+                Yeni ödeme üretimi <strong>Ödeme Planı</strong> üzerinden yapılır. Ödeme listesi planın oluşturduğu taksitleri gösterir.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="Payments"
+                   asp-action="Index"
                    asp-route-studentId="@Model.Id"
-                   class="btn btn-sm btn-primary">
-                    Ödeme Planı Oluştur
+                   class="btn btn-sm btn-outline-primary">
+                    Ödemeleri Gör
                 </a>
-            }
+
+                <a asp-controller="PaymentPlans"
+                   asp-action="Student"
+                   asp-route-studentId="@Model.Id"
+                   class="btn btn-sm btn-outline-primary">
+                    Ödeme Planını Gör
+                </a>
+
+                @if (isAdmin)
+                {
+                    <a asp-controller="PaymentPlans"
+                       asp-action="Create"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-sm btn-primary">
+                        Ödeme Planı Oluştur
+                    </a>
+                }
+            </div>
         </div>
     </div>
 </section>
+
+@if (isAdmin)
+{
+    <!-- Mobile sticky action bar (admin only) -->
+    <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
+        <div class="container-fluid py-2">
+            <div class="d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-fill">Düzenle</a>
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="flex-fill">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn btn-outline-danger w-100"
+                            onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
+                        Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

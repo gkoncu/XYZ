@@ -23,6 +23,26 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        public async Task<IActionResult> Index(
+            string? searchTerm,
+            int pageNumber = 1,
+            int pageSize = 20,
+            CancellationToken cancellationToken = default)
+        {
+            var students = await _apiClient.GetStudentsAsync(
+                searchTerm: searchTerm,
+                pageNumber: pageNumber,
+                pageSize: pageSize,
+                cancellationToken: cancellationToken);
+
+            ViewBag.SearchTerm = searchTerm;
+            ViewData["Title"] = "Gelişim Kayıtları";
+
+            return View(students);
+        }
+
+        [HttpGet]
         [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<IActionResult> Student(
             int studentId,
@@ -119,26 +139,13 @@ namespace XYZ.Web.Controllers
             {
                 StudentId = model.StudentId,
                 RecordDate = model.RecordDate,
-
                 Height = model.Height,
                 Weight = model.Weight,
-                BodyFatPercentage = model.BodyFatPercentage,
-                VerticalJump = model.VerticalJump,
-                SprintTime = model.SprintTime,
-                Endurance = model.Endurance,
-                Flexibility = model.Flexibility,
-
-                TechnicalScore = model.TechnicalScore,
-                TacticalScore = model.TacticalScore,
-                PhysicalScore = model.PhysicalScore,
-                MentalScore = model.MentalScore,
-
-                CoachNotes = string.IsNullOrWhiteSpace(model.CoachNotes) ? null : model.CoachNotes.Trim(),
-                Goals = string.IsNullOrWhiteSpace(model.Goals) ? null : model.Goals.Trim()
+                CoachNotes = model.CoachNotes
             }, cancellationToken);
 
             TempData["SuccessMessage"] = "Gelişim kaydı eklendi.";
-            return RedirectToAction(nameof(Student), new { studentId = model.StudentId });
+            return RedirectToAction("Student", new { studentId = model.StudentId });
         }
 
         [HttpGet]
@@ -157,22 +164,9 @@ namespace XYZ.Web.Controllers
                 StudentId = dto.StudentId,
                 StudentFullName = dto.StudentFullName,
                 RecordDate = dto.RecordDate,
-
                 Height = dto.Height,
                 Weight = dto.Weight,
-                BodyFatPercentage = dto.BodyFatPercentage,
-                VerticalJump = dto.VerticalJump,
-                SprintTime = dto.SprintTime,
-                Endurance = dto.Endurance,
-                Flexibility = dto.Flexibility,
-
-                TechnicalScore = dto.TechnicalScore,
-                TacticalScore = dto.TacticalScore,
-                PhysicalScore = dto.PhysicalScore,
-                MentalScore = dto.MentalScore,
-
-                CoachNotes = dto.CoachNotes,
-                Goals = dto.Goals
+                CoachNotes = dto.CoachNotes
             };
 
             return View(vm);
@@ -182,57 +176,27 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
-            int id,
             ProgressRecordEditViewModel model,
             CancellationToken cancellationToken = default)
         {
-            if (id != model.Id)
-            {
-                return BadRequest();
-            }
-
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            await _apiClient.UpdateProgressRecordAsync(id, new UpdateProgressRecordCommand
+            var vm = new UpdateProgressRecordCommand
             {
-                Id = id,
+                Id = model.Id,
                 RecordDate = model.RecordDate,
-
                 Height = model.Height,
                 Weight = model.Weight,
-                BodyFatPercentage = model.BodyFatPercentage,
-                VerticalJump = model.VerticalJump,
-                SprintTime = model.SprintTime,
-                Endurance = model.Endurance,
-                Flexibility = model.Flexibility,
+                CoachNotes = model.CoachNotes
+            };
 
-                TechnicalScore = model.TechnicalScore,
-                TacticalScore = model.TacticalScore,
-                PhysicalScore = model.PhysicalScore,
-                MentalScore = model.MentalScore,
-
-                CoachNotes = string.IsNullOrWhiteSpace(model.CoachNotes) ? null : model.CoachNotes.Trim(),
-                Goals = string.IsNullOrWhiteSpace(model.Goals) ? null : model.Goals.Trim(),
-
-                IsActive = null
-            }, cancellationToken);
+            await _apiClient.UpdateProgressRecordAsync(vm.Id, vm, cancellationToken);
 
             TempData["SuccessMessage"] = "Gelişim kaydı güncellendi.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id, int studentId, CancellationToken cancellationToken = default)
-        {
-            await _apiClient.DeleteProgressRecordAsync(id, cancellationToken);
-            TempData["SuccessMessage"] = "Gelişim kaydı silindi.";
-
-            return RedirectToAction(nameof(Student), new { studentId });
+            return RedirectToAction("Details", new { id = model.Id });
         }
     }
 }

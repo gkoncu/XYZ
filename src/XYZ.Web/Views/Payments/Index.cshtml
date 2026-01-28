@@ -1,4 +1,4 @@
-﻿﻿@using XYZ.Domain.Enums
+﻿﻿﻿@using XYZ.Domain.Enums
 @model PaginationResult<XYZ.Application.Features.Payments.Queries.GetPayments.PaymentListItemDto>
 
 @{
@@ -81,7 +81,6 @@
                     Öğrenci listesi
                 </a>
 
-                @* Öğrenci filtresi varken: ödeme planı CTA’ları *@
                 @if (studentId.HasValue)
                 {
                     <a asp-controller="PaymentPlans"
@@ -105,7 +104,6 @@
         }
     </div>
 
-    @* Student-only: Özet kartı (dashboard’a bulaşmadan burada veriyoruz) *@
     @if (isMyPayments)
     {
         <div class="card border-0 shadow-sm mb-3">
@@ -272,10 +270,10 @@
             <label class="form-label small mb-1">Durum</label>
             <select class="form-select form-select-sm" name="status">
                 <option value="" selected=@(status is null ? "selected" : null)>Hepsi</option>
-                <option value=@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
-                <option value=@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
-                <option value=@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
-                <option value=@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
+                <option value="@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
+                <option value="@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
+                <option value="@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
+                <option value="@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
             </select>
         </div>
 
@@ -319,10 +317,10 @@
                 <label class="form-label small mb-1">Durum</label>
                 <select class="form-select" name="status">
                     <option value="" selected=@(status is null ? "selected" : null)>Hepsi</option>
-                    <option value=@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
-                    <option value=@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
-                    <option value=@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
-                    <option value=@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
+                    <option value="@PaymentStatus.Pending" selected=@(status == PaymentStatus.Pending ? "selected" : null)>Beklemede</option>
+                    <option value="@PaymentStatus.Overdue" selected=@(status == PaymentStatus.Overdue ? "selected" : null)>Gecikmiş</option>
+                    <option value="@PaymentStatus.Paid" selected=@(status == PaymentStatus.Paid ? "selected" : null)>Ödendi</option>
+                    <option value="@PaymentStatus.Cancelled" selected=@(status == PaymentStatus.Cancelled ? "selected" : null)>İptal</option>
                 </select>
             </div>
 

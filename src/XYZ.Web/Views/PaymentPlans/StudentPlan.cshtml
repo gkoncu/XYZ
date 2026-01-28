@@ -1,4 +1,4 @@
-﻿﻿@using XYZ.Domain.Enums
+﻿﻿﻿@using XYZ.Domain.Enums
 @model StudentPaymentPlanDto
 
 @{
@@ -146,7 +146,20 @@ else
                             <div class="fw-semibold text-danger">@Model.TotalRemaining.ToString("C2")</div>
                         </div>
                     </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 border rounded bg-white h-100">
+                            <div class="small text-muted">Ödeme Kayıtları</div>
+                            <a asp-controller="Payments"
+                               asp-action="Index"
+                               asp-route-studentId="@Model.StudentId"
+                               class="btn btn-sm btn-outline-secondary mt-2">
+                                Tüm Ödemeleri Gör
+                            </a>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </section>
@@ -167,13 +180,14 @@ else
                             <th>Vade</th>
                             <th>Durum</th>
                             <th>Ödenme Tarihi</th>
+                            <th class="text-end">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.Installments.Count == 0)
                         {
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-3">Taksit kaydı bulunamadı.</td>
+                                <td colspan="8" class="text-center text-muted py-3">Taksit kaydı bulunamadı.</td>
                             </tr>
                         }
                         else
@@ -198,6 +212,14 @@ else
                                     <td>@i.DueDate.ToString("dd.MM.yyyy")</td>
                                     <td><span class="@statusClass">@i.Status.ToDisplayName()</span></td>
                                     <td>@(i.PaidDate.HasValue? i.PaidDate.Value.ToString("dd.MM.yyyy") : "-")</td>
+                                    <td class="text-end">
+                                        <a asp-controller="Payments"
+                                           asp-action="Details"
+                                           asp-route-id="@i.PaymentId"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Detay
+                                        </a>
+                                    </td>
                                 </tr>
                             }
                         }
@@ -256,6 +278,15 @@ else
                                             <span>@(i.PaidDate.HasValue? i.PaidDate.Value.ToString("dd.MM.yyyy") : "-")</span>
                                         </div>
                                     </div>
+
+                                    <div class="d-grid mt-3">
+                                        <a asp-controller="Payments"
+                                           asp-action="Details"
+                                           asp-route-id="@i.PaymentId"
+                                           class="btn btn-outline-primary">
+                                            Ödeme Detayı
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -265,4 +296,18 @@ else
 
         </div>
     </section>
+
+    @if (isAdmin && studentId > 0)
+    {
+        <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top" style="z-index: 1020;">
+            <div class="container-fluid py-2">
+                <a asp-controller="PaymentPlans"
+                   asp-action="Create"
+                   asp-route-studentId="@studentId"
+                   class="btn btn-primary w-100">
+                    Yeni Ödeme Planı Oluştur
+                </a>
+            </div>
+        </div>
+    }
 }

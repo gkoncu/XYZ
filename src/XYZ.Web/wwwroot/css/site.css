@@ -70,6 +70,42 @@ body {
             color: #ffffff;
         }
 
+    /* Navbar toggler kontrast (tenant renklerinde kaybolmasýn) */
+    .app-navbar .navbar-toggler {
+        border-color: rgba(255, 255, 255, 0.35);
+    }
+
+        .app-navbar .navbar-toggler:focus {
+            box-shadow: 0 0 0 .15rem rgba(255, 255, 255, 0.25);
+        }
+
+    /* Bootstrap'in varsayýlan toggler icon'u navbar-light/dark'a baðlýdýr.
+   Biz özel gradient navbar kullandýðýmýz için ikon'u beyaz stroke ile sabitliyoruz. */
+    .app-navbar .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.92%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+/* Dropdown menüler: koyu arka plan + okunabilir hover */
+body.app-shell .app-navbar .dropdown-menu {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.6);
+}
+
+body.app-shell .app-navbar .dropdown-item {
+    color: rgba(226, 232, 240, 0.92);
+}
+
+    body.app-shell .app-navbar .dropdown-item:hover,
+    body.app-shell .app-navbar .dropdown-item:focus {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+    }
+
+body.app-shell .app-navbar .dropdown-divider {
+    border-top-color: rgba(148, 163, 184, 0.18);
+}
+
 .club-logo {
     width: 32px;
     height: 32px;
@@ -333,6 +369,38 @@ body.app-shell .btn-outline-primary {
         border-color: var(--primary-color);
         color: #fff;
     }
+
+body.app-shell .btn-outline-secondary {
+    color: rgba(226, 232, 240, 0.92);
+    border-color: rgba(226, 232, 240, 0.45);
+}
+
+    body.app-shell .btn-outline-secondary:hover,
+    body.app-shell .btn-outline-secondary:focus {
+        background-color: rgba(255, 255, 255, 0.10);
+        border-color: rgba(255, 255, 255, 0.55);
+        color: #fff;
+    }
+
+body.app-shell .btn-outline-light {
+    color: rgba(255, 255, 255, 0.92);
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+    body.app-shell .btn-outline-light:hover,
+    body.app-shell .btn-outline-light:focus {
+        background-color: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.70);
+        color: #fff;
+    }
+
+body.app-shell .btn:focus-visible,
+body.app-shell .nav-link:focus-visible,
+body.app-shell .dropdown-item:focus-visible,
+body.app-shell a:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 2px;
+}
 
 body.app-shell .text-primary {
     color: var(--primary-color) !important;

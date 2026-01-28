@@ -213,4 +213,48 @@ public class PaymentsController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkPaid(int id, CancellationToken cancellationToken)
+    {
+        var payment = await _apiClient.GetPaymentAsync(id, cancellationToken);
+        if (payment == null)
+        {
+            return NotFound();
+        }
+
+        if (payment.Status == PaymentStatus.Paid)
+        {
+            TempData["SuccessMessage"] = "Bu ödeme zaten 'Ödendi' durumunda.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (payment.Status == PaymentStatus.Cancelled)
+        {
+            TempData["ErrorMessage"] = "İptal edilmiş bir ödeme 'Ödendi' olarak işaretlenemez.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        try
+        {
+            var cmd = new UpdatePaymentCommand
+            {
+                Id = payment.Id,
+                Amount = payment.Amount,
+                DiscountAmount = payment.DiscountAmount,
+                Status = PaymentStatus.Paid
+            };
+
+            await _apiClient.UpdatePaymentAsync(cmd, cancellationToken);
+            TempData["SuccessMessage"] = "Ödeme 'Ödendi' olarak işaretlendi.";
+        }
+        catch
+        {
+            TempData["ErrorMessage"] = "Ödeme durumu güncellenirken bir hata oluştu.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
 }
