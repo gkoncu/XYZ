@@ -68,7 +68,6 @@
                     <th>E-posta</th>
                     <th>Telefon</th>
                     <th>Branş</th>
-                    <th>Durum</th>
                     <th class="text-end">İşlem</th>
                 </tr>
             </thead>
@@ -88,7 +87,6 @@
                         <tr>
                             <td>
                                 <div class="fw-semibold">@c.FullName</div>
-                                <div class="small text-muted">Id: @c.Id</div>
                             </td>
 
                             @if (isSuperAdmin)
@@ -99,16 +97,6 @@
                             <td>@c.Email</td>
                             <td>@c.PhoneNumber</td>
                             <td>@c.BranchName</td>
-                            <td>
-                                @if (c.IsActive)
-                                {
-                                    <span class="badge-soft badge-soft-success">Aktif</span>
-                                }
-                                else
-                                {
-                                    <span class="badge-soft badge-soft-secondary">Pasif</span>
-                                }
-                            </td>
                             <td class="text-end">
                                 <a asp-action="Details"
                                    asp-route-id="@c.Id"

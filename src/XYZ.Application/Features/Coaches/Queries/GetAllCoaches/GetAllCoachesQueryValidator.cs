@@ -1,9 +1,6 @@
 ﻿using FluentValidation;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 {
@@ -23,11 +20,11 @@ namespace XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 
             RuleFor(x => x.SortBy)
                 .Must(v => v == null || AllowedSortBy.Contains(v))
-                .WithMessage($"SortBy sadece şu değerlerden biri olabilir: {string.Join(", ", AllowedSortBy)}");
+                .WithMessage($"SortBy must be one of: {string.Join(", ", AllowedSortBy)}");
 
             RuleFor(x => x.SortDir)
-                .Must(v => v == null || v.ToLower() == "asc" || v.ToLower() == "desc")
-                .WithMessage("SortDir 'asc' veya 'desc' olmalıdır.");
+                .Must(v => v == null || v.Equals("asc", StringComparison.OrdinalIgnoreCase) || v.Equals("desc", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("SortDir must be either 'asc' or 'desc'.");
         }
     }
 }

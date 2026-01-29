@@ -80,7 +80,7 @@
             <option value="">Branş seçiniz...</option>
             @foreach (BranchListItemDto b in (IEnumerable<BranchListItemDto>)ViewBag.Branches)
             {
-                <option value="@b.Id" selected="@(b.Id == Model.BranchId)">
+                <option value="@b.Id" selected=@(b.Id == Model.BranchId)>
                     @b.Name
                 </option>
             }
