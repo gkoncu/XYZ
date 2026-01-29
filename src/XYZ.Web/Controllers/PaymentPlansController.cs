@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
+using XYZ.Web.Models.PaymentPlans;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
@@ -38,13 +39,16 @@ namespace XYZ.Web.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,SuperAdmin")]
-        public IActionResult Create(int studentId)
+        public async Task <IActionResult> Create(int studentId, CancellationToken cancellationToken)
         {
             var today = DateTime.Today;
 
-            var model = new CreatePaymentPlanCommand
+            var student = await _apiClient.GetStudentAsync(studentId, cancellationToken);
+
+            var model = new CreatePaymentPlanVm
             {
                 StudentId = studentId,
+                StudentFullName = student?.FullName ?? "",
                 TotalAmount = 0,
                 TotalInstallments = 1,
                 FirstDueDate = today,
@@ -54,27 +58,35 @@ namespace XYZ.Web.Controllers
             return View(model);
         }
 
+
         [HttpPost]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            CreatePaymentPlanCommand model,
+            CreatePaymentPlanVm model,
             CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
 
             try
             {
-                await _apiClient.CreatePaymentPlanAsync(model, cancellationToken);
+                var cmd = new CreatePaymentPlanCommand
+                {
+                    StudentId = model.StudentId,
+                    TotalAmount = model.TotalAmount,
+                    TotalInstallments = model.TotalInstallments,
+                    FirstDueDate = model.FirstDueDate,
+                    IsInstallment = model.IsInstallment
+                };
+
+                await _apiClient.CreatePaymentPlanAsync(cmd, cancellationToken);
 
                 return RedirectToAction("Student", new { studentId = model.StudentId });
             }
             catch
             {
-                ModelState.AddModelError(string.Empty, "Ödeme planı oluşturulurken bir hata oluştu.");
+                ModelState.AddModelError(string.Empty, "Aidat planı oluşturulurken bir hata oluştu.");
                 return View(model);
             }
         }
