@@ -12,6 +12,10 @@
     var today = DateOnly.FromDateTime(DateTime.Today);
     var weekFrom = today.AddDays(-3);
     var weekTo = today.AddDays(3);
+
+    var todayStr = today.ToString("yyyy-MM-dd");
+    var weekFromStr = weekFrom.ToString("yyyy-MM-dd");
+    var weekToStr = weekTo.ToString("yyyy-MM-dd");
 }
 
 <section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -60,76 +64,59 @@
 
 <!-- Mobile quick actions -->
 <section class="card-surface mb-3 d-md-none">
-    <div class="card-body">
-        <div class="fw-semibold mb-2">Hızlı İşlemler</div>
+    <div class="fw-semibold mb-2">Hızlı İşlemler</div>
 
-        <div class="d-grid gap-2">
-            <a asp-controller="Attendance"
-               asp-action="List"
-               asp-route-classId="@c.Id"
-               class="btn btn-outline-primary">
-                Sınıf Yoklama Listesi
-            </a>
+    <div class="d-grid gap-2">
+        <a asp-controller="ClassSessions"
+           asp-action="Index"
+           asp-route-classId="@c.Id"
+           asp-route-from="@todayStr"
+           asp-route-to="@todayStr"
+           class="btn btn-outline-primary">
+            Antrenmanlar (Bugün)
+        </a>
 
-            <a asp-controller="Attendance"
-               asp-action="Index"
-               class="btn btn-outline-primary">
-                Bugünkü Seanslar
-            </a>
+        <a asp-controller="ClassSessions"
+           asp-action="Index"
+           asp-route-classId="@c.Id"
+           asp-route-from="@weekFromStr"
+           asp-route-to="@weekToStr"
+           class="btn btn-outline-primary">
+            Antrenmanlar (Bu Hafta)
+        </a>
 
-            <a asp-controller="ClassSessions"
-               asp-action="Index"
-               asp-route-from="@today.ToString("yyyy-MM-dd")"
-               asp-route-to="@today.ToString("yyyy-MM-dd")"
-               class="btn btn-outline-primary">
-                Seanslar (Bugün)
-            </a>
-
-            <a asp-controller="ClassSessions"
-               asp-action="Index"
-               asp-route-from="@weekFrom.ToString("yyyy-MM-dd")"
-               asp-route-to="@weekTo.ToString("yyyy-MM-dd")"
-               class="btn btn-outline-primary">
-                Seanslar (Bu Hafta)
-            </a>
-
-            <a asp-controller="Branches"
-               asp-action="Details"
-               asp-route-id="@c.BranchId"
-               class="btn btn-outline-primary">
-                Şube Detayı
-            </a>
-        </div>
-
-        @if (canEdit)
-        {
-            <hr class="my-3" />
-            <div class="d-grid gap-2">
-                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary">
-                    Düzenle
-                </a>
-
-                <form asp-action="Delete" asp-route-id="@c.Id" method="post">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-outline-danger w-100"
-                            onclick="return confirm('Sınıf silinsin mi?');">
-                        Sil
-                    </button>
-                </form>
-
-                <a asp-action="Index" class="btn btn-outline-secondary">
-                    Liste
-                </a>
-            </div>
-        }
-        else
-        {
-            <hr class="my-3" />
-            <a asp-action="Index" class="btn btn-outline-secondary w-100">
-                Liste
-            </a>
-        }
+        <a asp-controller="Branches"
+           asp-action="Details"
+           asp-route-id="@c.BranchId"
+           class="btn btn-outline-primary">
+            Şube Detayı
+        </a>
     </div>
+
+    <hr class="my-3" />
+
+    @if (canEdit)
+    {
+        <div class="d-grid gap-2">
+            <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary">Düzenle</a>
+
+            <form asp-action="Delete" asp-route-id="@c.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger w-100"
+                        onclick="return confirm('Sınıf silinsin mi?');">
+                    Sil
+                </button>
+            </form>
+
+            <a asp-action="Index" class="btn btn-outline-secondary">Liste</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-grid">
+            <a asp-action="Index" class="btn btn-outline-secondary">Liste</a>
+        </div>
+    }
 </section>
 
 <section class="detail-grid">
@@ -233,33 +220,22 @@
             <h2 class="h6 mb-3">Hızlı İşlemler</h2>
 
             <div class="d-grid gap-2">
-                <a asp-controller="Attendance"
-                   asp-action="List"
+                <a asp-controller="ClassSessions"
+                   asp-action="Index"
                    asp-route-classId="@c.Id"
+                   asp-route-from="@todayStr"
+                   asp-route-to="@todayStr"
                    class="btn btn-outline-primary">
-                    Sınıf Yoklama Listesi
-                </a>
-
-                <a asp-controller="Attendance"
-                   asp-action="Index"
-                   class="btn btn-outline-primary">
-                    Bugünkü Seanslar
+                    Antrenmanlar (Bugün)
                 </a>
 
                 <a asp-controller="ClassSessions"
                    asp-action="Index"
-                   asp-route-from="@today.ToString("yyyy-MM-dd")"
-                   asp-route-to="@today.ToString("yyyy-MM-dd")"
+                   asp-route-classId="@c.Id"
+                   asp-route-from="@weekFromStr"
+                   asp-route-to="@weekToStr"
                    class="btn btn-outline-primary">
-                    Seanslar (Bugün)
-                </a>
-
-                <a asp-controller="ClassSessions"
-                   asp-action="Index"
-                   asp-route-from="@weekFrom.ToString("yyyy-MM-dd")"
-                   asp-route-to="@weekTo.ToString("yyyy-MM-dd")"
-                   class="btn btn-outline-primary">
-                    Seanslar (Bu Hafta)
+                    Antrenmanlar (Bu Hafta)
                 </a>
 
                 <a asp-controller="Branches"
@@ -287,8 +263,12 @@
         <div class="card-surface">
             <h2 class="h6 mb-2">İpucu</h2>
             <p class="small text-muted mb-0">
+                Yalnızca sınıfla aynı şubeye sahip koçları atayabilirsiniz.
+            </p>
+            <br />
+            <p class="small text-muted mb-0">
                 Öğrenciyle ilgili tüm işlemler için aşağıdaki listeden <strong>Detay</strong> ekranına gidin.
-                (Ödemeler, belgeler, gelişim, yoklama geçmişi)
+                (Aidatlar, belgeler, gelişim, yoklama geçmişi)
             </p>
         </div>
     </div>
@@ -329,7 +309,6 @@
                         <tr>
                             <td>
                                 <div class="fw-semibold">@co.FullName</div>
-                                <div class="small text-muted">Id: @co.Id</div>
                             </td>
                             <td class="text-end">
                                 <a asp-controller="Coaches"
@@ -370,35 +349,32 @@
         {
             @foreach (var co in c.Coaches)
             {
-                <div class="card border shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div>
-                                <div class="fw-semibold">@co.FullName</div>
-                                <div class="small text-muted">Id: @co.Id</div>
-                            </div>
-                            <a asp-controller="Coaches"
-                               asp-action="Details"
-                               asp-route-id="@co.Id"
-                               class="btn btn-sm btn-outline-primary">
-                                Detay
-                            </a>
+                <div class="card-surface">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="fw-semibold">@co.FullName</div>
                         </div>
-
-                        @if (canCoachAssign)
-                        {
-                            <div class="mt-3">
-                                <form asp-action="UnassignCoach" asp-route-id="@c.Id" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="coachId" value="@co.Id" />
-                                    <button type="submit" class="btn btn-outline-danger w-100"
-                                            onclick="return confirm('Koç sınıftan çıkarılsın mı?');">
-                                        Koçu Çıkar
-                                    </button>
-                                </form>
-                            </div>
-                        }
+                        <a asp-controller="Coaches"
+                           asp-action="Details"
+                           asp-route-id="@co.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            Detay
+                        </a>
                     </div>
+
+                    @if (canCoachAssign)
+                    {
+                        <div class="mt-3">
+                            <form asp-action="UnassignCoach" asp-route-id="@c.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="coachId" value="@co.Id" />
+                                <button type="submit" class="btn btn-outline-danger w-100"
+                                        onclick="return confirm('Koç sınıftan çıkarılsın mı?');">
+                                    Koçu Çıkar
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </div>
             }
         }
@@ -443,7 +419,6 @@
                         <tr>
                             <td>
                                 <div class="fw-semibold">@s.FullName</div>
-                                <div class="small text-muted">Id: @s.Id</div>
                             </td>
                             <td>
                                 @if (s.IsActive)
@@ -471,7 +446,7 @@
                                        asp-action="Index"
                                        asp-route-studentId="@s.Id"
                                        class="btn btn-outline-secondary">
-                                        Ödemeler
+                                        Aidatlar
                                     </a>
                                     <a asp-controller="Documents"
                                        asp-action="Student"
@@ -519,67 +494,64 @@
             <div class="vstack gap-3">
                 @foreach (var s in c.Students)
                 {
-                    <div class="card border shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                <div>
-                                    <div class="fw-semibold">@s.FullName</div>
-                                    <div class="small text-muted">Id: @s.Id</div>
-                                </div>
-                                @if (s.IsActive)
-                                {
-                                    <span class="badge-soft badge-soft-success">Aktif</span>
-                                }
-                                else
-                                {
-                                    <span class="badge-soft badge-soft-muted">Pasif</span>
-                                }
+                    <div class="card-surface">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <div class="fw-semibold">@s.FullName</div>
                             </div>
-
-                            <div class="d-grid gap-2 mt-3">
-                                <a asp-controller="Students"
-                                   asp-action="Details"
-                                   asp-route-id="@s.Id"
-                                   class="btn btn-outline-secondary">
-                                    Öğrenci Detayı
-                                </a>
-
-                                <a asp-controller="Payments"
-                                   asp-action="Index"
-                                   asp-route-studentId="@s.Id"
-                                   class="btn btn-outline-primary">
-                                    Ödemeler
-                                </a>
-
-                                <a asp-controller="Documents"
-                                   asp-action="Student"
-                                   asp-route-studentId="@s.Id"
-                                   class="btn btn-outline-primary">
-                                    Belgeler
-                                </a>
-
-                                <a asp-controller="ProgressRecords"
-                                   asp-action="Student"
-                                   asp-route-studentId="@s.Id"
-                                   class="btn btn-outline-primary">
-                                    Gelişim
-                                </a>
-                            </div>
-
-                            @if (canStudentAssign)
+                            @if (s.IsActive)
                             {
-                                <div class="mt-3">
-                                    <form asp-action="UnassignStudent" asp-route-id="@c.Id" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="studentId" value="@s.Id" />
-                                        <button type="submit" class="btn btn-outline-danger w-100"
-                                                onclick="return confirm('Öğrenci sınıftan çıkarılsın mı?');">
-                                            Sınıftan Çıkar
-                                        </button>
-                                    </form>
-                                </div>
+                                <span class="badge-soft badge-soft-success">Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="badge-soft badge-soft-muted">Pasif</span>
                             }
                         </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <a asp-controller="Students"
+                               asp-action="Details"
+                               asp-route-id="@s.Id"
+                               class="btn btn-outline-secondary">
+                                Öğrenci Detayı
+                            </a>
+
+                            <a asp-controller="Payments"
+                               asp-action="Index"
+                               asp-route-studentId="@s.Id"
+                               class="btn btn-outline-primary">
+                                Aidatlar
+                            </a>
+
+                            <a asp-controller="Documents"
+                               asp-action="Student"
+                               asp-route-studentId="@s.Id"
+                               class="btn btn-outline-primary">
+                                Belgeler
+                            </a>
+
+                            <a asp-controller="ProgressRecords"
+                               asp-action="Student"
+                               asp-route-studentId="@s.Id"
+                               class="btn btn-outline-primary">
+                                Gelişim
+                            </a>
+                        </div>
+
+                        @if (canStudentAssign)
+                        {
+                            <div class="mt-3">
+                                <form asp-action="UnassignStudent" asp-route-id="@c.Id" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="studentId" value="@s.Id" />
+                                    <button type="submit" class="btn btn-outline-danger w-100"
+                                            onclick="return confirm('Öğrenci sınıftan çıkarılsın mı?');">
+                                        Sınıftan Çıkar
+                                    </button>
+                                </form>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -590,7 +562,8 @@
 @if (canEdit)
 {
     <!-- Mobile sticky action bar (edit/delete/list) -->
-    <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
+    <div class="d-md-none position-sticky bottom-0 start-0 end-0 mt-4"
+         style="z-index: 1020; background: rgba(15,23,42,0.95); border-top: 1px solid var(--border-subtle);">
         <div class="container-fluid py-2">
             <div class="d-flex gap-2">
                 <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-primary flex-fill">Düzenle</a>

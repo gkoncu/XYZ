@@ -15,7 +15,7 @@ namespace XYZ.Web.Models.Announcements
         public int? ClassId { get; set; }
 
         [Required(ErrorMessage = ValidationMessages.Required)]
-        [MaxLength(200, ErrorMessage = ValidationMessages.MaxLength)]
+        [MaxLength(50, ErrorMessage = ValidationMessages.MaxLength)]
         [Display(Name = "Başlık")]
         public string Title { get; set; } = string.Empty;
 

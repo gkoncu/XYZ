@@ -1,9 +1,4 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Classes.Commands.UpdateClass
 {
@@ -16,21 +11,24 @@ namespace XYZ.Application.Features.Classes.Commands.UpdateClass
 
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .MaximumLength(200);
+                .MaximumLength(50);
+
+            RuleFor(x => x.Description)
+                .MaximumLength(500)
+                .When(x => !string.IsNullOrWhiteSpace(x.Description));
 
             RuleFor(x => x.BranchId)
                 .GreaterThan(0);
 
             RuleFor(x => x.MaxCapacity)
-                .GreaterThan(0)
-                .WithMessage("MaxCapacity 0'dan büyük olmalıdır.");
+                .InclusiveBetween(1, 100);
 
             RuleFor(x => x.AgeGroupMin)
-                .GreaterThanOrEqualTo(0)
+                .InclusiveBetween(0, 100)
                 .When(x => x.AgeGroupMin.HasValue);
 
             RuleFor(x => x.AgeGroupMax)
-                .GreaterThanOrEqualTo(0)
+                .InclusiveBetween(0, 100)
                 .When(x => x.AgeGroupMax.HasValue);
 
             RuleFor(x => x)
@@ -38,7 +36,7 @@ namespace XYZ.Application.Features.Classes.Commands.UpdateClass
                     !x.AgeGroupMin.HasValue ||
                     !x.AgeGroupMax.HasValue ||
                     x.AgeGroupMin.Value <= x.AgeGroupMax.Value)
-                .WithMessage("AgeGroupMin, AgeGroupMax değerinden büyük olamaz.");
+                .WithMessage("AgeGroupMin cannot be greater than AgeGroupMax.");
         }
     }
 }

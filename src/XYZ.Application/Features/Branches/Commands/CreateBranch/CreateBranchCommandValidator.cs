@@ -13,7 +13,7 @@ namespace XYZ.Application.Features.Branches.Commands.CreateBranch
         {
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .MaximumLength(200);
+                .MaximumLength(30);
         }
     }
 }

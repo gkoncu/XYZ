@@ -13,7 +13,7 @@ namespace XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement
 
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Başlık alanı zorunludur.")
-                .MaximumLength(200).WithMessage("Başlık en fazla 200 karakter olmalıdır.");
+                .MaximumLength(50).WithMessage("Başlık en fazla 50 karakter olmalıdır.");
 
             RuleFor(x => x.Content)
                 .NotEmpty().WithMessage("İçerik alanı zorunludur.")
