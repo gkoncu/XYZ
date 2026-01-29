@@ -423,6 +423,10 @@ namespace XYZ.Web.Controllers
             start = default;
             end = default;
 
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var minDate = today.AddYears(-1);
+            var maxDate = today.AddDays(364);
+
             if (!DateOnly.TryParseExact(dateStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
             {
                 ModelState.AddModelError(nameof(CreateClassSessionVm.Date), "Tarih formatı hatalı. Örn: 2026-02-28");
@@ -447,6 +451,12 @@ namespace XYZ.Web.Controllers
                 return false;
             }
 
+            if (date < minDate || date > maxDate)
+            {
+                ModelState.AddModelError(nameof(CreateClassSessionVm.Date), $"Tarih {minDate:yyyy-MM-dd} ile {maxDate:yyyy-MM-dd} arasında olmalı.");
+                return false;
+            }
+
             return true;
         }
 
@@ -459,6 +469,10 @@ namespace XYZ.Web.Controllers
             out HashSet<DayOfWeek> daySet)
         {
             daySet = new HashSet<DayOfWeek>();
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var minDate = today.AddYears(-1);
+            var maxDate = today.AddDays(364);
 
             if (!DateOnly.TryParseExact(vm.FromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate))
             {
@@ -511,6 +525,40 @@ namespace XYZ.Web.Controllers
             if (daySet.Count == 0)
             {
                 ModelState.AddModelError(string.Empty, "En az 1 gün seçmelisin.");
+                return false;
+            }
+
+            if (fromDate < minDate)
+            {
+                ModelState.AddModelError(nameof(vm.FromDate), $"Başlangıç tarihi {minDate:yyyy-MM-dd} tarihinden önce olamaz.");
+                start = default; end = default;
+                return false;
+            }
+
+            if (toDate > maxDate)
+            {
+                ModelState.AddModelError(nameof(vm.ToDate), $"Bitiş tarihi {maxDate:yyyy-MM-dd} tarihinden sonra olamaz.");
+                start = default; end = default;
+                return false;
+            }
+
+            if (toDate > fromDate.AddDays(364))
+            {
+                ModelState.AddModelError(nameof(vm.ToDate), "Tarih aralığı en fazla 52 hafta (364 gün) olabilir.");
+                start = default; end = default;
+                return false;
+            }
+
+            var count = 0;
+            for (var d = fromDate; d <= toDate; d = d.AddDays(1))
+            {
+                if (daySet.Contains(d.DayOfWeek))
+                    count++;
+            }
+
+            if (count > 365)
+            {
+                ModelState.AddModelError(string.Empty, "Toplu oluşturma en fazla 365 seans üretebilir. Tarih aralığını daralt veya gün seçimini azalt.");
                 return false;
             }
 
