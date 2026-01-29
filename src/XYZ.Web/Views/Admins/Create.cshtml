@@ -45,17 +45,10 @@
         <div class="col-md-4">
             @if (User.IsInRole("SuperAdmin"))
             {
-                <label asp-for="TenantId" class="form-label small"></label>
-                <input asp-for="TenantId" class="form-control form-control-sm" />
-                <span asp-validation-for="TenantId" class="text-danger small"></span>
-                <div class="form-text small">
-                    SuperAdmin iseniz, bu admin’in ait olacağı <strong>kulüp Id</strong> bilgisini girin.
+                <div class="col-md-6">
+                    <label class="form-label small">Kulüp Id</label>
+                    <input class="form-control form-control-sm" value="@Model.TenantId" disabled />
                 </div>
-            }
-            else
-            {
-                <label class="form-label small">Kulüp</label>
-                <input class="form-control form-control-sm" value="Aktif kulüp" disabled />
             }
         </div>
 

@@ -1,127 +1,179 @@
-﻿@model CreatePaymentPlanCommand
+﻿@using XYZ.Web.Models.PaymentPlans
+@model CreatePaymentPlanVm
 @{
-    ViewData["Title"] = "Ödeme Planı Oluştur";
+    ViewData["Title"] = "Aidat Planı Oluştur";
+    var studentName = string.IsNullOrWhiteSpace(Model.StudentFullName) ? "Öğrenci" : Model.StudentFullName;
+
 }
 
-<section class="mb-3">
+<section class="mb-3 d-flex justify-content-between align-items-center gap-2">
+    <div>
+        <a asp-controller="PaymentPlans"
+           asp-action="Student"
+           asp-route-studentId="@Model.StudentId"
+           class="text-muted small text-decoration-none">
+            &larr; Aidat planına dön
+        </a>
+        <h2 class="h4 mb-0 mt-1">Aidat Planı Oluştur</h2>
+        <div class="text-muted small">Öğrenci için aidat planı ve taksitleri oluşturun.</div>
+    </div>
+
     <a asp-controller="PaymentPlans"
        asp-action="Student"
        asp-route-studentId="@Model.StudentId"
-       class="text-muted small text-decoration-none">
-        &larr; Ödeme planına dön
+       class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex">
+        Vazgeç
     </a>
 </section>
 
-<section class="card-surface">
-    <div class="card-body">
-        <h2 class="h5 mb-3">Ödeme Planı Oluştur</h2>
+<form asp-action="Create" method="post" id="planForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="StudentId" />
 
-        <form asp-action="Create" method="post" id="planForm">
-            @Html.AntiForgeryToken()
+    <div class="row g-3">
+        <!-- LEFT: Form -->
+        <div class="col-lg-8">
+            <section class="card-surface">
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-            <input type="hidden" asp-for="StudentId" />
-
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-            <div class="row g-3">
-                <div class="col-12">
-                    <label class="form-label">Öğrenci</label>
-                    <div class="p-2 border rounded bg-white">
-                        <span class="text-muted small">Öğrenci ID:</span>
-                        <span class="fw-semibold">@Model.StudentId</span>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label asp-for="TotalAmount" class="form-label">Toplam Tutar</label>
-                    <input asp-for="TotalAmount" class="form-control" inputmode="decimal" />
-                    <span asp-validation-for="TotalAmount" class="text-danger"></span>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label asp-for="FirstDueDate" class="form-label">İlk Vade Tarihi</label>
-                    <input asp-for="FirstDueDate"
-                           class="form-control"
-                           type="date"
-                           value="@(Model.FirstDueDate == default ? DateTime.Today.ToString("yyyy-MM-dd") : Model.FirstDueDate.ToString("yyyy-MM-dd"))" />
-                    <span asp-validation-for="FirstDueDate" class="text-danger"></span>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label">Ödeme Tipi</label>
-                    <div class="d-flex flex-wrap gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   id="plan-pesin"
-                                   name="IsInstallment"
-                                   value="false"
-                                   @(Model.IsInstallment ? null : "checked") />
-                            <label class="form-check-label" for="plan-pesin">Peşin (tek ödeme)</label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   id="plan-taksit"
-                                   name="IsInstallment"
-                                   value="true"
-                                   @(Model.IsInstallment ? "checked" : null) />
-                            <label class="form-check-label" for="plan-taksit">Aylık taksitli</label>
+                    <div class="mb-3">
+                        <label class="form-label">Öğrenci</label>
+                        <div class="p-2 border rounded bg-white text-dark">
+                            <span class="fw-semibold">@studentName</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-12 col-md-6">
-                    <label asp-for="TotalInstallments" class="form-label">Taksit Sayısı</label>
-                    <input asp-for="TotalInstallments" class="form-control" id="installmentsInput" min="1" />
-                    <div class="form-text">
-                        Peşin ödemede <strong>1</strong> olmalıdır.
-                    </div>
-                    <span asp-validation-for="TotalInstallments" class="text-danger"></span>
-                </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="TotalAmount" class="form-label">Toplam Tutar</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₺</span>
+                                <input asp-for="TotalAmount" class="form-control bg-white text-dark" inputmode="decimal" />
+                            </div>
+                            <span asp-validation-for="TotalAmount" class="text-danger small"></span>
+                        </div>
 
-                <div class="col-12 col-md-6">
-                    <label class="form-label">Önizleme</label>
-                    <div class="p-3 border rounded bg-white h-100">
-                        <div class="small text-muted mb-1">Yaklaşık taksit tutarı</div>
-                        <div class="fw-semibold" id="previewInstallment">-</div>
-                        <div class="small text-muted mt-2">
-                            Bu önizleme sadece toplam/taksit sayısına göre hesaplanır.
+                        <div class="col-md-6">
+                            <label asp-for="FirstDueDate" class="form-label">İlk Vade Tarihi</label>
+                            <input asp-for="FirstDueDate"
+                                   class="form-control bg-white text-dark"
+                                   type="date"
+                                   value="@(Model.FirstDueDate == default ? DateTime.Today.ToString("yyyy-MM-dd") : Model.FirstDueDate.ToString("yyyy-MM-dd"))" />
+                            <span asp-validation-for="FirstDueDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Plan Tipi</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <input class="btn-check" type="radio" id="plan-pesin" name="IsInstallment" value="false" @(Model.IsInstallment ? null : "checked") />
+                                <label class="btn btn-outline-secondary" for="plan-pesin">Peşin</label>
+
+                                <input class="btn-check" type="radio" id="plan-taksit" name="IsInstallment" value="true" @(Model.IsInstallment ? "checked" : null) />
+                                <label class="btn btn-outline-secondary" for="plan-taksit">Aylık Taksitli</label>
+                            </div>
+                            <div class="form-text">Peşin seçerseniz tek kalem oluşturulur. Taksitli seçerseniz aylık taksitler üretilir.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TotalInstallments" class="form-label">Taksit Sayısı</label>
+                            <input asp-for="TotalInstallments"
+                                   class="form-control bg-white text-dark"
+                                   id="installmentsInput"
+                                   min="1" />
+                            <span asp-validation-for="TotalInstallments" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Mobile preview (collapsible look) -->
+                        <div class="col-12 d-lg-none">
+                            <div class="p-3 border rounded bg-white text-dark">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="fw-semibold">Önizleme</div>
+                                        <div class="small text-muted">Yaklaşık taksit tutarı</div>
+                                    </div>
+                                    <div class="fs-5 fw-semibold" id="previewInstallment_m">-</div>
+                                </div>
+
+                                <div class="small text-muted mt-2">
+                                    Bu hesap sadece toplam tutar / taksit sayısına göredir.
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Desktop actions -->
-            <div class="mt-3 d-none d-md-flex justify-content-between">
-                <button type="submit" class="btn btn-primary">Kaydet</button>
-
-                <a asp-controller="PaymentPlans"
-                   asp-action="Student"
-                   asp-route-studentId="@Model.StudentId"
-                   class="btn btn-outline-secondary">
-                    Vazgeç
-                </a>
-            </div>
-
-            <!-- Mobile sticky action bar -->
-            <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
-                <div class="container-fluid py-2">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-fill">Kaydet</button>
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-end gap-2 mt-4 d-none d-md-flex">
                         <a asp-controller="PaymentPlans"
                            asp-action="Student"
                            asp-route-studentId="@Model.StudentId"
                            class="btn btn-outline-secondary">
                             Vazgeç
                         </a>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mobile sticky actions -->
+            <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-3" style="z-index: 1020;">
+                <div class="container-fluid py-2">
+                    <div class="d-flex gap-2">
+                        <a asp-controller="PaymentPlans"
+                           asp-action="Student"
+                           asp-route-studentId="@Model.StudentId"
+                           class="btn btn-outline-secondary">
+                            Vazgeç
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-fill">Kaydet</button>
                     </div>
                 </div>
             </div>
-        </form>
+            <div class="d-md-none" style="height:80px;"></div>
+        </div>
+
+        <!-- RIGHT: Desktop preview -->
+        <div class="col-lg-4 d-none d-lg-block">
+            <section class="card-surface position-sticky" style="top: 88px;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <div class="fw-semibold">Önizleme</div>
+                            <div class="small text-muted">Yaklaşık taksit tutarı</div>
+                        </div>
+                        <div class="fs-4 fw-semibold" id="previewInstallment">-</div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="small text-muted mb-2">Özet</div>
+                    <div class="vstack gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Toplam</span>
+                            <span class="fw-semibold" id="previewTotal">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Taksit</span>
+                            <span class="fw-semibold" id="previewCount">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">İlk Vade</span>
+                            <span class="fw-semibold" id="previewFirstDue">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Tip</span>
+                            <span class="fw-semibold" id="previewType">-</span>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mt-3">
+                        Bu bölüm bilgilendirme amaçlıdır. Kesin tutar ve vade listesi oluşturma sonrası belirlenir.
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
-</section>
+</form>
 
 <script>
     (function () {
@@ -129,13 +181,30 @@
         const taksit = document.getElementById('plan-taksit');
         const installmentsInput = document.getElementById('installmentsInput');
         const totalAmount = document.getElementById('TotalAmount');
-        const preview = document.getElementById('previewInstallment');
+        const firstDue = document.getElementById('FirstDueDate');
+
+        const prevDesktop = document.getElementById('previewInstallment');
+        const prevMobile = document.getElementById('previewInstallment_m');
+
+        const prevTotal = document.getElementById('previewTotal');
+        const prevCount = document.getElementById('previewCount');
+        const prevFirstDue = document.getElementById('previewFirstDue');
+        const prevType = document.getElementById('previewType');
 
         function parseNumber(val) {
             if (!val) return 0;
             const normalized = ('' + val).replace(',', '.');
             const n = Number(normalized);
             return isNaN(n) ? 0 : n;
+        }
+
+        function formatTry(n) {
+            if (!n || n <= 0) return '-';
+            try {
+                return n.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+            } catch {
+                return n.toFixed(2);
+            }
         }
 
         function updateInstallmentsState() {
@@ -159,18 +228,25 @@
             if (!count || count < 1) count = 1;
 
             const approx = total / count;
-            if (!approx || approx <= 0) {
-                preview.textContent = '-';
-                return;
-            }
+            const text = approx > 0 ? formatTry(approx) : '-';
 
-            preview.textContent = approx.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+            if (prevDesktop) prevDesktop.textContent = text;
+            if (prevMobile) prevMobile.textContent = text;
+
+            if (prevTotal) prevTotal.textContent = formatTry(total);
+            if (prevCount) prevCount.textContent = String(count);
+            if (prevFirstDue) {
+                const v = firstDue?.value;
+                prevFirstDue.textContent = v ? v.split('-').reverse().join('.') : '-';
+            }
+            if (prevType) prevType.textContent = pesin.checked ? "Peşin" : "Aylık Taksitli";
         }
 
         pesin.addEventListener('change', updateInstallmentsState);
         taksit.addEventListener('change', updateInstallmentsState);
         installmentsInput.addEventListener('input', updatePreview);
         totalAmount.addEventListener('input', updatePreview);
+        if (firstDue) firstDue.addEventListener('change', updatePreview);
 
         updateInstallmentsState();
     })();

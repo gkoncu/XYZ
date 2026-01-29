@@ -6,8 +6,18 @@ namespace XYZ.Application.Features.DocumentDefinitions.Commands.CreateDocumentDe
     {
         public CreateDocumentDefinitionCommandValidator()
         {
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-            RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Target)
+                .IsInEnum();
+
+            RuleFor(x => x.Name)
+                .NotEmpty()
+                .MaximumLength(80);
+
+            RuleFor(x => x.SortOrder)
+                .InclusiveBetween(0, 10000);
+
+            RuleFor(x => x.IsActive)
+                .NotNull();
         }
     }
 }

@@ -1,18 +1,18 @@
 ﻿using FluentValidation;
 using System;
 
-namespace XYZ.Application.Features.ClassSessions.Commands.UpdateClassSession
+namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
 {
-    public sealed class UpdateClassSessionCommandValidator
-        : AbstractValidator<UpdateClassSessionCommand>
+    public sealed class CreateClassSessionCommandValidator
+        : AbstractValidator<CreateClassSessionCommand>
     {
         private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
         private static DateOnly MinDate => Today.AddYears(-1);
         private static DateOnly MaxDate => Today.AddDays(364);
 
-        public UpdateClassSessionCommandValidator()
+        public CreateClassSessionCommandValidator()
         {
-            RuleFor(x => x.SessionId)
+            RuleFor(x => x.ClassId)
                 .GreaterThan(0);
 
             RuleFor(x => x.Date)
@@ -30,10 +30,6 @@ namespace XYZ.Application.Features.ClassSessions.Commands.UpdateClassSession
             RuleFor(x => x.Location)
                 .MaximumLength(80)
                 .When(x => !string.IsNullOrWhiteSpace(x.Location));
-
-            RuleFor(x => x.CoachNote)
-                .MaximumLength(500)
-                .When(x => !string.IsNullOrWhiteSpace(x.CoachNote));
 
             RuleFor(x => x)
                 .Must(x => x.EndTime > x.StartTime)

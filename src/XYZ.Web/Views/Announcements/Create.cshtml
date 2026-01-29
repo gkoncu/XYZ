@@ -15,7 +15,7 @@
     <div class="col-md-6">
         <label class="form-label small">Sınıf</label>
         <select class="form-select form-select-sm" asp-for="ClassId">
-            <option value="">Genel (Sınıf yok)</option>
+            <option value="">Genel (Tüm sınıflar)</option>
             @foreach (var c in classes)
             {
                 <option value="@c.Value" selected=@(Model.ClassId?.ToString() == c.Value)>@c.Text</option>
@@ -48,11 +48,13 @@
     <div class="col-md-6">
         <label asp-for="PublishDate" class="form-label small"></label>
         <input asp-for="PublishDate" type="date" class="form-control form-control-sm" />
+        <span asp-validation-for="PublishDate" class="text-danger small"></span>
     </div>
 
     <div class="col-md-6">
         <label asp-for="ExpiryDate" class="form-label small"></label>
         <input asp-for="ExpiryDate" type="date" class="form-control form-control-sm" />
+        <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
     </div>
 
     <div class="col-12 d-flex justify-content-end mt-2">

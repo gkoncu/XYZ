@@ -20,7 +20,11 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
         <div class="d-flex gap-2">
             <a asp-action="Create"
                class="btn btn-primary btn-sm">
-                + Yeni Seans Oluştur
+                + Tek Antrenman Oluştur
+            </a>
+            <a asp-action="BulkCreate"
+               class="btn btn-primary btn-sm">
+                + Çoklu Antrenman Oluştur
             </a>
         </div>
     </div>
@@ -116,7 +120,6 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
                     <tbody>
                         @foreach (var item in Model.Items)
                         {
-                            var statusText = item.Status.ToString();
                             <tr>
                                 <td>@item.Date.ToString("dd.MM.yyyy")</td>
                                 <td>
@@ -127,7 +130,7 @@ XYZ.Application.Features.ClassSessions.Queries.GetClassSessions.ClassSessionList
                                 <td>@item.ClassName</td>
                                 <td>@item.BranchName</td>
                                 <td>@item.Title</td>
-                                <td>@statusText</td>
+                                <td>@item.Status.ToDisplayName()</td>
                                 <td>
                                     @if (item.TotalStudents > 0)
                                     {

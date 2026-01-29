@@ -27,20 +27,20 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetClassSessions
 
             RuleFor(x => x.SortBy)
                 .Must(v => v == null || AllowedSortBy.Contains(v))
-                .WithMessage($"SortBy sadece şu değerlerden biri olabilir: {string.Join(", ", AllowedSortBy)}");
+                .WithMessage($"SortBy must be one of: {string.Join(", ", AllowedSortBy)}");
 
             RuleFor(x => x.SortDir)
                 .Must(v => v == null ||
                            v.Equals("asc", StringComparison.OrdinalIgnoreCase) ||
                            v.Equals("desc", StringComparison.OrdinalIgnoreCase))
-                .WithMessage("SortDir 'asc' veya 'desc' olmalıdır.");
+                .WithMessage("SortDir must be either 'asc' or 'desc'.");
 
             RuleFor(x => x)
                 .Must(x =>
                     !x.From.HasValue ||
                     !x.To.HasValue ||
                     x.From.Value <= x.To.Value)
-                .WithMessage("From, To tarihinden büyük olamaz.");
+                .WithMessage("From cannot be greater than To.");
         }
     }
 }

@@ -33,8 +33,9 @@ namespace XYZ.Web.Controllers
         {
             var result = await _api.GetClassesAsync(searchTerm, branchId, isActive, pageNumber, pageSize, ct);
 
-            var branches = await _api.GetBranchesAsync(1, 500, ct);
-            ViewBag.Branches = branches.Items
+            var branches = await _api.GetBranchesAsync(1, 20, ct);
+
+            ViewBag.BranchesSelectList = branches.Items
                 .Select(b => new SelectListItem(b.Name, b.Id.ToString(), branchId == b.Id))
                 .ToList();
 

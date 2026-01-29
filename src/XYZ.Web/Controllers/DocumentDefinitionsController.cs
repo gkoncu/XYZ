@@ -26,7 +26,7 @@ namespace XYZ.Web.Controllers
             var vm = new DocumentDefinitionsIndexViewModel
             {
                 Target = target,
-                IncludeInactive = includeInactive,
+                IncludeInactive = false ,
                 Items = items
                     .OrderBy(x => x.SortOrder)
                     .ThenBy(x => x.Name)

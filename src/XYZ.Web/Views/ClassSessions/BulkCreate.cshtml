@@ -6,6 +6,8 @@
     var classes = ViewBag.Classes as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
+<div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
 <h2 class="h4 mb-3">Toplu Seans Oluştur</h2>
 
 @if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
@@ -71,7 +73,7 @@
         <div class="form-check">
             <input asp-for="GenerateAttendance" class="form-check-input" />
             <label asp-for="GenerateAttendance" class="form-check-label">
-                Yoklama listesini otomatik oluştur (Attendance seed)
+                Katılım zorunlu mu ? (Yoklama listesinin oluşması için gerekli.)
             </label>
         </div>
     </div>

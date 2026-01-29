@@ -49,11 +49,11 @@
 </section>
 
 <!-- Desktop filter form -->
-<form method="get" class="card card-body mb-3 d-none d-md-block">
+<form method="get" class="card-surface mb-3 d-none d-md-block">
     <div class="row g-2 align-items-end">
         <div class="col-md-6">
             <label class="form-label">Arama</label>
-            <input class="form-control" name="searchTerm" value="@Model.SearchTerm" placeholder="Koç adı" />
+            <input class="form-control bg-white text-dark" name="searchTerm" value="@Model.SearchTerm" placeholder="Koç adı" />
         </div>
 
         <div class="col-md-3">
@@ -80,7 +80,7 @@
         <form method="get" class="row g-2">
             <div class="col-12">
                 <label class="form-label small mb-1">Arama</label>
-                <input class="form-control" name="searchTerm" value="@Model.SearchTerm" placeholder="Koç adı" />
+                <input class="form-control bg-white text-dark" name="searchTerm" value="@Model.SearchTerm" placeholder="Koç adı" />
             </div>
 
             <div class="col-12">
@@ -103,9 +103,8 @@
 </div>
 
 <section class="card-surface">
-    <!-- Desktop table -->
     <div class="table-responsive d-none d-md-block">
-        <table class="table mb-0 align-middle">
+        <table class="table table-modern align-middle mb-0">
             <thead>
                 <tr>
                     <th>Koç</th>
@@ -125,7 +124,7 @@
                     foreach (var c in Model.Items)
                     {
                         <tr>
-                            <td>@c.FullName</td>
+                            <td class="fw-semibold">@c.FullName</td>
                             <td class="text-center">
                                 @if (c.MissingCount > 0)
                                 {
@@ -151,7 +150,6 @@
         </table>
     </div>
 
-    <!-- Mobile cards -->
     <div class="d-md-none">
         @if (Model.Items is null || Model.Items.Count == 0)
         {
@@ -167,7 +165,6 @@
                             <div class="d-flex justify-content-between align-items-start gap-2">
                                 <div>
                                     <div class="fw-semibold">@c.FullName</div>
-                                    <div class="small text-muted">ID: @c.CoachId</div>
                                 </div>
 
                                 @if (c.MissingCount > 0)

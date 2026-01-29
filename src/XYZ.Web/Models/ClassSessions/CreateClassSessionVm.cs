@@ -4,25 +4,26 @@ namespace XYZ.Web.Models.ClassSessions
 {
     public sealed class CreateClassSessionVm
     {
-        [Required]
+        [Required(ErrorMessage = "Lütfen bir sınıf seçiniz.")]
         public int ClassId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Tarih zorunludur.")]
         public string Date { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Başlangıç saati zorunludur.")]
         public string StartTime { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Bitiş saati zorunludur.")]
         public string EndTime { get; set; } = string.Empty;
 
-        [Required, StringLength(120)]
+        [Required(ErrorMessage = "Başlık zorunludur.")]
+        [StringLength(50, ErrorMessage = "Başlık en fazla 50 karakter olabilir.")]
         public string Title { get; set; } = string.Empty;
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessage = "Açıklama en fazla 500 karakter olabilir.")]
         public string? Description { get; set; }
 
-        [StringLength(120)]
+        [StringLength(80, ErrorMessage = "Konum en fazla 80 karakter olabilir.")]
         public string? Location { get; set; }
 
         public bool GenerateAttendance { get; set; } = true;

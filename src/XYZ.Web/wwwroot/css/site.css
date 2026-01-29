@@ -337,12 +337,12 @@ body.app-shell .app-navbar .dropdown-divider {
    Bu blok: primary/secondary renklerin Bootstrap sýnýflarýna yansýmasý.
    ========================================================= */
 
-body.app-shell a,
+body.app-shell a:not(.btn),
 body.app-shell .link-primary {
     color: var(--primary-color);
 }
 
-    body.app-shell a:hover,
+    body.app-shell a:not(.btn):hover,
     body.app-shell .link-primary:hover {
         color: var(--secondary-color);
     }
@@ -350,12 +350,14 @@ body.app-shell .link-primary {
 body.app-shell .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
+    color: #fff;
 }
 
     body.app-shell .btn-primary:hover,
     body.app-shell .btn-primary:focus {
         background-color: var(--secondary-color);
         border-color: var(--secondary-color);
+        color: #fff;
     }
 
 body.app-shell .btn-outline-primary {
@@ -430,4 +432,51 @@ body.app-shell .nav-pills .nav-link.active,
 body.app-shell .nav-pills .show > .nav-link {
     background-color: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
+}
+
+/* Navbar: link/metin rengi secondary */
+body.app-shell .app-navbar .navbar-brand,
+body.app-shell .app-navbar .navbar-brand span,
+body.app-shell .app-navbar .nav-link,
+body.app-shell .app-navbar .nav-link.dropdown-toggle {
+    color: var(--text-main);
+}
+
+    body.app-shell .app-navbar .navbar-brand:hover,
+    body.app-shell .app-navbar .nav-link:hover,
+    body.app-shell .app-navbar .nav-link.active {
+        color: var(--secondary-color);
+    }
+
+/* Documents upload modal: force readable colors regardless of tenant theme overrides */
+.docs-modal .modal-content,
+.docs-modal .modal-header,
+.docs-modal .modal-body,
+.docs-modal .modal-footer {
+    background-color: #fff !important;
+    color: #212529 !important; /* bootstrap body text */
+}
+
+.docs-modal .modal-title,
+.docs-modal label,
+.docs-modal .form-label,
+.docs-modal .form-check-label,
+.docs-modal .text-muted,
+.docs-modal .small {
+    color: #212529 !important;
+}
+
+.docs-modal .form-control,
+.docs-modal .form-select,
+.docs-modal textarea {
+    background-color: #fff !important;
+    color: #212529 !important;
+}
+
+    .docs-modal .form-control::placeholder {
+        color: #6c757d !important;
+    }
+
+.docs-modal .btn-close {
+    filter: none !important;
 }

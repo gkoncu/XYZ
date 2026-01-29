@@ -1,4 +1,5 @@
-﻿@using XYZ.Application.Common.Models
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using XYZ.Application.Common.Models
 @using XYZ.Application.Features.Classes.Queries.GetAllClasses
 @model PaginationResult<ClassListItemDto>
 
@@ -7,10 +8,11 @@
 
     var isSuperAdmin = User.IsInRole("SuperAdmin");
     var canCreate = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+    var canFilterByBranch = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 
     string? searchTerm = ViewBag.SearchTerm as string;
-    int? branchId = ViewBag.BranchId as int?;
-    bool? isActive = ViewBag.IsActive as bool?;
+
+    int? branchId = ViewBag.BranchId is int bi ? bi : (int?)null;
 
     var branches = ViewBag.BranchesSelectList as List<SelectListItem> ?? new List<SelectListItem>();
 }
@@ -30,203 +32,190 @@
         }
     </div>
 
-    <div class="card-surface mb-3">
-        <form asp-action="Index" method="get" class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label form-label-sm">Ara</label>
-                <input type="text"
-                       name="searchTerm"
-                       value="@searchTerm"
-                       class="form-control form-control-sm"
-                       placeholder="Sınıf adı@(isSuperAdmin ? ", kulüp" : ""), şube" />
-            </div>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-6">
+            <label class="form-label small">Ara</label>
+            <input name="searchTerm"
+                   value="@searchTerm"
+                   class="form-control form-control-sm"
+                   placeholder="Sınıf adı..." />
+        </div>
 
-            <div class="col-md-4">
-                <label class="form-label form-label-sm">Şube</label>
+        @if (canFilterByBranch)
+        {
+            <div class="col-12 col-md-4">
+                <label class="form-label small">Şube</label>
                 <select name="branchId" class="form-select form-select-sm">
                     <option value="">Tümü</option>
                     @foreach (var b in branches)
                     {
-                        var selected = (branchId.HasValue && b.Value == branchId.Value.ToString()) ? "selected" : null;
-                        <option value="@b.Value" selected="@selected">@b.Text</option>
+                        <option value="@b.Value" selected="@(b.Value == branchId?.ToString())">@b.Text</option>
                     }
                 </select>
             </div>
+        }
 
-            <div class="col-md-2">
-                <label class="form-label form-label-sm">Durum</label>
-                <select name="isActive" class="form-select form-select-sm">
-                    @if (isActive == null)
-                    {
-                        <option value="" selected>Tümü</option>
-                    }
-                    else
-                    {
-                        <option value="">Tümü</option>
-                    }
+        <div class="col-12 col-md-2 d-grid">
+            <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+        </div>
+    </form>
+</section>
 
-                    @if (isActive == true)
-                    {
-                        <option value="true" selected>Aktif</option>
-                    }
-                    else
-                    {
-                        <option value="true">Aktif</option>
-                    }
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
 
-                    @if (isActive == false)
-                    {
-                        <option value="false" selected>Pasif</option>
-                    }
-                    else
-                    {
-                        <option value="false">Pasif</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-2 d-flex justify-content-end">
-                <button type="submit" class="btn btn-sm btn-outline-light me-2">Filtrele</button>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Temizle</a>
-            </div>
-        </form>
+<section class="card-surface">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="small text-muted">
+            Toplam: <strong>@Model.TotalCount</strong>
+        </div>
     </div>
 
-    <div class="card-surface">
-        <div class="table-responsive">
-            <table class="table table-modern align-middle mb-0">
-                <thead>
+    <!-- Desktop table -->
+    <div class="table-responsive d-none d-md-block">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Sınıf</th>
+                    <th>Şube</th>
+                    <th class="text-end">Öğrenci</th>
+                    <th class="text-end">Koç</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items is null || Model.Items.Count == 0)
+                {
                     <tr>
-                        <th>Sınıf</th>
-                        <th>Şube</th>
-                        @if (isSuperAdmin)
-                        {
-                            <th>Kulüp</th>
-                        }
-                        <th>Öğrenci</th>
-                        <th>Koç</th>
-                        <th>Durum</th>
-                        <th class="text-end">İşlem</th>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            Kayıt bulunamadı.
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Count == 0)
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
                     {
                         <tr>
-                            <td colspan=@(isSuperAdmin ? 7 : 6) class="text-center text-muted py-4">
-                                Kriterlere uygun sınıf bulunamadı.
+                            <td>
+                                <div class="fw-semibold">@item.Name</div>
+                                @if (isSuperAdmin && !string.IsNullOrWhiteSpace(item.TenantName))
+                                {
+                                    <div class="small text-muted">Kulüp: @item.TenantName</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="text-muted">@item.BranchName</span>
+                            </td>
+                            <td class="text-end">@item.StudentsCount</td>
+                            <td class="text-end">@item.CoachesCount</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-outline-light">
+                                        Detay
+                                    </a>
+                                    @if (canCreate)
+                                    {
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-outline-secondary">
+                                            Düzenle
+                                        </a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
-                    else
-                    {
-                        foreach (var c in Model.Items)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold">@c.Name</div>
-                                    <div class="small text-muted">Id: @c.Id</div>
-                                </td>
-                                <td>@c.BranchName</td>
+                }
+            </tbody>
+        </table>
+    </div>
 
-                                @if (isSuperAdmin)
-                                {
-                                    <td>@c.TenantName</td>
-                                }
-
-                                <td>@c.StudentsCount</td>
-                                <td>@c.CoachesCount</td>
-
-                                <td>
-                                    @if (c.IsActive)
-                                    {
-                                        <span class="badge-soft badge-soft-success">Aktif</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge-soft badge-soft-muted">Pasif</span>
-                                    }
-                                </td>
-
-                                <td class="text-end">
-                                    <a asp-action="Details"
-                                       asp-route-id="@c.Id"
-                                       class="btn btn-sm btn-outline-light me-1">
-                                        Detay
-                                    </a>
-
-                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-                                    {
-                                        <a asp-action="Edit"
-                                           asp-route-id="@c.Id"
-                                           class="btn btn-sm btn-outline-light me-1">
-                                            Düzenle
-                                        </a>
-
-                                        <form asp-action="Delete"
-                                              asp-route-id="@c.Id"
-                                              method="post"
-                                              class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('Sınıf silinsin mi?');">
-                                                Sil
-                                            </button>
-                                        </form>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @if (Model.TotalPages > 1)
+    <!-- Mobile cards -->
+    <div class="d-md-none vstack gap-3">
+        @if (Model.Items is null || Model.Items.Count == 0)
         {
-            <nav class="mt-3">
-                <ul class="pagination pagination-modern justify-content-end mb-0">
-                    @{
-                        var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
-                        var nextDisabled = Model.PageNumber >= Model.TotalPages ? "disabled" : "";
-                    }
+            <div class="text-center text-muted py-4">Kayıt bulunamadı.</div>
+        }
+        else
+        {
+            @foreach (var item in Model.Items)
+            {
+                <div class="card-surface">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="fw-semibold">@item.Name</div>
+                            <div class="small text-muted">@item.BranchName</div>
+                            @if (isSuperAdmin && !string.IsNullOrWhiteSpace(item.TenantName))
+                            {
+                                <div class="small text-muted">Kulüp: @item.TenantName</div>
+                            }
+                        </div>
+                        <div class="text-end small text-muted">
+                            <div>@item.StudentsCount öğrenci</div>
+                            <div>@item.CoachesCount koç</div>
+                        </div>
+                    </div>
 
-                    <li class="page-item @prevDisabled">
-                        <a class="page-link"
-                           asp-action="Index"
-                           asp-route-pageNumber="@(Model.PageNumber - 1)"
-                           asp-route-pageSize="@Model.PageSize"
-                           asp-route-searchTerm="@searchTerm"
-                           asp-route-branchId="@branchId"
-                           asp-route-isActive="@isActive">Önceki</a>
-                    </li>
+                    <div class="d-grid gap-2 mt-3">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-light">
+                            Detay
+                        </a>
 
-                    @for (var i = 1; i <= Model.TotalPages; i++)
-                    {
-                        var active = i == Model.PageNumber ? "active" : "";
-                        <li class="page-item @active">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-pageNumber="@i"
-                               asp-route-pageSize="@Model.PageSize"
-                               asp-route-searchTerm="@searchTerm"
-                               asp-route-branchId="@branchId"
-                               asp-route-isActive="@isActive">@i</a>
-                        </li>
-                    }
-
-                    <li class="page-item @nextDisabled">
-                        <a class="page-link"
-                           asp-action="Index"
-                           asp-route-pageNumber="@(Model.PageNumber + 1)"
-                           asp-route-pageSize="@Model.PageSize"
-                           asp-route-searchTerm="@searchTerm"
-                           asp-route-branchId="@branchId"
-                           asp-route-isActive="@isActive">Sonraki</a>
-                    </li>
-                </ul>
-            </nav>
+                        @if (canCreate)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary">
+                                Düzenle
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
         }
     </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalCount > Model.PageSize)
+    {
+        <hr class="my-3" />
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+                Sayfa @Model.PageNumber / @((int)Math.Ceiling((double)Model.TotalCount / Model.PageSize))
+            </div>
+
+            <div class="d-flex gap-2">
+                @if (Model.PageNumber > 1)
+                {
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-action="Index"
+                       asp-route-searchTerm="@searchTerm"
+                       asp-route-branchId="@branchId"
+                       asp-route-pageNumber="@(Model.PageNumber - 1)"
+                       asp-route-pageSize="@Model.PageSize">
+                        &laquo; Önceki
+                    </a>
+                }
+
+                @if (Model.PageNumber * Model.PageSize < Model.TotalCount)
+                {
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-action="Index"
+                       asp-route-searchTerm="@searchTerm"
+                       asp-route-branchId="@branchId"
+                       asp-route-pageNumber="@(Model.PageNumber + 1)"
+                       asp-route-pageSize="@Model.PageSize">
+                        Sonraki &raquo;
+                    </a>
+                }
+            </div>
+        </div>
+    }
 </section>

@@ -17,7 +17,7 @@ namespace XYZ.Application.Features.Coaches.Commands.CreateCoach
                 RuleFor(x => x.IdentityNumber!)
                     .Length(11)
                     .Matches("^[0-9]{11}$")
-                    .WithMessage("T.C. Kimlik No 11 haneli ve sadece rakam olmalıdır.");
+                    .WithMessage("IdentityNumber must be exactly 11 digits.");
             });
 
             When(x => !string.IsNullOrWhiteSpace(x.LicenseNumber), () =>
