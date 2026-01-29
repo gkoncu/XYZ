@@ -447,3 +447,36 @@ body.app-shell .app-navbar .nav-link.dropdown-toggle {
     body.app-shell .app-navbar .nav-link.active {
         color: var(--secondary-color);
     }
+
+/* Documents upload modal: force readable colors regardless of tenant theme overrides */
+.docs-modal .modal-content,
+.docs-modal .modal-header,
+.docs-modal .modal-body,
+.docs-modal .modal-footer {
+    background-color: #fff !important;
+    color: #212529 !important; /* bootstrap body text */
+}
+
+.docs-modal .modal-title,
+.docs-modal label,
+.docs-modal .form-label,
+.docs-modal .form-check-label,
+.docs-modal .text-muted,
+.docs-modal .small {
+    color: #212529 !important;
+}
+
+.docs-modal .form-control,
+.docs-modal .form-select,
+.docs-modal textarea {
+    background-color: #fff !important;
+    color: #212529 !important;
+}
+
+    .docs-modal .form-control::placeholder {
+        color: #6c757d !important;
+    }
+
+.docs-modal .btn-close {
+    filter: none !important;
+}
