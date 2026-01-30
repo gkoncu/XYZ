@@ -59,6 +59,7 @@ public sealed class GetPaymentsQueryHandler : IRequestHandler<GetPaymentsQuery, 
             .Select(p => new PaymentListItemDto
             {
                 Id = p.Id,
+                PaymentPlanId = p.PaymentPlanId,
                 StudentId = p.StudentId,
                 StudentFullName = p.Student.User.FullName,
                 Amount = p.Amount,

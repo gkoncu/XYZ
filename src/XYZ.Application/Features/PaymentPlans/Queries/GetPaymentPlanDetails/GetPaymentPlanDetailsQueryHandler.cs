@@ -4,27 +4,26 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
 using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan
+namespace XYZ.Application.Features.PaymentPlans.Queries.GetPaymentPlanDetails
 {
-    public class GetStudentPaymentPlanQueryHandler
-        : IRequestHandler<GetStudentPaymentPlanQuery, StudentPaymentPlanDto?>
+    public class GetPaymentPlanDetailsQueryHandler : IRequestHandler<GetPaymentPlanDetailsQuery, StudentPaymentPlanDto?>
     {
         private readonly IDataScopeService _dataScope;
 
-        public GetStudentPaymentPlanQueryHandler(IDataScopeService dataScope)
+        public GetPaymentPlanDetailsQueryHandler(IDataScopeService dataScope)
         {
             _dataScope = dataScope;
         }
 
-        public async Task<StudentPaymentPlanDto?> Handle(GetStudentPaymentPlanQuery request, CancellationToken ct)
+        public async Task<StudentPaymentPlanDto?> Handle(GetPaymentPlanDetailsQuery request, CancellationToken ct)
         {
             var plan = await _dataScope.PaymentPlans()
                 .Include(pp => pp.Student).ThenInclude(s => s.User)
                 .Include(pp => pp.Payments)
-                .Where(pp => pp.StudentId == request.StudentId && pp.Status == PaymentPlanStatus.Active && pp.IsActive)
-                .OrderByDescending(pp => pp.CreatedAt)
+                .Where(pp => pp.Id == request.PlanId && pp.IsActive)
                 .FirstOrDefaultAsync(ct);
 
             if (plan == null)
@@ -49,14 +48,8 @@ namespace XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan
             decimal Net(StudentPaymentInstallmentDto i) => i.Amount - (i.DiscountAmount ?? 0m);
 
             var plannedTotal = installments.Sum(Net);
-
-            var totalPaid = installments
-                .Where(i => i.Status == PaymentStatus.Paid)
-                .Sum(Net);
-
-            var totalRemaining = installments
-                .Where(i => i.Status == PaymentStatus.Pending || i.Status == PaymentStatus.Overdue)
-                .Sum(Net);
+            var totalPaid = installments.Where(i => i.Status == PaymentStatus.Paid).Sum(Net);
+            var totalRemaining = installments.Where(i => i.Status == PaymentStatus.Pending || i.Status == PaymentStatus.Overdue).Sum(Net);
 
             return new StudentPaymentPlanDto
             {

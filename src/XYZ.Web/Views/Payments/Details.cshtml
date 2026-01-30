@@ -9,6 +9,9 @@
     var backAction = isStudent ? "My" : "Index";
     var backRouteStudentId = isStudent ? (int?)null : Model.StudentId;
 
+    var isPlanInstallment = Model.PaymentPlanId.HasValue;
+
+
     string StatusBadgeClass(PaymentStatus s) => s switch
     {
         PaymentStatus.Pending => "badge bg-warning text-dark",
@@ -60,9 +63,12 @@
                 <input type="hidden" name="studentId" value="@Model.StudentId" />
                 <button type="submit"
                         class="btn btn-outline-danger"
-                        onclick="return confirm('Bu ödemeyi silmek istediğinize emin misiniz?');">
-                    Sil
+                        onclick="return confirm('@(isPlanInstallment
+                                    ? "Bu taksiti iptal etmek istediğinize emin misiniz?"
+                                    : "Bu ödemeyi silmek istediğinize emin misiniz?")');">
+                    @(isPlanInstallment ? "İptal Et" : "Sil")
                 </button>
+
             </form>
         </div>
     }

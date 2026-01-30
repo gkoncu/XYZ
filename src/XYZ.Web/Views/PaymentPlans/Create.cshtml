@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Aidat Planı Oluştur";
     var studentName = string.IsNullOrWhiteSpace(Model.StudentFullName) ? "Öğrenci" : Model.StudentFullName;
+    var hasActivePlan = (ViewBag.ActivePlanExists as bool?) == true;
+    var unpaidCount = (int)(ViewBag.ActivePlanUnpaidCount ?? 0);
 
 }
 
@@ -25,6 +27,14 @@
         Vazgeç
     </a>
 </section>
+
+@if (hasActivePlan)
+{
+    <div class="alert alert-warning small">
+        Bu öğrenci için <strong>aktif bir aidat planı</strong> mevcut.
+        Kaydetmeniz halinde mevcut plan <strong>Arşivlenecek</strong> ve ödenmemiş <strong>@unpaidCount</strong> taksit <strong>İptal</strong> edilecektir.
+    </div>
+}
 
 <form asp-action="Create" method="post" id="planForm">
     @Html.AntiForgeryToken()
@@ -250,4 +260,13 @@
 
         updateInstallmentsState();
     })();
+
+        document.getElementById('planForm')?.addEventListener('submit', function (e) {
+        const hasActive = @(hasActivePlan.ToString().ToLower());
+        if (!hasActive) return;
+
+        const ok = confirm("Bu öğrenci için aktif plan var. Devam ederseniz mevcut plan arşivlenecek ve ödenmemiş taksitler iptal edilecek. Devam edilsin mi?");
+        if (!ok) e.preventDefault();
+    });
+
 </script>

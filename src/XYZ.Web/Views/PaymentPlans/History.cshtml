@@ -1,0 +1,83 @@
+﻿@using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlanHistory
+@using XYZ.Web.Extensions
+@model IList<PaymentPlanHistoryItemDto>
+
+@{
+    ViewData["Title"] = "Aidat Planı Geçmişi";
+    var studentId = (int?)ViewBag.StudentId ?? 0;
+}
+
+<section class="mb-3 d-flex justify-content-between align-items-center gap-2">
+    <div>
+        <a asp-action="Student" asp-route-studentId="@studentId" class="text-muted small text-decoration-none">
+            &larr; Aktif plana dön
+        </a>
+        <h2 class="h4 mb-0 mt-1">Aidat Planı Geçmişi</h2>
+        <div class="text-muted small">Öğrencinin geçmiş planlarını görüntüleyin.</div>
+    </div>
+
+    <a asp-controller="Payments" asp-action="Index" asp-route-studentId="@ViewBag.StudentId" class="btn btn-sm btn-outline-secondary">
+        Tüm Aidatlar
+    </a>
+</section>
+
+<section class="card-surface">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Plan</th>
+                        <th>Durum</th>
+                        <th class="text-end">Toplam</th>
+                        <th class="text-end">Ödenen</th>
+                        <th class="text-end">Kalan</th>
+                        <th class="text-end">Detay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Geçmiş plan bulunamadı.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <div class="fw-semibold">@item.PlanName</div>
+                                    <div class="small text-muted">
+                                        @(item.IsInstallment ? $"{item.TotalInstallments} taksit" : "peşin") · İlk vade: @item.FirstDueDate.ToString("dd.MM.yyyy")
+                                    </div>
+                                </td>
+                                <td>
+                                    @if(item.Status.ToDisplayName().ToString() == "Aktif")
+                                    {
+                                        <span class="badge bg-success">@item.Status.ToDisplayName()</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@item.Status.ToDisplayName()</span>
+                                    }
+                                </td>
+                                <td class="text-end">@item.TotalAmount.ToString("C2")</td>
+                                <td class="text-end text-success">@item.TotalPaid.ToString("C2")</td>
+                                <td class="text-end text-danger">@item.TotalRemaining.ToString("C2")</td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-planId="@item.PlanId" class="btn btn-sm btn-outline-primary">
+                                        Görüntüle
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

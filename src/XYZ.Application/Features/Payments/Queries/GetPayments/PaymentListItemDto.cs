@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Payments.Queries.GetPayments
@@ -10,6 +6,8 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
     public class PaymentListItemDto
     {
         public int Id { get; set; }
+
+        public int? PaymentPlanId { get; set; }
 
         public int StudentId { get; set; }
 
@@ -21,7 +19,7 @@ namespace XYZ.Application.Features.Payments.Queries.GetPayments
 
         public PaymentStatus Status { get; set; }
 
-        public DateTime DueDate {get; set; }
+        public DateTime DueDate { get; set; }
 
         public DateTime CreatedAt { get; set; }
     }

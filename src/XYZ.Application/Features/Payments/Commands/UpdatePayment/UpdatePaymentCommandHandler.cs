@@ -1,17 +1,13 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Payments.Commands.UpdatePayment
 {
-    public class UpdatePaymentCommandHandler
-        : IRequestHandler<UpdatePaymentCommand, int>
+    public class UpdatePaymentCommandHandler : IRequestHandler<UpdatePaymentCommand, int>
     {
         private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
@@ -48,8 +44,38 @@ namespace XYZ.Application.Features.Payments.Commands.UpdatePayment
 
             payment.UpdatedAt = DateTime.UtcNow;
 
+            if (payment.PaymentPlanId.HasValue)
+            {
+                await TryArchivePaymentPlanIfCompletedAsync(payment.PaymentPlanId.Value, payment.UpdatedAt.Value, ct);
+            }
+
             await _context.SaveChangesAsync(ct);
             return payment.Id;
+        }
+
+        private async Task TryArchivePaymentPlanIfCompletedAsync(int paymentPlanId, DateTime now, CancellationToken ct)
+        {
+            var plan = await _context.PaymentPlans
+                .FirstOrDefaultAsync(x => x.Id == paymentPlanId, ct);
+
+            if (plan is null)
+                return;
+
+            if (!plan.IsActive || plan.Status != PaymentPlanStatus.Active)
+                return;
+
+            var hasOpenInstallment = await _context.Payments
+                .AnyAsync(p => p.PaymentPlanId == paymentPlanId
+                              && p.IsActive
+                              && p.Status != PaymentStatus.Paid
+                              && p.Status != PaymentStatus.Cancelled,
+                         ct);
+
+            if (!hasOpenInstallment)
+            {
+                plan.Status = PaymentPlanStatus.Archived;
+                plan.UpdatedAt = now;
+            }
         }
     }
 }

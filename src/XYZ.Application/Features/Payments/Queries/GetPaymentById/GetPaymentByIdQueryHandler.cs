@@ -26,6 +26,7 @@ public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQ
             .Select(p => new PaymentDetailDto
             {
                 Id = p.Id,
+                PaymentPlanId = p.PaymentPlanId,
                 StudentId = p.StudentId,
                 StudentFullName = p.Student.User.FullName,
                 Amount = p.Amount,

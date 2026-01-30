@@ -34,6 +34,7 @@ using XYZ.Application.Features.Documents.Queries.DocumentStatus;
 using XYZ.Application.Features.Documents.Queries.GetUserDocuments;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
 using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlanHistory;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
@@ -744,6 +745,32 @@ namespace XYZ.Web.Services
             return deletedId;
         }
 
+        public async Task<IList<PaymentPlanHistoryItemDto>> GetStudentPaymentPlanHistoryAsync(
+            int studentId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"paymentplans/by-student/{studentId}/history", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                return new List<PaymentPlanHistoryItemDto>();
+
+            return await response.Content.ReadFromJsonAsync<IList<PaymentPlanHistoryItemDto>>(cancellationToken: cancellationToken)
+                   ?? new List<PaymentPlanHistoryItemDto>();
+        }
+
+        public async Task<StudentPaymentPlanDto?> GetPaymentPlanDetailsAsync(
+            int planId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.GetAsync($"paymentplans/{planId}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(cancellationToken: cancellationToken);
+        }
+
+
         // === Branches ===
         public async Task<PaginationResult<BranchListItemDto>> GetBranchesAsync(
             int pageNumber,
@@ -872,6 +899,29 @@ namespace XYZ.Web.Services
             return await response.Content.ReadFromJsonAsync<StudentPaymentPlanDto>(
                 cancellationToken: cancellationToken);
         }
+
+        public async Task<int> CancelPaymentPlanAsync(
+            int planId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsync($"paymentplans/{planId}/cancel", content: null, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
+        public async Task<int> ArchivePaymentPlanAsync(
+            int planId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsync($"paymentplans/{planId}/archive", content: null, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+            return id;
+        }
+
 
         // === ProgressRecords ===
         public async Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(
