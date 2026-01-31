@@ -11,8 +11,7 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
 {
-    public class CreatePaymentPlanCommandHandler
-        : IRequestHandler<CreatePaymentPlanCommand, int>
+    public class CreatePaymentPlanCommandHandler : IRequestHandler<CreatePaymentPlanCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
@@ -28,25 +27,39 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
             _current = currentUser;
         }
 
-        public async Task<int> Handle(
-            CreatePaymentPlanCommand request,
-            CancellationToken ct)
+        public async Task<int> Handle(CreatePaymentPlanCommand request, CancellationToken ct)
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme planı oluşturma yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat planı oluşturma yetkiniz yok.");
 
             var student = await _dataScope.Students()
                 .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
 
             if (student == null)
-            {
                 throw new NotFoundException(nameof(Student), request.StudentId);
-            }
 
             var tenantId = student.TenantId;
             var now = DateTime.UtcNow;
+
+            var activePlan = await _dataScope.PaymentPlans()
+                .Include(pp => pp.Payments)
+                .Where(pp => pp.StudentId == student.Id && pp.Status == PaymentPlanStatus.Active && pp.IsActive)
+                .OrderByDescending(pp => pp.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
+            if (activePlan != null)
+            {
+                activePlan.Status = PaymentPlanStatus.Archived;
+                activePlan.UpdatedAt = now;
+
+                foreach (var p in activePlan.Payments.Where(x => x.IsActive && x.Status != PaymentStatus.Paid && x.Status != PaymentStatus.Cancelled))
+                {
+                    p.Status = PaymentStatus.Cancelled;
+                    p.UpdatedAt = now;
+                }
+            }
 
             var totalInstallments =
                 request.IsInstallment
@@ -54,9 +67,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
                     : 1;
 
             if (!request.IsInstallment)
-            {
                 totalInstallments = 1;
-            }
 
             var plan = new PaymentPlan
             {
@@ -66,9 +77,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
                 TotalInstallments = totalInstallments,
                 FirstDueDate = request.FirstDueDate.Date,
                 IsInstallment = totalInstallments > 1,
-                Name = request.IsInstallment
-                    ? $"{totalInstallments} Taksit Planı"
-                    : "Peşin Ödeme",
+                Name = request.IsInstallment ? $"{totalInstallments} Taksit Planı" : "Peşin Ödeme",
                 Status = PaymentPlanStatus.Active,
                 CreatedAt = now,
                 IsActive = true,

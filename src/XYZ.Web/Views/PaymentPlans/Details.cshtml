@@ -1,8 +1,8 @@
 ﻿<section class="mt-4">
     <div class="card-surface">
-        <h2 class="h6 mb-2">Ödemeler ve Ödeme Planı</h2>
+        <h2 class="h6 mb-2">Aidatlar ve Aidat Planı</h2>
         <p class="small text-muted mb-3">
-            Bu öğrencinin ödeme planını ve ödeme kayıtlarını görüntüleyebilirsiniz.
+            Bu öğrencinin aidat planını ve aidat kayıtlarını görüntüleyebilirsiniz.
         </p>
 
         <div class="d-flex flex-wrap gap-2">
@@ -10,14 +10,14 @@
                asp-action="Student"
                asp-route-studentId="@Model.Id"
                class="btn btn-sm btn-outline-primary">
-                Ödeme Planını Gör
+                Aidat Planını Gör
             </a>
 
             <a asp-controller="Payments"
                asp-action="Index"
                asp-route-studentId="@Model.Id"
                class="btn btn-sm btn-outline-secondary">
-                Ödeme Kayıtlarını Gör
+                Aidat Kayıtlarını Gör
             </a>
 
             @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
@@ -26,7 +26,7 @@
                    asp-action="Create"
                    asp-route-studentId="@Model.Id"
                    class="btn btn-sm btn-primary">
-                    Yeni Ödeme Planı Oluştur
+                    Yeni Aidat Planı Oluştur
                 </a>
             }
         </div>

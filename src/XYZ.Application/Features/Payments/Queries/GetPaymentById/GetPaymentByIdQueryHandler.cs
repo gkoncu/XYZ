@@ -26,6 +26,7 @@ public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQ
             .Select(p => new PaymentDetailDto
             {
                 Id = p.Id,
+                PaymentPlanId = p.PaymentPlanId,
                 StudentId = p.StudentId,
                 StudentFullName = p.Student.User.FullName,
                 Amount = p.Amount,
@@ -38,7 +39,7 @@ public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQ
             .FirstOrDefaultAsync(ct);
 
         if (dto is null)
-            throw new KeyNotFoundException("Ödeme bulunamadı.");
+            throw new KeyNotFoundException("Aidat bulunamadı.");
 
         return dto;
     }

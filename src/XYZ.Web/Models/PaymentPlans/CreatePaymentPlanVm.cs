@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace XYZ.Web.Models.PaymentPlans
@@ -10,7 +11,7 @@ namespace XYZ.Web.Models.PaymentPlans
 
         public string StudentFullName { get; set; } = "";
 
-        [Range(typeof(decimal), "1", "99999", ErrorMessage = "Toplam tutar 0'dan büyük olmalıdır.")]
+        [DataType(DataType.Currency)]
         public decimal TotalAmount { get; set; }
 
         [DataType(DataType.Date)]
@@ -25,7 +26,7 @@ namespace XYZ.Web.Models.PaymentPlans
         {
             var today = DateTime.Today;
 
-            if (TotalAmount <= 1)
+            if (TotalAmount <= 0)
                 yield return new ValidationResult("Toplam tutar 0'dan büyük olmalıdır.", new[] { nameof(TotalAmount) });
 
             if (FirstDueDate.Date < today.AddDays(-365) || FirstDueDate.Date > today.AddDays(365))

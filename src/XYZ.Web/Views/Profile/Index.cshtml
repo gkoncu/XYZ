@@ -209,7 +209,7 @@
                 {
                     <div class="col-12">
                         <div class="alert alert-light border small mb-0">
-                            İpucu: Koç panelinden gecikmiş ödemeleri ve eksik belgeleri takip edebilirsiniz.
+                            İpucu: Koç panelinden gecikmiş aidatları ve eksik belgeleri takip edebilirsiniz.
                         </div>
                     </div>
                 }
@@ -232,21 +232,21 @@
                 @if (role == "Student")
                 {
                     <a asp-controller="StudentDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Dashboard</a>
-                    <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-secondary">Ödemelerim</a>
-                    <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">Ödeme Planım</a>
+                    <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-secondary">Aidatlarım</a>
+                    <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">Aidat Planım</a>
                 }
                 else if (role == "Coach")
                 {
                     <a asp-controller="CoachDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Koç Paneli</a>
                     <a asp-controller="Attendance" asp-action="Index" class="btn btn-sm btn-outline-secondary">Antrenmanlar</a>
-                    <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ödemeler</a>
+                    <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Aidatlar</a>
                     <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Eksik Belgeler</a>
                 }
                 else if (role == "Admin" || role == "SuperAdmin")
                 {
                     <a asp-controller="AdminDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Admin Paneli</a>
                     <a asp-controller="Students" asp-action="Index" class="btn btn-sm btn-outline-secondary">Öğrenciler</a>
-                    <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ödemeler</a>
+                    <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Aidatlar </a>
                     <a asp-controller="Attendance" asp-action="Index" class="btn btn-sm btn-outline-secondary">Antrenmanlar</a>
                     <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-secondary">Kulüp Ayarları</a>
                 }

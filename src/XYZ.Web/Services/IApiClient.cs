@@ -27,6 +27,7 @@ using XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
 using XYZ.Application.Features.Dashboard.Queries.GetSuperAdminDashboard;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
 using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlan;
+using XYZ.Application.Features.PaymentPlans.Queries.GetStudentPaymentPlanHistory;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Application.Features.Payments.Queries.GetPaymentById;
@@ -287,6 +288,23 @@ namespace XYZ.Web.Services
 
         Task<StudentPaymentPlanDto?> GetMyPaymentPlanAsync(
             CancellationToken cancellationToken = default);
+
+        Task<IList<PaymentPlanHistoryItemDto>> GetStudentPaymentPlanHistoryAsync(
+            int studentId,
+            CancellationToken cancellationToken = default);
+
+        Task<StudentPaymentPlanDto?> GetPaymentPlanDetailsAsync(
+            int planId,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CancelPaymentPlanAsync(
+            int planId,
+            CancellationToken cancellationToken = default);
+
+        Task<int> ArchivePaymentPlanAsync(
+            int planId,
+            CancellationToken cancellationToken = default);
+
 
         // === ProgressRecords ===
         Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(

@@ -24,19 +24,62 @@
 
         <h2 class="h4 mb-1 mt-1">Aidat Planı</h2>
         <div class="text-muted small">
-            @(Model == null ? "Bu öğrenci için plan bulunmuyor." : "Plan özeti ve taksitleri görüntüleyin.")
+            @(Model == null ? "Bu öğrenci için aktif plan bulunmuyor." : "Plan özeti ve taksitleri görüntüleyin.")
         </div>
     </div>
 
     <div class="d-flex flex-wrap gap-2 align-items-center">
         @if (Model != null)
         {
+            <a asp-controller="PaymentPlans"
+               asp-action="History"
+               asp-route-studentId="@studentId"
+               class="btn btn-sm btn-outline-secondary">
+                Plan Geçmişi
+            </a>
+
             <a asp-controller="Payments"
                asp-action="Index"
-               asp-route-studentId="@Model.StudentId"
+               asp-route-studentId="@studentId"
                class="btn btn-sm btn-outline-secondary">
                 Tüm Aidatları Gör
             </a>
+        }
+
+        @if (isAdmin && Model != null)
+        {
+            var canArchive = Model.Installments.All(x => x.Status == PaymentStatus.Paid || x.Status == PaymentStatus.Cancelled);
+
+            <form asp-controller="PaymentPlans"
+                  asp-action="Cancel"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="planId" value="@Model.PlanId" />
+                <input type="hidden" name="studentId" value="@studentId" />
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Bu aidat planını iptal etmek istediğinize emin misiniz? İptal edilirse ödenmemiş taksitler de iptal olur.');">
+                    Planı İptal Et
+                </button>
+            </form>
+
+            @if (canArchive && Model.Status != PaymentPlanStatus.Archived)
+            {
+                <form asp-controller="PaymentPlans"
+                      asp-action="Archive"
+                      method="post"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="planId" value="@Model.PlanId" />
+                    <input type="hidden" name="studentId" value="@studentId" />
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-secondary"
+                            onclick="return confirm('Bu aidat planını arşivlemek istiyor musunuz?');">
+                        Planı Arşivle
+                    </button>
+                </form>
+            }
         }
 
         @if (isAdmin && studentId > 0)
@@ -55,24 +98,42 @@
 {
     <section class="card-surface">
         <div class="card-body text-center">
-            <h3 class="h5 mb-2">Aidat planı bulunamadı</h3>
+            <h3 class="h5 mb-2">Aktif aidat planı bulunamadı</h3>
             <p class="text-muted small mb-3">
-                Bu öğrenci için henüz bir plan oluşturulmamış.
+                Bu öğrenci için aktif plan yok. Geçmiş planları görmek için plan geçmişine gidebilirsiniz.
             </p>
 
-            @if (isAdmin && studentId > 0)
-            {
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
                 <a asp-controller="PaymentPlans"
-                   asp-action="Create"
+                   asp-action="History"
                    asp-route-studentId="@studentId"
-                   class="btn btn-primary">
-                    Aidat Planı Oluştur
+                   class="btn btn-outline-secondary">
+                    Plan Geçmişi
                 </a>
-            }
-            else if (isStudent)
+
+                @if (isAdmin && studentId > 0)
+                {
+                    <a asp-controller="PaymentPlans"
+                       asp-action="Create"
+                       asp-route-studentId="@studentId"
+                       class="btn btn-primary">
+                        Yeni Plan Oluştur
+                    </a>
+
+                    <a asp-controller="Payments"
+                       asp-action="Create"
+                       asp-route-studentId="@studentId"
+                       class="btn btn-outline-primary">
+                        Yeni Aidat
+                    </a>
+
+                }
+            </div>
+
+            @if (isStudent)
             {
-                <div class="alert alert-info small mb-0">
-                    Aidat planınız henüz oluşturulmamış. Lütfen kulübünüzle iletişime geçin.
+                <div class="alert alert-info small mt-3 mb-0">
+                    Aidat planınız aktif değil. Lütfen kulübünüzle iletişime geçin.
                 </div>
             }
         </div>
@@ -276,7 +337,6 @@ else
                     </div>
                 }
             </div>
-
         </div>
     </section>
 }

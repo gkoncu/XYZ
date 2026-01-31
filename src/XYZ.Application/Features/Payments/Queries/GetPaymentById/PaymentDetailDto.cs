@@ -7,11 +7,15 @@ public sealed class PaymentDetailDto
 {
     public int Id { get; set; }
 
+    public int? PaymentPlanId { get; set; }
+
     public int StudentId { get; set; }
 
     public string StudentFullName { get; set; } = string.Empty;
 
     public decimal Amount { get; set; }
+
+    public string? Notes { get; set; }
 
     public decimal? DiscountAmount { get; set; }
 
