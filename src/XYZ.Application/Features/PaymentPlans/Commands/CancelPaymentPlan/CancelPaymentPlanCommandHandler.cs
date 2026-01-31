@@ -30,7 +30,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CancelPaymentPlan
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme planı iptal etme yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat planı iptal etme yetkiniz yok.");
 
             var plan = await _dataScope.PaymentPlans()
                 .Include(pp => pp.Payments)

@@ -31,7 +31,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme planı oluşturma yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat planı oluşturma yetkiniz yok.");
 
             var student = await _dataScope.Students()
                 .Include(s => s.User)

@@ -27,7 +27,7 @@ namespace XYZ.Application.Features.Payments.Commands.DeletePayment
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme silme yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat silme yetkiniz yok.");
 
             var payment = await _dataScope.Payments()
                 .FirstOrDefaultAsync(p => p.Id == request.Id, ct);

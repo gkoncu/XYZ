@@ -30,14 +30,14 @@
                asp-action="Index"
                asp-route-studentId="@Model.Id"
                class="btn btn-sm btn-outline-primary">
-                Ödemeler
+                Aidatlar
             </a>
 
             <a asp-controller="PaymentPlans"
                asp-action="Student"
                asp-route-studentId="@Model.Id"
                class="btn btn-sm btn-outline-primary">
-                Ödeme Planı
+                Aidat Planı
             </a>
 
             <a asp-controller="ProgressRecords"
@@ -97,14 +97,14 @@
                    asp-action="Index"
                    asp-route-studentId="@Model.Id"
                    class="btn btn-outline-primary">
-                    Ödemeler
+                    Aidatlar
                 </a>
 
                 <a asp-controller="PaymentPlans"
                    asp-action="Student"
                    asp-route-studentId="@Model.Id"
                    class="btn btn-outline-primary">
-                    Ödeme Planı
+                    Aidat Planı
                 </a>
 
                 <a asp-controller="ProgressRecords"
@@ -261,7 +261,7 @@
                        asp-action="Index"
                        asp-route-studentId="@Model.Id"
                        class="btn btn-outline-primary">
-                        Ödemeler
+                        Aidatlar
                     </a>
 
                     <div class="d-flex gap-2">
@@ -285,7 +285,7 @@
                        asp-action="Student"
                        asp-route-studentId="@Model.Id"
                        class="btn btn-outline-primary">
-                        Ödeme Planı
+                        Aidat Planı
                     </a>
 
                     <a asp-controller="ProgressRecords"
@@ -334,9 +334,9 @@
 
             <hr class="my-4" />
 
-            <h2 class="h6 mb-2">Ödemeler ve Plan</h2>
+            <h2 class="h6 mb-2">Aidatlar ve Plan</h2>
             <p class="small text-muted mb-3">
-                Yeni ödeme üretimi <strong>Ödeme Planı</strong> üzerinden yapılır. Ödeme listesi planın oluşturduğu taksitleri gösterir.
+                Yeni aidat üretimi <strong>Aidat Planı</strong> üzerinden yapılır. Aidat listesi planın oluşturduğu taksitleri gösterir.
             </p>
 
             <div class="d-flex flex-wrap gap-2">
@@ -344,14 +344,14 @@
                    asp-action="Index"
                    asp-route-studentId="@Model.Id"
                    class="btn btn-sm btn-outline-primary">
-                    Ödemeleri Gör
+                    Aidatları Gör
                 </a>
 
                 <a asp-controller="PaymentPlans"
                    asp-action="Student"
                    asp-route-studentId="@Model.Id"
                    class="btn btn-sm btn-outline-primary">
-                    Ödeme Planını Gör
+                    Aidat Planını Gör
                 </a>
 
                 @if (isAdmin)
@@ -360,8 +360,16 @@
                        asp-action="Create"
                        asp-route-studentId="@Model.Id"
                        class="btn btn-sm btn-primary">
-                        Ödeme Planı Oluştur
+                        Aidat Planı Oluştur
                     </a>
+
+                    <a asp-controller="Payments"
+                       asp-action="Create"
+                       asp-route-studentId="@Model.Id"
+                       class="btn btn-sm btn-outline-secondary">
+                        Yeni Aidat
+                    </a>
+
                 }
             </div>
         </div>

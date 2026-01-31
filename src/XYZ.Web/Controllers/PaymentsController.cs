@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
 using XYZ.Domain.Enums;
+using XYZ.Web.Extensions;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers;
@@ -54,8 +56,8 @@ public class PaymentsController : Controller
         ViewBag.Status = status;
 
         ViewData["Title"] = studentId.HasValue
-            ? "Öğrenci Ödemeleri"
-            : "Ödemeler";
+            ? "Öğrenci Aidatları"
+            : "Aidatlar";
 
         return View(result);
     }
@@ -91,7 +93,7 @@ public class PaymentsController : Controller
         ViewBag.FromDueDate = fromDueDate;
         ViewBag.ToDueDate = toDueDate;
         ViewBag.Status = status;
-        ViewData["Title"] = "Ödemelerim";
+        ViewData["Title"] = "Aidatlarım";
 
         return View("Index", result);
     }
@@ -111,11 +113,28 @@ public class PaymentsController : Controller
 
     [HttpGet]
     [Authorize(Roles = "Admin,SuperAdmin")]
-    public IActionResult Create(int? studentId)
+    public async Task<IActionResult> Create(int? studentId, CancellationToken cancellationToken = default)
     {
+        if (!studentId.HasValue || studentId.Value <= 0)
+        {
+            TempData["ErrorMessage"] = "Aidat oluşturmak için önce bir öğrenci seçmelisiniz.";
+            return RedirectToAction("Index", "Students");
+        }
+
+        var student = await _apiClient.GetStudentAsync(studentId.Value, cancellationToken);
+        if (student == null)
+        {
+            TempData["ErrorMessage"] = "Öğrenci bulunamadı.";
+            return RedirectToAction("Index", "Students");
+        }
+
+        ViewBag.StudentFullName = student.FullName;
+
         var model = new CreatePaymentCommand
         {
-            StudentId = studentId ?? 0
+            StudentId = studentId.Value,
+            DueDate = DateTime.Today,
+            Status = PaymentStatus.Pending
         };
 
         return View(model);
@@ -126,6 +145,12 @@ public class PaymentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreatePaymentCommand model, CancellationToken cancellationToken)
     {
+        if (model.StudentId > 0)
+        {
+            var student = await _apiClient.GetStudentAsync(model.StudentId, cancellationToken);
+            ViewBag.StudentFullName = student?.FullName;
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -134,17 +159,11 @@ public class PaymentsController : Controller
         try
         {
             var id = await _apiClient.CreatePaymentAsync(model, cancellationToken);
-
-            if (model.StudentId > 0)
-            {
-                return RedirectToAction(nameof(Index), new { studentId = model.StudentId });
-            }
-
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id });
         }
         catch
         {
-            ModelState.AddModelError(string.Empty, "Ödeme kaydedilirken bir hata oluştu.");
+            ModelState.AddModelError(string.Empty, "Aidat kaydedilirken bir hata oluştu.");
             return View(model);
         }
     }
@@ -159,12 +178,15 @@ public class PaymentsController : Controller
             return NotFound();
         }
 
+        ViewBag.StudentFullName = payment.StudentFullName;
+
         var model = new UpdatePaymentCommand
         {
             Id = payment.Id,
             Amount = payment.Amount,
             DiscountAmount = payment.DiscountAmount,
-            Status = payment.Status
+            Status = payment.Status,
+            Notes = payment.Notes
         };
 
         return View(model);
@@ -175,6 +197,9 @@ public class PaymentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(UpdatePaymentCommand model, CancellationToken cancellationToken)
     {
+        var payment = await _apiClient.GetPaymentAsync(model.Id, cancellationToken);
+        ViewBag.StudentFullName = payment?.StudentFullName;
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -183,11 +208,11 @@ public class PaymentsController : Controller
         try
         {
             await _apiClient.UpdatePaymentAsync(model, cancellationToken);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id = model.Id });
         }
         catch
         {
-            ModelState.AddModelError(string.Empty, "Ödeme güncellenirken bir hata oluştu.");
+            ModelState.AddModelError(string.Empty, "Aidat güncellenirken bir hata oluştu.");
             return View(model);
         }
     }
@@ -200,10 +225,11 @@ public class PaymentsController : Controller
         try
         {
             await _apiClient.DeletePaymentAsync(id, cancellationToken);
+            TempData["SuccessMessage"] = "Aidat silindi.";
         }
         catch
         {
-            TempData["Error"] = "Ödeme silinirken bir hata oluştu.";
+            TempData["ErrorMessage"] = "Aidat silinirken bir hata oluştu.";
         }
 
         if (studentId.HasValue && studentId.Value > 0)
@@ -227,13 +253,13 @@ public class PaymentsController : Controller
 
         if (payment.Status == PaymentStatus.Paid)
         {
-            TempData["SuccessMessage"] = "Bu ödeme zaten 'Ödendi' durumunda.";
+            TempData["SuccessMessage"] = "Bu aidat zaten 'Ödendi' durumunda.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
         if (payment.Status == PaymentStatus.Cancelled)
         {
-            TempData["ErrorMessage"] = "İptal edilmiş bir ödeme 'Ödendi' olarak işaretlenemez.";
+            TempData["ErrorMessage"] = "İptal edilmiş bir aidat 'Ödendi' olarak işaretlenemez.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -244,15 +270,16 @@ public class PaymentsController : Controller
                 Id = payment.Id,
                 Amount = payment.Amount,
                 DiscountAmount = payment.DiscountAmount,
-                Status = PaymentStatus.Paid
+                Status = PaymentStatus.Paid,
+                Notes = payment.Notes
             };
 
             await _apiClient.UpdatePaymentAsync(cmd, cancellationToken);
-            TempData["SuccessMessage"] = "Ödeme 'Ödendi' olarak işaretlendi.";
+            TempData["SuccessMessage"] = "Aidat 'Ödendi' olarak işaretlendi.";
         }
         catch
         {
-            TempData["ErrorMessage"] = "Ödeme durumu güncellenirken bir hata oluştu.";
+            TempData["ErrorMessage"] = "Aidat durumu güncellenirken bir hata oluştu.";
         }
 
         return RedirectToAction(nameof(Details), new { id });

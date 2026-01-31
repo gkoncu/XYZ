@@ -44,14 +44,14 @@
            asp-controller="PaymentPlans"
            asp-action="@(isStudent ? "My" : "Student")"
            asp-route-studentId="@(isStudent ? null : Model.StudentId)">
-            Ödeme Planı
+            Aidat Planı
         </a>
 
         <a class="btn btn-sm btn-outline-primary"
            asp-controller="Payments"
            asp-action="@(isStudent ? "My" : "Index")"
            asp-route-studentId="@(isStudent ? null : Model.StudentId)">
-            Ödemeler
+            Aidatlar
         </a>
 
         <a class="btn btn-sm btn-outline-primary"

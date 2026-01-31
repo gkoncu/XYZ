@@ -27,7 +27,7 @@ namespace XYZ.Application.Features.Payments.Commands.UpdatePayment
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme güncelleme yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat güncelleme yetkiniz yok.");
 
             var payment = await _dataScope.Payments()
                 .FirstOrDefaultAsync(p => p.Id == request.Id, ct);

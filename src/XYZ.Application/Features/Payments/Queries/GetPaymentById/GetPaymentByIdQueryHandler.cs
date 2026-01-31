@@ -39,7 +39,7 @@ public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQ
             .FirstOrDefaultAsync(ct);
 
         if (dto is null)
-            throw new KeyNotFoundException("Ödeme bulunamadı.");
+            throw new KeyNotFoundException("Aidat bulunamadı.");
 
         return dto;
     }

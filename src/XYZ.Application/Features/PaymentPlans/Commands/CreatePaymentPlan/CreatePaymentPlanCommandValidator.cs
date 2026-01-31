@@ -11,8 +11,8 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan
                 .GreaterThan(0);
 
             RuleFor(x => x.TotalAmount)
-                .GreaterThan(1)
-                .LessThan(99999);
+                .GreaterThan(0)
+                .LessThanOrEqualTo(99999);
 
             RuleFor(x => x.FirstDueDate.Date)
                 .Must(d =>

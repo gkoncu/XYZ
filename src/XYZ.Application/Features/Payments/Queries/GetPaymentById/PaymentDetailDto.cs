@@ -15,6 +15,8 @@ public sealed class PaymentDetailDto
 
     public decimal Amount { get; set; }
 
+    public string? Notes { get; set; }
+
     public decimal? DiscountAmount { get; set; }
 
     public PaymentStatus Status { get; set; }

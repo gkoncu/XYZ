@@ -10,8 +10,8 @@
     PaymentStatus? status = ViewBag.Status as PaymentStatus?;
 
     ViewData["Title"] ??= isMyPayments
-        ? "Ödemelerim"
-        : (studentId.HasValue ? "Öğrenci Ödemeleri" : "Ödemeler");
+        ? "Aidatlarım"
+        : (studentId.HasValue ? "Öğrenci Aidatları" : "Aidatlar");
 
     string actionName = isMyPayments ? "My" : "Index";
 
@@ -56,20 +56,20 @@
             <h2 class="h4 mb-1">
                 @if (isMyPayments)
                 {
-                    @:Ödemelerim
+                    @:Aidatlarım
                 }
                 else if (studentId.HasValue)
                 {
-                    @:Öğrenci Ödemeleri
+                    @:Öğrenci Aidatları
                 }
                 else
                 {
-                    @:Ödemeler
+                    @:Aidatlar
                 }
             </h2>
 
             <p class="text-muted small mb-0">
-                Ödenmemiş (beklemede / gecikmiş) ödemeler öne çıkacak şekilde listelenir.
+                Ödenmemiş (beklemede / gecikmiş) aidatlar öne çıkacak şekilde listelenir.
                 Varsayılan filtre: son 30 gün / gelecek 30 gün (vade tarihine göre).
             </p>
         </div>
@@ -87,7 +87,7 @@
                        asp-action="Student"
                        asp-route-studentId="@studentId.Value"
                        class="btn btn-sm btn-outline-primary">
-                        Ödeme Planı
+                        Aidat Planı
                     </a>
 
                     @if (isAdmin)
@@ -96,8 +96,12 @@
                            asp-action="Create"
                            asp-route-studentId="@studentId.Value"
                            class="btn btn-sm btn-primary">
-                            Ödeme Planı Oluştur
+                            Aidat Planı Oluştur
                         </a>
+                        <a asp-action="Create" asp-route-studentId="@studentId.Value" class="btn btn-sm btn-outline-primary">
+                            Yeni Aidat
+                        </a>
+
                     }
                 }
             </div>
@@ -155,7 +159,7 @@
 
                 <div class="mt-3 d-flex flex-wrap gap-2">
                     <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-primary">
-                        Ödeme Planım
+                        Aidat Planım
                     </a>
                 </div>
 
@@ -163,7 +167,7 @@
                 {
                     var nextNet = upcomingNext.Amount - (upcomingNext.DiscountAmount ?? 0m);
                     <div class="alert alert-info mt-3 mb-0">
-                        <div class="fw-semibold">Yaklaşan ödeme</div>
+                        <div class="fw-semibold">Yaklaşan aidatlar</div>
                         <div class="small">
                             Vade: <strong>@upcomingNext.DueDate.ToString("dd.MM.yyyy")</strong>
                             · Net: <strong>@nextNet.ToString("C2")</strong>
@@ -227,7 +231,7 @@
                asp-action="Student"
                asp-route-studentId="@studentId.Value"
                class="btn btn-sm btn-outline-primary d-md-none">
-                Ödeme Planı
+                Aidat Planı
             </a>
 
             @if (isAdmin)
@@ -337,8 +341,8 @@
 <section class="card-surface">
     <!-- Desktop table -->
     <div class="table-responsive d-none d-md-block">
-        <table class="table table-sm align-middle mb-0">
-            <thead class="table-light">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
                 <tr>
                     <th>Öğrenci</th>
                     <th class="text-end">Tutar</th>

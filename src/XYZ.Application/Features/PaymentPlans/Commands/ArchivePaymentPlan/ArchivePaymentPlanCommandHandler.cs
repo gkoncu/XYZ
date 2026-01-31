@@ -30,7 +30,7 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.ArchivePaymentPlan
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme planı arşivleme yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat planı arşivleme yetkiniz yok.");
 
             var plan = await _dataScope.PaymentPlans()
                 .Include(pp => pp.Payments)

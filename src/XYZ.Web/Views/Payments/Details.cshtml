@@ -1,7 +1,7 @@
 ﻿﻿@using XYZ.Domain.Enums
 @model PaymentDetailDto
 @{
-    ViewData["Title"] = "Ödeme Detayı";
+    ViewData["Title"] = "Aidat Detayı";
 
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
     var isStudent = User.IsInRole("Student");
@@ -26,7 +26,7 @@
     <a asp-action="@backAction"
        asp-route-studentId="@backRouteStudentId"
        class="text-muted small text-decoration-none">
-        &larr; Ödeme listesine dön
+        &larr; Aidat listesine dön
     </a>
 
     <div class="d-flex gap-2">
@@ -34,7 +34,7 @@
            asp-action="Student"
            asp-route-studentId="@Model.StudentId"
            class="btn btn-sm btn-outline-primary">
-            Ödeme Planı
+            Aidat Planı
         </a>
 
         @if (!isStudent)
@@ -86,7 +86,7 @@
 
 <section class="detail-grid">
     <div class="card-surface">
-        <h2 class="h5 mb-3">Ödeme Bilgileri</h2>
+        <h2 class="h5 mb-3">Aidat Bilgileri</h2>
 
         <dl class="row small mb-0">
             <dt class="col-4 text-muted">Öğrenci</dt>
@@ -97,6 +97,12 @@
 
             <dt class="col-4 text-muted">İndirim</dt>
             <dd class="col-8">@(Model.DiscountAmount.HasValue? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
+            <dt class="col-4 text-muted">Not</dt>
+            <dd class="col-8">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
+
+
+            <dt class="col-4 text-muted">Not</dt>
+            <dd class="col-8">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
 
             <dt class="col-4 text-muted">Net</dt>
             <dd class="col-8 fw-semibold">@((Model.Amount - (Model.DiscountAmount ?? 0m)).ToString("C2"))</dd>
@@ -190,7 +196,7 @@
                         <input type="hidden" name="studentId" value="@Model.StudentId" />
                         <button type="submit"
                                 class="btn btn-outline-danger w-100"
-                                onclick="return confirm('Bu ödemeyi silmek istediğinize emin misiniz?');">
+                                onclick="return confirm('Bu aidatı silmek istediğinize emin misiniz?');">
                             Sil
                         </button>
                     </form>

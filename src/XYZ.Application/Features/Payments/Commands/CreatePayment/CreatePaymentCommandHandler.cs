@@ -32,7 +32,7 @@ namespace XYZ.Application.Features.Payments.Commands.CreatePayment
         {
             var role = _current.Role;
             if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Ödeme oluşturma yetkiniz yok.");
+                throw new UnauthorizedAccessException("Aidat oluşturma yetkiniz yok.");
 
             var tenantId = _current.TenantId
                 ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
