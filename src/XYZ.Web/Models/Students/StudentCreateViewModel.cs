@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using XYZ.Application.Features.Classes.Queries.GetAllClasses;
 
 namespace XYZ.Web.Models.Students
 {
@@ -37,8 +39,10 @@ namespace XYZ.Web.Models.Students
         [Display(Name = "Sınıf")]
         public int? ClassId { get; set; }
 
+        public List<ClassListItemDto> ClassOptions { get; set; } = new();
+
         [Display(Name = "T.C. Kimlik No")]
-        [StringLength(11, MinimumLength = 11 ,ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
+        [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No 11 haneli olmalıdır.")]
         public string? IdentityNumber { get; set; }
 
         [Display(Name = "Adres")]
