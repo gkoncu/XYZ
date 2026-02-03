@@ -89,7 +89,32 @@ namespace XYZ.Web.Controllers
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            return View("ComingSoon");
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var (ok, errorCode) = await _api.ChangeMyPasswordAsync(model.CurrentPassword, model.NewPassword, ct);
+            if (ok)
+            {
+                TempData["SuccessMessage"] = "Şifre güncellendi.";
+                return RedirectToAction("Index", "Settings");
+            }
+
+            var msg = errorCode switch
+            {
+                "invalid_current_password" => "Mevcut şifre hatalı.",
+                "password_policy_failed" => "Yeni şifre kurallara uymuyor.",
+                _ => "Şifre güncellenemedi. Lütfen tekrar deneyin."
+            };
+
+            ModelState.AddModelError("", msg);
+            return View(model);
         }
 
         private static string BuildInitials(string fullName)

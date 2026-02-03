@@ -401,6 +401,7 @@ namespace XYZ.Web.Services
         // === Profile ===
         Task<MyProfileDto?> GetMyProfileAsync(CancellationToken cancellationToken = default);
         Task<bool> UpdateMyProfileAsync(UpdateMyProfileCommand command, CancellationToken cancellationToken = default);
+        Task<(bool Ok, string? ErrorCode)> ChangeMyPasswordAsync( string currentPassword, string newPassword, CancellationToken cancellationToken = default);
 
         Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default);
         Task<bool> UpdateCurrentTenantThemeAsync(UpdateCurrentTenantThemeCommand command, CancellationToken cancellationToken = default);

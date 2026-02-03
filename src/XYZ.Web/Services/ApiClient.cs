@@ -1236,6 +1236,34 @@ namespace XYZ.Web.Services
             return response.IsSuccessStatusCode;
         }
 
+        public sealed record ChangeMyPasswordApiError(string? ErrorCode, string? Error);
+
+        public async Task<(bool Ok, string? ErrorCode)> ChangeMyPasswordAsync(
+            string currentPassword,
+            string newPassword,
+            CancellationToken cancellationToken = default)
+        {
+            var payload = new
+            {
+                currentPassword,
+                newPassword
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("profile/me/password", payload, cancellationToken);
+            if (response.IsSuccessStatusCode)
+                return (true, null);
+
+            try
+            {
+                var err = await response.Content.ReadFromJsonAsync<ChangeMyPasswordApiError>(cancellationToken: cancellationToken);
+                return (false, err?.ErrorCode);
+            }
+            catch
+            {
+                return (false, "change_password_failed");
+            }
+        }
+
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {
             var response = await _httpClient.GetAsync("tenants/current-theme", cancellationToken);
