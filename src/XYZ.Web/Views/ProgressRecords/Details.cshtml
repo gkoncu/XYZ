@@ -36,18 +36,19 @@
 </section>
 
 <section class="card-surface p-3 mb-3">
+
     <h6 class="mb-2">Metrikler</h6>
 
     @if (Model.Values.Count == 0)
     {
-        <div class="text-muted small">Metrik değeri yok.</div>
+        <div class="small">Metrik değeri yok.</div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
+            <table class="table table-sm align-middle mb-0 table-modern pr-detail-table">
                 <thead>
-                    <tr class="text-muted small">
+                    <tr class="small">
                         <th>Metrik</th>
                         <th class="text-end">Değer</th>
                     </tr>

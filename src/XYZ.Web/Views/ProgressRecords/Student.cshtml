@@ -53,13 +53,13 @@
         <div class="col-md-3">
             <label class="form-label small">Başlangıç</label>
             <input type="date" class="form-control form-control-sm" name="from"
-                   value="@(Model.From.HasValue? Model.From.Value.ToString("yyyy-MM-dd") : "")" />
+                   value="@(Model.From.HasValue ? Model.From.Value.ToString("yyyy-MM-dd") : "")" />
         </div>
 
         <div class="col-md-3">
             <label class="form-label small">Bitiş</label>
             <input type="date" class="form-control form-control-sm" name="to"
-                   value="@(Model.To.HasValue? Model.To.Value.ToString("yyyy-MM-dd") : "")" />
+                   value="@(Model.To.HasValue ? Model.To.Value.ToString("yyyy-MM-dd") : "")" />
         </div>
 
         <div class="col-md-2 d-grid">
@@ -69,10 +69,11 @@
 </section>
 
 <section class="card-surface p-3">
+
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table table-sm align-middle table-modern pr-table">
             <thead>
-                <tr class="text-muted small">
+                <tr class="small">
                     <th>Tarih</th>
                     <th>#</th>
                     <th>Şube</th>
@@ -85,7 +86,7 @@
                 @if (Model.Items.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-muted small">Kayıt bulunamadı.</td>
+                        <td colspan="6" class="small">Kayıt bulunamadı.</td>
                     </tr>
                 }
                 else
