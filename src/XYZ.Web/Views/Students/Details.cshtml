@@ -2,73 +2,34 @@
 @{
     ViewData["Title"] = "Öğrenci Detayı";
 
+    string GenderTr(string? value) => value switch
+    {
+        "Male" => "Erkek",
+        "Female" => "Kadın",
+        "PreferNotToSay" => "Belirtilmedi",
+        _ => string.IsNullOrWhiteSpace(value) ? "-" : value
+    };
+
+    string BloodTypeTr(string? value) => value switch
+    {
+        "Unknown" => "Bilinmiyor",
+        "A_Positive" => "A+",
+        "A_Negative" => "A-",
+        "B_Positive" => "B+",
+        "B_Negative" => "B-",
+        "AB_Positive" => "AB+",
+        "AB_Negative" => "AB-",
+        "O_Positive" => "0+",
+        "O_Negative" => "0-",
+        _ => string.IsNullOrWhiteSpace(value) ? "-" : value
+    };
+
     var canManageStudent = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin");
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 }
 
 <section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Öğrenci listesine dön</a>
-
-    @if (canManageStudent)
-    {
-        <div class="d-none d-md-flex gap-2">
-            <a asp-controller="Attendance"
-               asp-action="List"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Yoklama Geçmişi
-            </a>
-
-            <a asp-controller="Documents"
-               asp-action="Student"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Belgeler
-            </a>
-
-            <a asp-controller="Payments"
-               asp-action="Index"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Aidatlar
-            </a>
-
-            <a asp-controller="PaymentPlans"
-               asp-action="Student"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Aidat Planı
-            </a>
-
-            <a asp-controller="ProgressRecords"
-               asp-action="Student"
-               asp-route-studentId="@Model.Id"
-               class="btn btn-sm btn-outline-primary">
-                Gelişim
-            </a>
-
-            @if (isAdmin)
-            {
-                <a asp-action="Edit"
-                   asp-route-id="@Model.Id"
-                   class="btn btn-sm btn-outline-secondary">
-                    Düzenle
-                </a>
-
-                <form asp-action="Delete"
-                      asp-route-id="@Model.Id"
-                      method="post"
-                      class="d-inline">
-                    @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
-                        Sil
-                    </button>
-                </form>
-            }
-        </div>
-    }
 </section>
 
 @* Mobil-first: Hızlı işlemler *@
@@ -180,11 +141,11 @@
         <div class="row g-3 mb-3">
             <div class="col-md-4">
                 <div class="small text-muted">Cinsiyet</div>
-                <div>@Model.Gender</div>
+                <div>@GenderTr(Model.Gender)</div>
             </div>
             <div class="col-md-4">
                 <div class="small text-muted">Kan Grubu</div>
-                <div>@Model.BloodType</div>
+                <div>@BloodTypeTr(Model.BloodType)</div>
             </div>
             <div class="col-md-4">
                 <div class="small text-muted">Doğum Tarihi</div>
@@ -331,47 +292,6 @@
                     <dd class="col-7">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</dd>
                 }
             </dl>
-
-            <hr class="my-4" />
-
-            <h2 class="h6 mb-2">Aidatlar ve Plan</h2>
-            <p class="small text-muted mb-3">
-                Yeni aidat üretimi <strong>Aidat Planı</strong> üzerinden yapılır. Aidat listesi planın oluşturduğu taksitleri gösterir.
-            </p>
-
-            <div class="d-flex flex-wrap gap-2">
-                <a asp-controller="Payments"
-                   asp-action="Index"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-sm btn-outline-primary">
-                    Aidatları Gör
-                </a>
-
-                <a asp-controller="PaymentPlans"
-                   asp-action="Student"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-sm btn-outline-primary">
-                    Aidat Planını Gör
-                </a>
-
-                @if (isAdmin)
-                {
-                    <a asp-controller="PaymentPlans"
-                       asp-action="Create"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-sm btn-primary">
-                        Aidat Planı Oluştur
-                    </a>
-
-                    <a asp-controller="Payments"
-                       asp-action="Create"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-sm btn-outline-secondary">
-                        Yeni Aidat
-                    </a>
-
-                }
-            </div>
         </div>
     </div>
 </section>

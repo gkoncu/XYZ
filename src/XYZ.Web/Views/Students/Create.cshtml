@@ -74,9 +74,14 @@
 
         <div class="col-md-4">
             <label asp-for="ClassId" class="form-label small"></label>
-            <input asp-for="ClassId" class="form-control form-control-sm" />
+            <select asp-for="ClassId" class="form-select form-select-sm">
+                <option value="">Henüz atanmadı</option>
+                @foreach (var c in Model.ClassOptions)
+                {
+                    <option value="@c.Id">@c.Name (@c.BranchName)</option>
+                }
+            </select>
             <span asp-validation-for="ClassId" class="text-danger small"></span>
-            <div class="form-text small">Geçici olarak sınıf Id girilebilir; ileride dropdown'a bağlarız.</div>
         </div>
 
         <div class="col-md-4">
