@@ -83,6 +83,7 @@
             <a asp-action="Index" class="btn btn-outline-secondary">
                 Şube Listesi
             </a>
+
         </div>
 
         @if (canEdit)
@@ -153,6 +154,7 @@
                        class="btn btn-sm btn-primary">
                         Yeni Sınıf Oluştur
                     </a>
+
                 }
             </div>
         </div>
@@ -176,6 +178,7 @@
     <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
         <div class="container-fluid py-2">
             <div class="d-flex gap-2">
+
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-fill">Düzenle</a>
 
                 <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="flex-fill">

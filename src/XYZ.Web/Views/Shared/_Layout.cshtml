@@ -162,15 +162,15 @@
                                         <li>
                                             <a class="dropdown-item" asp-controller="Coaches" asp-action="Index">Koçlar</a>
                                         </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admins" asp-action="Index">Adminler</a>
+                                        </li>
                                     }
 
                                     @if (User.IsInRole("SuperAdmin"))
                                     {
                                         <li>
                                             <a class="dropdown-item" asp-controller="Tenants" asp-action="Index">Kulüpler</a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Admins" asp-action="Index">Adminler</a>
                                         </li>
                                     }
                                 </ul>

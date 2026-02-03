@@ -12,7 +12,12 @@ namespace XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRec
     {
         public GetStudentProgressRecordsQueryValidator()
         {
-            RuleFor(x => x.StudentId).GreaterThan(0);
+            RuleFor(x => x.StudentId)
+                .GreaterThan(0).WithMessage("Invalid student id.");
+
+            RuleFor(x => x)
+                .Must(x => !x.From.HasValue || !x.To.HasValue || x.From.Value <= x.To.Value)
+                .WithMessage("Start date cannot bigger than end date.");
         }
     }
 }

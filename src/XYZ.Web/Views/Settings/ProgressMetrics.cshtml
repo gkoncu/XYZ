@@ -1,0 +1,48 @@
+﻿@model XYZ.Web.Models.Settings.ProgressMetricsSettingsViewModel
+
+@{
+    ViewData["Title"] = "Gelişim Metrikleri";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">Gelişim Metrikleri</h2>
+        <div class="text-muted small">Metrik yönetimi için önce şube seçin.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-secondary">Kulüp</a>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<form asp-action="ProgressMetrics" method="post" class="card-surface p-3" style="max-width:720px;">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="row g-3 align-items-end">
+        <div class="col-md-8">
+            <label asp-for="SelectedBranchId" class="form-label small">Şube</label>
+            <select asp-for="SelectedBranchId" asp-items="Model.BranchOptions" class="form-select form-select-sm"></select>
+            <span asp-validation-for="SelectedBranchId" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4 d-grid">
+            <button type="submit" class="btn btn-sm btn-primary">
+                Devam
+            </button>
+        </div>
+    </div>
+
+    <div class="text-muted small mt-3">
+        Not: Metrikler şube bazlıdır. Şube seçtikten sonra metrik listesini yönetebilirsiniz.
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

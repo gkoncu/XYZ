@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
@@ -10,22 +6,21 @@ namespace XYZ.Domain.Entities
     public class ProgressRecord : BaseEntity
     {
         public int StudentId { get; set; }
-        public DateTime RecordDate { get; set; }
+        public int BranchId { get; set; }
 
-        public decimal? Height { get; set; }
-        public decimal? Weight { get; set; }
-        public decimal? BodyFatPercentage { get; set; }
-        public decimal? VerticalJump { get; set; }
-        public decimal? SprintTime { get; set; }
-        public decimal? Endurance { get; set; }
-        public decimal? Flexibility { get; set; }
-        public int? TechnicalScore { get; set; }
-        public int? TacticalScore { get; set; }
-        public int? PhysicalScore { get; set; }
-        public int? MentalScore { get; set; }
+        public DateOnly RecordDate { get; set; }
+
+        public int Sequence { get; set; } = 1;
+
+        public string? CreatedByUserId { get; set; }
+        public string? CreatedByDisplayName { get; set; }
+
         public string? CoachNotes { get; set; }
         public string? Goals { get; set; }
 
         public Student Student { get; set; } = null!;
+        public Branch Branch { get; set; } = null!;
+
+        public ICollection<ProgressRecordValue> Values { get; set; } = new List<ProgressRecordValue>();
     }
 }

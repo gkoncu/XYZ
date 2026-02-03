@@ -41,6 +41,9 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
+using XYZ.Application.Features.ProgressMetricDefinitions.Commands.CreateProgressMetricDefinition;
+using XYZ.Application.Features.ProgressMetricDefinitions.Commands.UpdateProgressMetricDefinition;
+using XYZ.Application.Features.ProgressMetricDefinitions.Queries;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
@@ -51,6 +54,7 @@ using XYZ.Application.Features.Tenants.Commands.UpdateCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
 using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
+using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Theming;
 using static System.Net.WebRequestMethods;
@@ -926,8 +930,9 @@ namespace XYZ.Web.Services
         // === ProgressRecords ===
         public async Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(
             int studentId,
-            DateTime? from,
-            DateTime? to,
+            DateOnly? from,
+            DateOnly? to,
+            int? branchId,
             CancellationToken cancellationToken = default)
         {
             var url = $"progressrecords/student/{studentId}";
@@ -935,11 +940,10 @@ namespace XYZ.Web.Services
             var query = new Dictionary<string, string?>();
             if (from.HasValue) query["from"] = from.Value.ToString("yyyy-MM-dd");
             if (to.HasValue) query["to"] = to.Value.ToString("yyyy-MM-dd");
+            if (branchId.HasValue) query["branchId"] = branchId.Value.ToString();
 
             if (query.Count > 0)
-            {
                 url = QueryHelpers.AddQueryString(url, query);
-            }
 
             var resp = await _httpClient.GetAsync(url, cancellationToken);
 
@@ -1002,6 +1006,51 @@ namespace XYZ.Web.Services
             resp.EnsureSuccessStatusCode();
 
             return await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
+        }
+
+        // === ProgressMetricDefinitions ===
+        public async Task<IList<ProgressMetricDefinitionListItemDto>> GetProgressMetricDefinitionsAsync(
+            int branchId,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default)
+        {
+            var url = $"progressmetricdefinitions?branchId={branchId}&includeInactive={includeInactive.ToString().ToLowerInvariant()}";
+            var resp = await _httpClient.GetAsync(url, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<IList<ProgressMetricDefinitionListItemDto>>(cancellationToken: cancellationToken))
+                   ?? new List<ProgressMetricDefinitionListItemDto>();
+        }
+
+        public async Task<int> CreateProgressMetricDefinitionAsync(
+            CreateProgressMetricDefinitionCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PostAsJsonAsync("progressmetricdefinitions", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        public async Task<int> UpdateProgressMetricDefinitionAsync(
+            int id,
+            UpdateProgressMetricDefinitionCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.PutAsJsonAsync($"progressmetricdefinitions/{id}", command, cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
+        }
+
+        public async Task<int> DeleteProgressMetricDefinitionAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync($"progressmetricdefinitions/{id}", cancellationToken);
+            resp.EnsureSuccessStatusCode();
+
+            return (await resp.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken));
         }
 
         // === Announcements ===

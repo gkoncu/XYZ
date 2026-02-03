@@ -1,96 +1,120 @@
 ﻿@model XYZ.Web.Models.ProgressRecords.ProgressRecordCreateViewModel
+@using XYZ.Domain.Enums
 
 @{
     ViewData["Title"] = "Gelişim Kaydı Ekle";
 }
 
-<h2 class="h4 mb-3">Gelişim Kaydı Ekle</h2>
-<div class="text-muted small mb-3">Öğrenci: <span class="fw-semibold">@Model.StudentFullName</span></div>
+<section class="mb-3">
+    <h2 class="h4 mb-1">Gelişim Kaydı Ekle</h2>
+    <div class="text-muted small">Öğrenci: <span class="fw-semibold">@Model.StudentFullName</span></div>
+</section>
 
-<form asp-action="Create" method="post" class="row g-3">
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<form asp-action="Create" asp-route-studentId="@Model.StudentId" method="post" class="card-surface p-3">
     @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
 
     <input type="hidden" asp-for="StudentId" />
     <input type="hidden" asp-for="StudentFullName" />
+    <input type="hidden" asp-for="BranchId" />
 
-    <div class="col-md-4">
-        <label asp-for="RecordDate" class="form-label small"></label>
-        <input asp-for="RecordDate" type="date" class="form-control form-control-sm" />
-        <span asp-validation-for="RecordDate" class="text-danger small"></span>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label small">Şube</label>
+            <div class="form-control form-control-sm bg-body-secondary">
+                @(!string.IsNullOrWhiteSpace(Model.BranchName) ? Model.BranchName : $"ID: {Model.BranchId}")
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="RecordDate" class="form-label small"></label>
+            <input asp-for="RecordDate" type="date" class="form-control form-control-sm" />
+            <span asp-validation-for="RecordDate" class="text-danger small"></span>
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <label asp-for="Height" class="form-label small"></label>
-        <input asp-for="Height" class="form-control form-control-sm" />
-        <span asp-validation-for="Height" class="text-danger small"></span>
+    <hr class="my-3" />
+
+    @if (Model.BranchId <= 0)
+    {
+        <div class="alert alert-warning small mb-0">
+            Bu öğrencinin sınıf/şube bilgisi bulunamadı. Gelişim kaydı eklenemez.
+        </div>
+    }
+    else if (Model.Metrics.Count == 0)
+    {
+        <div class="alert alert-warning small mb-0">
+            Bu şube için metrik tanımı bulunamadı. (Şube bazlı metrikleri önce tanımlamalısın.)
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @for (int i = 0; i < Model.Metrics.Count; i++)
+            {
+                <input type="hidden" asp-for="Metrics[i].ProgressMetricDefinitionId" />
+                <input type="hidden" asp-for="Metrics[i].MetricName" />
+                <input type="hidden" asp-for="Metrics[i].DataType" />
+                <input type="hidden" asp-for="Metrics[i].Unit" />
+
+                <div class="col-md-6">
+                    <label class="form-label small">
+                        @Model.Metrics[i].MetricName
+                        @if (!string.IsNullOrWhiteSpace(Model.Metrics[i].Unit))
+                        {
+                            <span class="text-muted">(@Model.Metrics[i].Unit)</span>
+                        }
+                    </label>
+
+                    @switch (Model.Metrics[i].DataType)
+                    {
+                        case ProgressMetricDataType.Decimal:
+                            <input asp-for="Metrics[i].DecimalValue" type="number" step="0.01" class="form-control form-control-sm" />
+                            break;
+
+                        case ProgressMetricDataType.Int:
+                            <input asp-for="Metrics[i].IntValue" type="number" step="1" class="form-control form-control-sm" />
+                            break;
+
+                        case ProgressMetricDataType.Text:
+                            <input asp-for="Metrics[i].TextValue" type="text" class="form-control form-control-sm" />
+                            break;
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <hr class="my-3" />
+
+    <div class="row g-3">
+        <div class="col-12">
+            <label asp-for="CoachNotes" class="form-label small"></label>
+            <textarea asp-for="CoachNotes" rows="3" class="form-control form-control-sm"></textarea>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Goals" class="form-label small"></label>
+            <textarea asp-for="Goals" rows="3" class="form-control form-control-sm"></textarea>
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <label asp-for="Weight" class="form-label small"></label>
-        <input asp-for="Weight" class="form-control form-control-sm" />
-        <span asp-validation-for="Weight" class="text-danger small"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="BodyFatPercentage" class="form-label small"></label>
-        <input asp-for="BodyFatPercentage" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="VerticalJump" class="form-label small"></label>
-        <input asp-for="VerticalJump" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="SprintTime" class="form-label small"></label>
-        <input asp-for="SprintTime" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Endurance" class="form-label small"></label>
-        <input asp-for="Endurance" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Flexibility" class="form-label small"></label>
-        <input asp-for="Flexibility" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-3">
-        <label asp-for="TechnicalScore" class="form-label small"></label>
-        <input asp-for="TechnicalScore" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-3">
-        <label asp-for="TacticalScore" class="form-label small"></label>
-        <input asp-for="TacticalScore" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-3">
-        <label asp-for="PhysicalScore" class="form-label small"></label>
-        <input asp-for="PhysicalScore" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-md-3">
-        <label asp-for="MentalScore" class="form-label small"></label>
-        <input asp-for="MentalScore" class="form-control form-control-sm" />
-    </div>
-
-    <div class="col-12">
-        <label asp-for="CoachNotes" class="form-label small"></label>
-        <textarea asp-for="CoachNotes" rows="3" class="form-control form-control-sm"></textarea>
-    </div>
-
-    <div class="col-12">
-        <label asp-for="Goals" class="form-label small"></label>
-        <textarea asp-for="Goals" rows="3" class="form-control form-control-sm"></textarea>
-    </div>
-
-    <div class="col-12 d-flex justify-content-end mt-2">
-        <a class="btn btn-sm btn-outline-light me-2"
+    <div class="d-flex justify-content-end mt-3 gap-2">
+        <a class="btn btn-sm btn-outline-secondary"
            asp-action="Student"
-           asp-route-studentId="@Model.StudentId">İptal</a>
+           asp-route-studentId="@Model.StudentId">
+            İptal
+        </a>
+
         <button type="submit" class="btn btn-sm btn-primary">Kaydet</button>
     </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -12,7 +12,7 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.DeleteProgressRecord
     {
         public DeleteProgressRecordCommandValidator()
         {
-            RuleFor(x => x.Id).GreaterThan(0);
+            RuleFor(x => x.Id).GreaterThan(0).WithMessage("Invalid id.");
         }
     }
 }

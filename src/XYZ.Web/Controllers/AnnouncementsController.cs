@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -264,25 +265,38 @@ namespace XYZ.Web.Controllers
 
         private async Task FillClassesSelectList(CancellationToken ct, int? selectedClassId)
         {
-            var classes = await _api.GetClassesAsync(
-                searchTerm: null,
-                branchId: null,
-                isActive: true,
-                pageNumber: 1,
-                pageSize: 200,
-                cancellationToken: ct);
+            if (User.IsInRole("Student"))
+            {
+                ViewBag.ClassesSelectList = new List<SelectListItem>();
+                return;
+            }
 
-            var items = classes.Items
-                .OrderBy(x => x.Name)
-                .Select(x => new SelectListItem
-                {
-                    Value = x.Id.ToString(),
-                    Text = x.Name,
-                    Selected = selectedClassId.HasValue && x.Id == selectedClassId.Value
-                })
-                .ToList();
+            try
+            {
+                var classes = await _api.GetClassesAsync(
+                    searchTerm: null,
+                    branchId: null,
+                    isActive: true,
+                    pageNumber: 1,
+                    pageSize: 200,
+                    cancellationToken: ct);
 
-            ViewBag.ClassesSelectList = items;
+                var items = classes.Items
+                    .OrderBy(x => x.Name)
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.Id.ToString(),
+                        Text = x.Name,
+                        Selected = selectedClassId.HasValue && x.Id == selectedClassId.Value
+                    })
+                    .ToList();
+
+                ViewBag.ClassesSelectList = items;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+            {
+                ViewBag.ClassesSelectList = new List<SelectListItem>();
+            }
         }
 
         private static List<SelectListItem> BuildTypeOptions(AnnouncementType? selected)

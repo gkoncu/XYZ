@@ -870,6 +870,63 @@ namespace XYZ.Application.Data.Migrations
                     b.ToTable("PaymentPlans");
                 });
 
+            modelBuilder.Entity("XYZ.Domain.Entities.ProgressMetricDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DataType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("MinValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ProgressMetricDefinitions");
+                });
+
             modelBuilder.Entity("XYZ.Domain.Entities.ProgressRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -878,9 +935,8 @@ namespace XYZ.Application.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("BodyFatPercentage")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)");
+                    b.Property<int>("BranchId")
+                        .HasColumnType("int");
 
                     b.Property<string>("CoachNotes")
                         .HasColumnType("nvarchar(max)");
@@ -888,62 +944,86 @@ namespace XYZ.Application.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("Endurance")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)");
+                    b.Property<string>("CreatedByDisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<decimal?>("Flexibility")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)");
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("Goals")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("Height")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("MentalScore")
+                    b.Property<DateOnly>("RecordDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Sequence")
                         .HasColumnType("int");
-
-                    b.Property<int?>("PhysicalScore")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RecordDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("SprintTime")
-                        .HasPrecision(4, 2)
-                        .HasColumnType("decimal(4,2)");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TacticalScore")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TechnicalScore")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("VerticalJump")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)");
+                    b.HasKey("Id");
 
-                    b.Property<decimal?>("Weight")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("StudentId", "BranchId", "RecordDate");
+
+                    b.HasIndex("StudentId", "BranchId", "RecordDate", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("ProgressRecords");
+                });
+
+            modelBuilder.Entity("XYZ.Domain.Entities.ProgressRecordValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DecimalValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int?>("IntValue")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ProgressMetricDefinitionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProgressRecordId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TextValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("ProgressMetricDefinitionId");
 
-                    b.ToTable("ProgressRecords");
+                    b.HasIndex("ProgressRecordId", "ProgressMetricDefinitionId")
+                        .IsUnique();
+
+                    b.ToTable("ProgressRecordValues");
                 });
 
             modelBuilder.Entity("XYZ.Domain.Entities.RefreshToken", b =>
@@ -1443,15 +1523,53 @@ namespace XYZ.Application.Data.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("XYZ.Domain.Entities.ProgressMetricDefinition", b =>
+                {
+                    b.HasOne("XYZ.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("XYZ.Domain.Entities.ProgressRecord", b =>
                 {
+                    b.HasOne("XYZ.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("XYZ.Domain.Entities.Student", "Student")
                         .WithMany("ProgressRecords")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Branch");
+
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("XYZ.Domain.Entities.ProgressRecordValue", b =>
+                {
+                    b.HasOne("XYZ.Domain.Entities.ProgressMetricDefinition", "ProgressMetricDefinition")
+                        .WithMany()
+                        .HasForeignKey("ProgressMetricDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("XYZ.Domain.Entities.ProgressRecord", "ProgressRecord")
+                        .WithMany("Values")
+                        .HasForeignKey("ProgressRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProgressMetricDefinition");
+
+                    b.Navigation("ProgressRecord");
                 });
 
             modelBuilder.Entity("XYZ.Domain.Entities.Student", b =>
@@ -1519,6 +1637,11 @@ namespace XYZ.Application.Data.Migrations
             modelBuilder.Entity("XYZ.Domain.Entities.PaymentPlan", b =>
                 {
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("XYZ.Domain.Entities.ProgressRecord", b =>
+                {
+                    b.Navigation("Values");
                 });
 
             modelBuilder.Entity("XYZ.Domain.Entities.Student", b =>

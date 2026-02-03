@@ -34,6 +34,7 @@ using XYZ.Application.Features.Payments.Queries.GetPaymentById;
 using XYZ.Application.Features.Payments.Queries.GetPayments;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
+using XYZ.Application.Features.ProgressMetricDefinitions.Queries;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById;
@@ -309,8 +310,9 @@ namespace XYZ.Web.Services
         // === ProgressRecords ===
         Task<IList<ProgressRecordListItemDto>> GetStudentProgressRecordsAsync(
             int studentId,
-            DateTime? from,
-            DateTime? to,
+            DateOnly? from,
+            DateOnly? to,
+            int? branchId,
             CancellationToken cancellationToken = default);
 
         Task<ProgressRecordDetailDto?> GetProgressRecordAsync(
@@ -329,6 +331,26 @@ namespace XYZ.Web.Services
         Task<int> DeleteProgressRecordAsync(
             int id,
             CancellationToken cancellationToken = default);
+
+        // === ProgressMetricDefinitions ===
+        Task<IList<ProgressMetricDefinitionListItemDto>> GetProgressMetricDefinitionsAsync(
+            int branchId,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default);
+
+        Task<int> CreateProgressMetricDefinitionAsync(
+            XYZ.Application.Features.ProgressMetricDefinitions.Commands.CreateProgressMetricDefinition.CreateProgressMetricDefinitionCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> UpdateProgressMetricDefinitionAsync(
+            int id,
+            XYZ.Application.Features.ProgressMetricDefinitions.Commands.UpdateProgressMetricDefinition.UpdateProgressMetricDefinitionCommand command,
+            CancellationToken cancellationToken = default);
+
+        Task<int> DeleteProgressMetricDefinitionAsync(
+            int id,
+            CancellationToken cancellationToken = default);
+
 
         // === Announcements ===
         Task<PaginationResult<AnnouncementListItemDto>> GetAnnouncementsAsync(

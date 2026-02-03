@@ -12,7 +12,8 @@ namespace XYZ.Application.Features.ProgressRecords.Queries.GetProgressRecordById
     {
         public GetProgressRecordByIdQueryValidator()
         {
-            RuleFor(x => x.Id).GreaterThan(0);
+            RuleFor(x => x.Id)
+                .GreaterThan(0).WithMessage("Undefinied register id.");
         }
     }
 }
