@@ -18,10 +18,12 @@ namespace XYZ.Web.Models.Admins
         [Required(ErrorMessage = ValidationMessages.Required)]
         [EmailAddress(ErrorMessage = ValidationMessages.Email)]
         [Display(Name = "E-posta")]
+        [StringLength(256, ErrorMessage = ValidationMessages.MaxLength)]
         public string Email { get; set; } = string.Empty;
 
         [Phone(ErrorMessage = ValidationMessages.Phone)]
         [Display(Name = "Telefon")]
+        [StringLength(20, ErrorMessage = ValidationMessages.MaxLength)]
         public string? PhoneNumber { get; set; }
 
         [Display(Name = "Kulüp Id (yalnızca SuperAdmin)")]

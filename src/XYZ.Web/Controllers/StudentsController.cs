@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading;
@@ -58,7 +59,7 @@ namespace XYZ.Web.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Coach,SuperAdmin")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             var vm = new StudentCreateViewModel
             {
@@ -66,6 +67,8 @@ namespace XYZ.Web.Controllers
                 Gender = "PreferNotToSay",
                 BloodType = "Unknown"
             };
+
+            await FillClasses(vm, cancellationToken);
 
             return View(vm);
         }
@@ -79,12 +82,14 @@ namespace XYZ.Web.Controllers
         {
             if (!ModelState.IsValid)
             {
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
             if (!model.BirthDate.HasValue)
             {
                 ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
@@ -123,6 +128,7 @@ namespace XYZ.Web.Controllers
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
                 ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
@@ -212,6 +218,8 @@ namespace XYZ.Web.Controllers
                 IsActive = dto.IsActive
             };
 
+            await FillClasses(vm, cancellationToken);
+
             return View(vm);
         }
 
@@ -230,12 +238,14 @@ namespace XYZ.Web.Controllers
 
             if (!ModelState.IsValid)
             {
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
             if (!model.BirthDate.HasValue)
             {
                 ModelState.AddModelError(nameof(model.BirthDate), "Doğum tarihi zorunludur.");
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
@@ -275,6 +285,7 @@ namespace XYZ.Web.Controllers
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
                 ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
+                await FillClasses(model, cancellationToken);
                 return View(model);
             }
 
@@ -302,6 +313,36 @@ namespace XYZ.Web.Controllers
 
             TempData["SuccessMessage"] = "Öğrenci silindi.";
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task FillClasses(StudentCreateViewModel model, CancellationToken ct)
+        {
+            var result = await _apiClient.GetClassesAsync(
+                searchTerm: null,
+                branchId: null,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 200,
+                cancellationToken: ct);
+
+            model.ClassOptions = result.Items
+                .OrderBy(x => x.Name)
+                .ToList();
+        }
+
+        private async Task FillClasses(StudentEditViewModel model, CancellationToken ct)
+        {
+            var result = await _apiClient.GetClassesAsync(
+                searchTerm: null,
+                branchId: null,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 200,
+                cancellationToken: ct);
+
+            model.ClassOptions = result.Items
+                .OrderBy(x => x.Name)
+                .ToList();
         }
     }
 }

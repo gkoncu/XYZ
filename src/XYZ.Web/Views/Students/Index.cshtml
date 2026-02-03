@@ -54,7 +54,6 @@
                         }
                         <th>Sınıf</th>
                         <th>Şube</th>
-                        <th>Durum</th>
                         <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
@@ -62,7 +61,7 @@
                     @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan=@(isSuperAdmin ? 6 : 5) class="text-center text-muted py-4">
+                            <td colspan=@(isSuperAdmin ? 5 : 4) class="text-center text-muted py-4">
                                 Kriterlere uygun öğrenci bulunamadı.
                             </td>
                         </tr>
@@ -104,16 +103,6 @@
                                     else
                                     {
                                         <span class="text-muted small">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (s.IsActive)
-                                    {
-                                        <span class="badge-soft badge-soft-success">Aktif</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge-soft badge-soft-muted">Pasif</span>
                                     }
                                 </td>
                                 <td class="text-end">

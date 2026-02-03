@@ -8,15 +8,15 @@
 </section>
 
 <section class="card-surface">
-    <h2 class="h5 mb-3">Öğrenci Bilgilerini Düzenle</h2>
+    <h2 class="h5 mb-3">Öğrenci Düzenle</h2>
 
-    <form asp-action="Edit" method="post" class="row g-3">
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="row g-3">
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Id" />
 
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
 
-        <!-- Ad Soyad / İletişim -->
+        <input type="hidden" asp-for="Id" />
+
         <div class="col-md-6">
             <label asp-for="FirstName" class="form-label small"></label>
             <input asp-for="FirstName" class="form-control form-control-sm" />
@@ -41,7 +41,6 @@
             <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
         </div>
 
-        <!-- Temel Bilgiler -->
         <div class="col-md-4">
             <label asp-for="BirthDate" class="form-label small"></label>
             <input asp-for="BirthDate" class="form-control form-control-sm" />
@@ -76,7 +75,13 @@
 
         <div class="col-md-4">
             <label asp-for="ClassId" class="form-label small"></label>
-            <input asp-for="ClassId" class="form-control form-control-sm" />
+            <select asp-for="ClassId" class="form-select form-select-sm">
+                <option value="">Henüz atanmadı</option>
+                @foreach (var c in Model.ClassOptions)
+                {
+                    <option value="@c.Id">@c.Name (@c.BranchName)</option>
+                }
+            </select>
             <span asp-validation-for="ClassId" class="text-danger small"></span>
         </div>
 

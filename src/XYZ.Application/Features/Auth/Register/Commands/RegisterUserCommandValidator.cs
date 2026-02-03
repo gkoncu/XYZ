@@ -16,15 +16,18 @@ namespace XYZ.Application.Features.Auth.Register.Commands
         {
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email zorunludur.")
-                .EmailAddress().WithMessage("Geçerli bir email adresi giriniz.");
+                .EmailAddress().WithMessage("Geçerli bir email adresi giriniz.")
+                .MaximumLength(256);
 
             RuleFor(x => x.FirstName)
                 .NotEmpty().WithMessage("Ad zorunludur.")
-                .MaximumLength(100);
+                .MinimumLength(2)
+                .MaximumLength(50);
 
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage("Soyad zorunludur.")
-                .MaximumLength(100);
+                .MinimumLength(2)
+                .MaximumLength(50);
 
             RuleFor(x => x.Role)
                 .NotEmpty().WithMessage("Role zorunludur.")
