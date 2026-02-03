@@ -37,30 +37,24 @@
             </div>
         </div>
     </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+    {
+        <div class="col-12 col-lg-6">
+            <div class="card-surface p-3 h-100">
+                <div class="fw-semibold">Kulüp</div>
 
-    <div class="col-12 col-lg-6">
-        <div class="card-surface p-3 h-100">
-            <div class="fw-semibold">Kulüp</div>
-            <div class="text-muted small mt-1">@Model.TenantName</div>
+                <div class="text-muted small mt-1">@Model.TenantName</div>
 
-            @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
-            {
                 <div class="mt-3 d-flex flex-wrap gap-2">
                     <a asp-controller="Settings" asp-action="Club" class="btn btn-sm btn-outline-primary">Kulüp Ayarları</a>
                     <a asp-controller="DocumentDefinitions" asp-action="Index" class="btn btn-sm btn-outline-secondary">Belge Tanımları</a>
-                    <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Eksik Belgeler</a>
+                    <a asp-controller="Settings" asp-action="ProgressMetrics" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Gelişim Metrikleri</a>
                 </div>
 
                 <div class="text-muted small mt-3">
                     Kulüp ayarlarında tema (renkler/logo) ve uyum (belge gereksinimleri) yönetilir.
                 </div>
-            }
-            else
-            {
-                <div class="text-muted small mt-3">
-                    Kulüp ayarları yalnızca yönetici rolü ile düzenlenebilir.
-                </div>
-            }
+            </div>
         </div>
-    </div>
+    }
 </div>

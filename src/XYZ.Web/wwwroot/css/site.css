@@ -272,7 +272,7 @@ body.app-shell .app-navbar .dropdown-divider {
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: var(--text-muted);
+        /*color: var(--text-muted);*/
         border-bottom-width: 1px;
     }
 

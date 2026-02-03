@@ -1,0 +1,78 @@
+﻿@model XYZ.Web.Models.ProgressMetricDefinitions.ProgressMetricDefinitionEditViewModel
+
+@{
+    ViewData["Title"] = "Metrik Düzenle";
+}
+
+<section class="mb-3">
+    <h2 class="h4 mb-1">Metrik Düzenle</h2>
+    <div class="text-muted small">Şube: <span class="fw-semibold">@Model.BranchName</span></div>
+</section>
+
+<form method="post" class="card-surface p-3">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="BranchId" />
+    <input type="hidden" asp-for="BranchName" />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Metrik Adı</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Veri Tipi</label>
+            <select asp-for="DataType" class="form-select">
+                <option value="Decimal">Ondalıklı sayı</option>
+                <option value="Int">Tam sayı</option>
+                <option value="Text">Metin</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Birim</label>
+            <input asp-for="Unit" class="form-control" placeholder="kg, cm, sn..." />
+            <span asp-validation-for="Unit" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Sıralama</label>
+            <input asp-for="SortOrder" class="form-control" />
+            <span asp-validation-for="SortOrder" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Min</label>
+            <input asp-for="MinValue" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Max</label>
+            <input asp-for="MaxValue" class="form-control" />
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label class="form-check-label">Aktif</label>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-3" />
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary"
+           asp-action="Index" asp-route-branchId="@Model.BranchId" asp-route-includeInactive="true">
+            Geri
+        </a>
+        <button class="btn btn-primary" type="submit">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

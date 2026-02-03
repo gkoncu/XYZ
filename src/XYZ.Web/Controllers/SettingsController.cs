@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Tenants.Commands.UpdateCurrentTenantTheme;
@@ -84,4 +85,55 @@ public sealed class SettingsController : Controller
         return RedirectToAction(nameof(Club));
     }
 
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [HttpGet]
+    public async Task<IActionResult> ProgressMetrics(CancellationToken ct)
+    {
+        var model = new ProgressMetricsSettingsViewModel
+        {
+            BranchOptions = await BuildBranchOptionsAsync(ct)
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ProgressMetrics(ProgressMetricsSettingsViewModel model, CancellationToken ct)
+    {
+        if (model.SelectedBranchId is null || model.SelectedBranchId <= 0)
+        {
+            model.BranchOptions = await BuildBranchOptionsAsync(ct);
+            ModelState.AddModelError(nameof(model.SelectedBranchId), "Lütfen bir şube seçin.");
+            return View(model);
+        }
+
+        return RedirectToAction(
+            actionName: "Index",
+            controllerName: "ProgressMetricDefinitions",
+            routeValues: new { branchId = model.SelectedBranchId.Value });
+    }
+
+    private async Task<List<SelectListItem>> BuildBranchOptionsAsync(CancellationToken ct)
+    {
+        var branches = await _api.GetBranchesAsync(pageNumber: 1, pageSize: 20, ct);
+
+        var list = branches.Items
+            .OrderBy(x => x.Name)
+            .Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name
+            })
+            .ToList();
+
+        list.Insert(0, new SelectListItem
+        {
+            Value = "",
+            Text = "Şube seçiniz..."
+        });
+
+        return list;
+    }
 }

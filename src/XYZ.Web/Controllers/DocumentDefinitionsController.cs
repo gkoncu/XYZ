@@ -44,7 +44,7 @@ namespace XYZ.Web.Controllers
                 Target = target,
                 IsActive = true,
                 IsRequired = true,
-                SortOrder = 100
+                SortOrder = 1
             };
 
             return View(vm);

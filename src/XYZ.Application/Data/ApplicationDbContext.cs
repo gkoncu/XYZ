@@ -8,9 +8,7 @@ namespace XYZ.Application.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-        }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Student> Students => Set<Student>();
@@ -21,7 +19,11 @@ namespace XYZ.Application.Data
         public DbSet<PaymentPlan> PaymentPlans => Set<PaymentPlan>();
         public DbSet<Document> Documents => Set<Document>();
         public DbSet<DocumentDefinition> DocumentDefinitions => Set<DocumentDefinition>();
+
         public DbSet<ProgressRecord> ProgressRecords => Set<ProgressRecord>();
+        public DbSet<ProgressMetricDefinition> ProgressMetricDefinitions => Set<ProgressMetricDefinition>();
+        public DbSet<ProgressRecordValue> ProgressRecordValues => Set<ProgressRecordValue>();
+
         public DbSet<Announcement> Announcements => Set<Announcement>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Admin> Admins => Set<Admin>();
@@ -47,6 +49,8 @@ namespace XYZ.Application.Data
             builder.Entity<Document>().HasQueryFilter(d => d.IsActive);
             builder.Entity<DocumentDefinition>().HasQueryFilter(dd => dd.IsActive);
             builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
+            builder.Entity<ProgressMetricDefinition>().HasQueryFilter(md => md.IsActive);
+            builder.Entity<ProgressRecordValue>().HasQueryFilter(v => v.IsActive);
             builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
             builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
             builder.Entity<Branch>().HasQueryFilter(b => b.IsActive);
@@ -55,11 +59,59 @@ namespace XYZ.Application.Data
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);
             ConfigureOptionalRelationships(builder);
+            ConfigureProgressModels(builder);
+        }
 
-            // TODO : Tenant-based Query Filters (Multi-tenancy)
-            // builder.Entity<Student>().HasQueryFilter(s => s.TenantId == _tenantService.GetCurrentTenantId());
-            // builder.Entity<Coach>().HasQueryFilter(c => c.TenantId == _tenantService.GetCurrentTenantId());
-            // builder.Entity<Class>().HasQueryFilter(c => c.TenantId == _tenantService.GetCurrentTenantId());
+        private void ConfigureProgressModels(ModelBuilder builder)
+        {
+            builder.Entity<ProgressMetricDefinition>(entity =>
+            {
+                entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
+                entity.Property(x => x.Unit).HasMaxLength(32);
+
+                entity.HasOne(x => x.Branch)
+                      .WithMany()
+                      .HasForeignKey(x => x.BranchId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new { x.BranchId, x.Name }).IsUnique();
+            });
+
+            builder.Entity<ProgressRecord>(entity =>
+            {
+                entity.Property(x => x.CreatedByUserId).HasMaxLength(64);
+                entity.Property(x => x.CreatedByDisplayName).HasMaxLength(200);
+
+                entity.HasOne(x => x.Student)
+                      .WithMany(s => s.ProgressRecords)
+                      .HasForeignKey(x => x.StudentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Branch)
+                      .WithMany()
+                      .HasForeignKey(x => x.BranchId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new { x.StudentId, x.BranchId, x.RecordDate });
+                entity.HasIndex(x => new { x.StudentId, x.BranchId, x.RecordDate, x.Sequence }).IsUnique();
+            });
+
+            builder.Entity<ProgressRecordValue>(entity =>
+            {
+                entity.Property(x => x.TextValue).HasMaxLength(500);
+
+                entity.HasOne(x => x.ProgressRecord)
+                      .WithMany(r => r.Values)
+                      .HasForeignKey(x => x.ProgressRecordId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.ProgressMetricDefinition)
+                      .WithMany()
+                      .HasForeignKey(x => x.ProgressMetricDefinitionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new { x.ProgressRecordId, x.ProgressMetricDefinitionId }).IsUnique();
+            });
         }
 
         private void ConfigureCascadeRestrictions(ModelBuilder builder)
@@ -144,18 +196,10 @@ namespace XYZ.Application.Data
                       .HasForeignKey(cs => cs.ClassId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(cs => cs.Title)
-                      .HasMaxLength(200)
-                      .IsRequired();
-
-                entity.Property(cs => cs.Location)
-                      .HasMaxLength(200);
-
-                entity.Property(cs => cs.Description)
-                      .HasMaxLength(2000);
-
-                entity.Property(cs => cs.CoachNote)
-                      .HasMaxLength(2000);
+                entity.Property(cs => cs.Title).HasMaxLength(200).IsRequired();
+                entity.Property(cs => cs.Location).HasMaxLength(200);
+                entity.Property(cs => cs.Description).HasMaxLength(2000);
+                entity.Property(cs => cs.CoachNote).HasMaxLength(2000);
 
                 entity.HasIndex(cs => new { cs.ClassId, cs.Date });
             });
@@ -192,22 +236,10 @@ namespace XYZ.Application.Data
                       .HasForeignKey(a => a.ClassId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(a => a.Note)
-                      .HasMaxLength(1000);
+                entity.Property(a => a.Note).HasMaxLength(1000);
+                entity.Property(a => a.CoachComment).HasMaxLength(2000);
 
-                entity.Property(a => a.CoachComment)
-                      .HasMaxLength(2000);
-
-                entity.HasIndex(a => new { a.ClassSessionId, a.StudentId })
-                      .IsUnique();
-            });
-
-            builder.Entity<ProgressRecord>(entity =>
-            {
-                entity.HasOne(pr => pr.Student)
-                      .WithMany(s => s.ProgressRecords)
-                      .HasForeignKey(pr => pr.StudentId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                entity.HasIndex(a => new { a.ClassSessionId, a.StudentId }).IsUnique();
             });
 
             builder.Entity<Document>(entity =>
@@ -231,7 +263,6 @@ namespace XYZ.Application.Data
                       .WithMany()
                       .HasForeignKey(d => d.DocumentDefinitionId)
                       .OnDelete(DeleteBehavior.Restrict);
-
             });
         }
 
@@ -248,15 +279,15 @@ namespace XYZ.Application.Data
                 entity.Property(pp => pp.TotalAmount).HasPrecision(18, 2);
             });
 
-            builder.Entity<ProgressRecord>(entity =>
+            builder.Entity<ProgressMetricDefinition>(entity =>
             {
-                entity.Property(p => p.Height).HasPrecision(5, 2);
-                entity.Property(p => p.Weight).HasPrecision(5, 2);
-                entity.Property(p => p.BodyFatPercentage).HasPrecision(4, 1);
-                entity.Property(p => p.VerticalJump).HasPrecision(4, 1);
-                entity.Property(p => p.SprintTime).HasPrecision(4, 2);
-                entity.Property(p => p.Endurance).HasPrecision(4, 1);
-                entity.Property(p => p.Flexibility).HasPrecision(4, 1);
+                entity.Property(x => x.MinValue).HasPrecision(18, 4);
+                entity.Property(x => x.MaxValue).HasPrecision(18, 4);
+            });
+
+            builder.Entity<ProgressRecordValue>(entity =>
+            {
+                entity.Property(x => x.DecimalValue).HasPrecision(18, 4);
             });
         }
 
@@ -275,10 +306,7 @@ namespace XYZ.Application.Data
                               .WithMany()
                               .HasForeignKey("ClassId")
                               .OnDelete(DeleteBehavior.Restrict),
-                        j =>
-                        {
-                            j.HasKey("ClassId", "CoachId");
-                        });
+                        j => { j.HasKey("ClassId", "CoachId"); });
 
             builder.Entity<ApplicationUser>(entity =>
             {
@@ -335,8 +363,6 @@ namespace XYZ.Application.Data
                       .OnDelete(DeleteBehavior.Restrict)
                       .IsRequired(false);
             });
-
-
         }
     }
 }

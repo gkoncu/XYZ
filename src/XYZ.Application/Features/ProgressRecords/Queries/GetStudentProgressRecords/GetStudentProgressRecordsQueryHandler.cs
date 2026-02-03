@@ -1,16 +1,10 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 
 namespace XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords
 {
-    public class GetStudentProgressRecordsQueryHandler
-        : IRequestHandler<GetStudentProgressRecordsQuery, IList<ProgressRecordListItemDto>>
+    public class GetStudentProgressRecordsQueryHandler : IRequestHandler<GetStudentProgressRecordsQuery, IList<ProgressRecordListItemDto>>
     {
         private readonly IDataScopeService _dataScope;
 
@@ -19,45 +13,40 @@ namespace XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRec
             _dataScope = dataScope;
         }
 
-        public async Task<IList<ProgressRecordListItemDto>> Handle(
-            GetStudentProgressRecordsQuery request,
-            CancellationToken ct)
+        public async Task<IList<ProgressRecordListItemDto>> Handle(GetStudentProgressRecordsQuery request, CancellationToken ct)
         {
             await _dataScope.EnsureStudentAccessAsync(request.StudentId, ct);
 
-            var query = _dataScope.ProgressRecords()
-                .Where(p => p.StudentId == request.StudentId);
+            var q = _dataScope.ProgressRecords()
+                .Where(r => r.StudentId == request.StudentId)
+                .Include(r => r.Branch)
+                .Include(r => r.Values)
+                .AsQueryable();
+
+            if (request.BranchId.HasValue)
+                q = q.Where(r => r.BranchId == request.BranchId.Value);
 
             if (request.From.HasValue)
-            {
-                query = query.Where(p => p.RecordDate >= request.From.Value);
-            }
+                q = q.Where(r => r.RecordDate >= request.From.Value);
 
             if (request.To.HasValue)
-            {
-                query = query.Where(p => p.RecordDate <= request.To.Value);
-            }
+                q = q.Where(r => r.RecordDate <= request.To.Value);
 
-            var list = await query
-                .OrderByDescending(p => p.RecordDate)
-                .ThenByDescending(p => p.Id)
-                .Select(p => new ProgressRecordListItemDto
+            return await q
+                .OrderByDescending(r => r.RecordDate)
+                .ThenByDescending(r => r.Sequence)
+                .Select(r => new ProgressRecordListItemDto
                 {
-                    Id = p.Id,
-                    RecordDate = p.RecordDate,
-                    Height = p.Height,
-                    Weight = p.Weight,
-                    BodyFatPercentage = p.BodyFatPercentage,
-                    TechnicalScore = p.TechnicalScore,
-                    TacticalScore = p.TacticalScore,
-                    PhysicalScore = p.PhysicalScore,
-                    MentalScore = p.MentalScore,
-                    CoachNotes = p.CoachNotes
+                    Id = r.Id,
+                    BranchId = r.BranchId,
+                    BranchName = r.Branch.Name,
+                    RecordDate = r.RecordDate,
+                    Sequence = r.Sequence,
+                    CreatedByDisplayName = r.CreatedByDisplayName,
+                    FilledMetricsCount = r.Values.Count(v =>
+                        v.DecimalValue != null || v.IntValue != null || v.TextValue != null)
                 })
-                .AsNoTracking()
                 .ToListAsync(ct);
-
-            return list;
         }
     }
 }

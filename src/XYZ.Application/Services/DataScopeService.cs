@@ -25,6 +25,7 @@ public class DataScopeService : IDataScopeService
     public IQueryable<Payment> Payments() => ApplyPaymentScope(_context.Payments);
     public IQueryable<Announcement> Announcements() => ApplyAnnouncementScope(_context.Announcements);
     public IQueryable<PaymentPlan> PaymentPlans() => ApplyPaymentPlanScope(_context.PaymentPlans);
+    public IQueryable<Branch> Branches() => ApplyBranchScope(_context.Branches);
 
     // -------- Composition Helpers --------
     public IQueryable<Student> TenantStudents(int tenantId)
@@ -52,6 +53,9 @@ public class DataScopeService : IDataScopeService
     public async Task<bool> CanAccessDocumentAsync(int documentId, CancellationToken ct = default)
         => await Documents().AnyAsync(d => d.Id == documentId, ct);
 
+    public async Task<bool> CanAccessBranchAsync(int branchId, CancellationToken ct = default)
+        => await Branches().AnyAsync(b => b.Id == branchId, ct);
+
     public async Task EnsureStudentAccessAsync(int studentId, CancellationToken ct = default)
     {
         if (!await CanAccessStudentAsync(studentId, ct))
@@ -64,6 +68,12 @@ public class DataScopeService : IDataScopeService
             throw new UnauthorizedAccessException("Bu sınıfa erişiminiz yok.");
     }
 
+    public async Task EnsureBranchAccessAsync(int branchId, CancellationToken ct = default)
+    {
+        if (!await CanAccessBranchAsync(branchId, ct))
+            throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
+    }
+
     // -------- Inside Scope (Role Based WHERE) --------
     private IQueryable<Student> ApplyStudentScope(IQueryable<Student> q)
     {
@@ -72,31 +82,26 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(s => s.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(s => s.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(s => s.TenantId == tenantId.Value
-                                   && s.Class != null
-                                   && s.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(s => s.TenantId == tenantId.Value
+                               && s.Class != null
+                               && s.Class.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(s => s.Id == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(s => s.Id == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<Class> ApplyClassScope(IQueryable<Class> q)
@@ -106,30 +111,24 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(c => c.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(c => c.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(c => c.TenantId == tenantId.Value
-                                   && c.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(c => c.TenantId == tenantId.Value && c.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(c => c.Students.Any(s => s.Id == studentId.Value))
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(c => c.Students.Any(s => s.Id == studentId.Value))
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<Coach> ApplyCoachScope(IQueryable<Coach> q)
@@ -138,24 +137,46 @@ public class DataScopeService : IDataScopeService
         var tenantId = _current.TenantId;
         var coachId = _current.CoachId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(c => c.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(c => c.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(c => c.TenantId == tenantId.Value && c.Id == coachId.Value)
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(c => c.TenantId == tenantId.Value && c.Id == coachId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
+    }
+
+    private IQueryable<Branch> ApplyBranchScope(IQueryable<Branch> q)
+    {
+        var role = _current.Role;
+        var tenantId = _current.TenantId;
+        var coachId = _current.CoachId;
+
+        return role switch
+        {
+            "SuperAdmin" => q,
+
+            "Admin" => tenantId.HasValue
+                ? q.Where(b => b.TenantId == tenantId.Value)
+                : q.Where(_ => false),
+
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(b => b.TenantId == tenantId.Value && b.Coaches.Any(c => c.Id == coachId.Value))
+                : q.Where(_ => false),
+
+            "Student" => tenantId.HasValue
+                ? q.Where(b => b.TenantId == tenantId.Value)
+                : q.Where(_ => false),
+
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<Document> ApplyDocumentScope(IQueryable<Document> q)
@@ -165,41 +186,33 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(d =>
-                        (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId.Value)
-                        || (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId.Value))
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(d =>
+                    (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId.Value)
+                    || (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId.Value))
+                : q.Where(_ => false),
 
-            case "Coach":
-                if (!tenantId.HasValue || !coachId.HasValue)
-                    return q.Where(_ => false);
-
-                return q.Where(d =>
+            "Coach" => (!tenantId.HasValue || !coachId.HasValue)
+                ? q.Where(_ => false)
+                : q.Where(d =>
                     (d.CoachId != null && d.CoachId == coachId.Value)
                     || (d.StudentId != null
                         && d.Student != null
                         && d.Student.TenantId == tenantId.Value
                         && d.Student.Class != null
-                        && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value)));
+                        && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value))),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(d => d.StudentId != null && d.StudentId == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(d => d.StudentId != null && d.StudentId == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
-
-
 
     private IQueryable<Attendance> ApplyAttendanceScope(IQueryable<Attendance> q)
     {
@@ -208,31 +221,26 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(a => a.Student.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(a => a.Student.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(a => a.Student.TenantId == tenantId.Value
-                                   && a.Student.Class != null
-                                   && a.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(a => a.Student.TenantId == tenantId.Value
+                               && a.Student.Class != null
+                               && a.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(a => a.StudentId == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(a => a.StudentId == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<ProgressRecord> ApplyProgressScope(IQueryable<ProgressRecord> q)
@@ -242,31 +250,26 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(p => p.Student.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(p => p.Student.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(p => p.Student.TenantId == tenantId.Value
-                                   && p.Student.Class != null
-                                   && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(p => p.Student.TenantId == tenantId.Value
+                               && p.Student.Class != null
+                               && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(p => p.StudentId == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(p => p.StudentId == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<Payment> ApplyPaymentScope(IQueryable<Payment> q)
@@ -276,31 +279,26 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(p => p.Student.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(p => p.Student.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(p => p.Student.TenantId == tenantId.Value
-                                   && p.Student.Class != null
-                                   && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(p => p.Student.TenantId == tenantId.Value
+                               && p.Student.Class != null
+                               && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(p => p.StudentId == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(p => p.StudentId == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 
     private IQueryable<Announcement> ApplyAnnouncementScope(IQueryable<Announcement> q)
@@ -310,31 +308,27 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(a => a.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(a => a.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(a => a.TenantId == tenantId.Value
-                                   && (a.ClassId == null || a.Class.Coaches.Any(co => co.Id == coachId.Value)))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(a => a.TenantId == tenantId.Value
+                               && (a.ClassId == null || a.Class.Coaches.Any(co => co.Id == coachId.Value)))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(a => a.ClassId == null || a.Class.Students.Any(s => s.Id == studentId.Value))
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(a => a.ClassId == null || a.Class.Students.Any(s => s.Id == studentId.Value))
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
+
     private IQueryable<PaymentPlan> ApplyPaymentPlanScope(IQueryable<PaymentPlan> q)
     {
         var role = _current.Role;
@@ -342,30 +336,25 @@ public class DataScopeService : IDataScopeService
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
-        switch (role)
+        return role switch
         {
-            case "SuperAdmin":
-                return q;
+            "SuperAdmin" => q,
 
-            case "Admin":
-                return tenantId.HasValue
-                    ? q.Where(pp => pp.Student.TenantId == tenantId.Value)
-                    : q.Where(_ => false);
+            "Admin" => tenantId.HasValue
+                ? q.Where(pp => pp.Student.TenantId == tenantId.Value)
+                : q.Where(_ => false),
 
-            case "Coach":
-                return (tenantId.HasValue && coachId.HasValue)
-                    ? q.Where(pp => pp.Student.TenantId == tenantId.Value
-                                    && pp.Student.Class != null
-                                    && pp.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
-                    : q.Where(_ => false);
+            "Coach" => (tenantId.HasValue && coachId.HasValue)
+                ? q.Where(pp => pp.Student.TenantId == tenantId.Value
+                                && pp.Student.Class != null
+                                && pp.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
+                : q.Where(_ => false),
 
-            case "Student":
-                return studentId.HasValue
-                    ? q.Where(pp => pp.StudentId == studentId.Value)
-                    : q.Where(_ => false);
+            "Student" => studentId.HasValue
+                ? q.Where(pp => pp.StudentId == studentId.Value)
+                : q.Where(_ => false),
 
-            default:
-                return q.Where(_ => false);
-        }
+            _ => q.Where(_ => false)
+        };
     }
 }

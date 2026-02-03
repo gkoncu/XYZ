@@ -1,0 +1,121 @@
+﻿@model XYZ.Web.Models.ProgressMetricDefinitions.ProgressMetricDefinitionsIndexViewModel
+
+@{
+    ViewData["Title"] = "Gelişim Metrikleri";
+}
+
+<section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+        <h2 class="h4 mb-1">Gelişim Metrikleri</h2>
+        <div class="small text-muted">
+            Şube: <span>@Model.BranchName</span> · ID: @Model.BranchId
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-sm btn-outline-secondary"
+           asp-controller="Branches" asp-action="Details" asp-route-id="@Model.BranchId">
+            Şube Detayı
+        </a>
+
+        <a class="btn btn-sm btn-primary"
+           asp-action="Create" asp-route-branchId="@Model.BranchId">
+            + Yeni Metrik
+        </a>
+    </div>
+</section>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success py-2 small">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger py-2 small">@err</div>
+}
+
+<section class="card-surface p-3">
+    <form method="get" class="d-flex gap-2 align-items-center mb-3">
+        <input type="hidden" name="branchId" value="@Model.BranchId" />
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="inc" name="includeInactive" value="true"
+                   @(Model.IncludeInactive ? "checked" : "") />
+            <label class="form-check-label small" for="inc">Pasifleri göster</label>
+        </div>
+
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Uygula</button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle table-modern">
+            <thead>
+                <tr class="small">
+                    <th style="width:80px;">Sıra</th>
+                    <th>Ad</th>
+                    <th style="width:120px;">Tip</th>
+                    <th style="width:120px;">Birim</th>
+                    <th style="width:90px;">Min</th>
+                    <th style="width:90px;">Max</th>
+                    <th style="width:110px;">Durum</th>
+                    <th class="text-end" style="width:180px;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="small">
+                            Bu şube için metrik tanımı yok.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var x in Model.Items)
+                    {
+                        <tr>
+                            <td>@x.SortOrder</td>
+                            <td>@x.Name</td>
+                            <td class="small">@x.DataType</td>
+                            <td class="small">@(!string.IsNullOrWhiteSpace(x.Unit) ? x.Unit : "-")</td>
+                            <td class="small">
+                                @(x.MinValue.HasValue ? x.MinValue.Value.ToString("0.00") : "-")
+                            </td>
+                            <td class="small">
+                                @(x.MaxValue.HasValue ? x.MaxValue.Value.ToString("0.00") : "-")
+                            </td>
+
+                            <td>
+                                @if (x.IsActive)
+                                {
+                                    <span class="badge-soft badge-soft-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft badge-soft-muted">Pasif</span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-action="Edit" asp-route-id="@x.Id" asp-route-branchId="@Model.BranchId">
+                                    Düzenle
+                                </a>
+
+                                <form asp-action="Delete" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@x.Id" />
+                                    <input type="hidden" name="branchId" value="@Model.BranchId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Metrik silinsin mi?');">
+                                        Sil
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

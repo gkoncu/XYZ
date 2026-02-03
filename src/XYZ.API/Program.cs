@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Globalization;
 using System.Text;
+using XYZ.API.Dev;
 using XYZ.API.HostedServices;
 using XYZ.API.Services.Auth;
 using XYZ.API.Services.Email;
@@ -144,6 +145,7 @@ builder.Services.AddSwaggerGen(c =>
             Type = ReferenceType.SecurityScheme
         }
     };
+    c.CustomSchemaIds(type => type.FullName);
     c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -158,7 +160,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //await DevIdentitySeeder.RunAsync(app.Services);
+    await DevIdentitySeeder.RunAsync(app.Services);
 }
 
 app.UseAuthentication();

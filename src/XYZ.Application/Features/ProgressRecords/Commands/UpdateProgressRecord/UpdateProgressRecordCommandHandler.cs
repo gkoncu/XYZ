@@ -1,30 +1,21 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
 {
-    public class UpdateProgressRecordCommandHandler
-        : IRequestHandler<UpdateProgressRecordCommand, int>
+    public class UpdateProgressRecordCommandHandler : IRequestHandler<UpdateProgressRecordCommand, int>
     {
-        private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
+        private readonly IDataScopeService _dataScope;
         private readonly ICurrentUserService _current;
 
-        public UpdateProgressRecordCommandHandler(
-            IDataScopeService dataScope,
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public UpdateProgressRecordCommandHandler(IApplicationDbContext context, IDataScopeService dataScope, ICurrentUserService current)
         {
-            _dataScope = dataScope;
             _context = context;
-            _current = currentUser;
+            _dataScope = dataScope;
+            _current = current;
         }
 
         public async Task<int> Handle(UpdateProgressRecordCommand request, CancellationToken ct)
@@ -33,39 +24,82 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
             if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
                 throw new UnauthorizedAccessException("Gelişim kaydı güncelleme yetkiniz yok.");
 
-            var entity = await _dataScope.ProgressRecords()
-                .FirstOrDefaultAsync(p => p.Id == request.Id, ct);
+            var record = await _dataScope.ProgressRecords()
+                .Include(r => r.Values)
+                .FirstOrDefaultAsync(r => r.Id == request.Id, ct);
 
-            if (entity is null)
-                throw new NotFoundException("ProgressRecord", request.Id);
+            if (record is null)
+                throw new KeyNotFoundException("Gelişim kaydı bulunamadı.");
 
-            entity.RecordDate = request.RecordDate == default
-                ? entity.RecordDate
-                : request.RecordDate;
+            await _dataScope.EnsureBranchAccessAsync(record.BranchId, ct);
 
-            entity.Height = request.Height;
-            entity.Weight = request.Weight;
-            entity.BodyFatPercentage = request.BodyFatPercentage;
-            entity.VerticalJump = request.VerticalJump;
-            entity.SprintTime = request.SprintTime;
-            entity.Endurance = request.Endurance;
-            entity.Flexibility = request.Flexibility;
+            var defs = await _context.ProgressMetricDefinitions
+                .Where(d => d.BranchId == record.BranchId && d.IsActive)
+                .ToListAsync(ct);
 
-            entity.TechnicalScore = request.TechnicalScore;
-            entity.TacticalScore = request.TacticalScore;
-            entity.PhysicalScore = request.PhysicalScore;
-            entity.MentalScore = request.MentalScore;
+            if (defs.Count == 0)
+                throw new InvalidOperationException("Bu branş için gelişim metrikleri tanımlanmamış.");
 
-            entity.CoachNotes = request.CoachNotes;
-            entity.Goals = request.Goals;
+            var defsById = defs.ToDictionary(d => d.Id);
 
-            if (request.IsActive.HasValue)
-                entity.IsActive = request.IsActive.Value;
+            record.CoachNotes = request.CoachNotes;
+            record.Goals = request.Goals;
+            record.UpdatedAt = DateTime.UtcNow;
 
-            entity.UpdatedAt = DateTime.UtcNow;
+            _context.ProgressRecordValues.RemoveRange(record.Values);
+            record.Values.Clear();
+
+            foreach (var input in request.Values)
+            {
+                if (!defsById.TryGetValue(input.ProgressMetricDefinitionId, out var def))
+                    throw new InvalidOperationException("Seçilen metrik bu branşa ait değil veya pasif.");
+
+                if (!IsValueCompatible(def.DataType, input))
+                    throw new InvalidOperationException($"'{def.Name}' metriği için girilen değer tipi hatalı.");
+
+                if (def.DataType is ProgressMetricDataType.Decimal or ProgressMetricDataType.Int)
+                {
+                    var numeric = def.DataType == ProgressMetricDataType.Decimal
+                        ? input.DecimalValue
+                        : (input.IntValue.HasValue ? (decimal?)input.IntValue.Value : null);
+
+                    if (numeric.HasValue)
+                    {
+                        if (def.MinValue.HasValue && numeric.Value < def.MinValue.Value)
+                            throw new InvalidOperationException($"'{def.Name}' için değer en az {def.MinValue} olmalıdır.");
+
+                        if (def.MaxValue.HasValue && numeric.Value > def.MaxValue.Value)
+                            throw new InvalidOperationException($"'{def.Name}' için değer en fazla {def.MaxValue} olmalıdır.");
+                    }
+                }
+
+                if (input.DecimalValue is null && input.IntValue is null && string.IsNullOrWhiteSpace(input.TextValue))
+                    continue;
+
+                record.Values.Add(new XYZ.Domain.Entities.ProgressRecordValue
+                {
+                    ProgressMetricDefinitionId = def.Id,
+                    DecimalValue = input.DecimalValue,
+                    IntValue = input.IntValue,
+                    TextValue = string.IsNullOrWhiteSpace(input.TextValue) ? null : input.TextValue.Trim(),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                });
+            }
 
             await _context.SaveChangesAsync(ct);
-            return entity.Id;
+            return record.Id;
+        }
+
+        private bool IsValueCompatible(ProgressMetricDataType type, MetricValueInput input)
+        {
+            return type switch
+            {
+                ProgressMetricDataType.Decimal => input.IntValue is null && string.IsNullOrWhiteSpace(input.TextValue),
+                ProgressMetricDataType.Int => input.DecimalValue is null && string.IsNullOrWhiteSpace(input.TextValue),
+                ProgressMetricDataType.Text => input.DecimalValue is null && input.IntValue is null,
+                _ => false
+            };
         }
     }
 }

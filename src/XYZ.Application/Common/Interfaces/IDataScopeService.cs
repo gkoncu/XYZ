@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XYZ.Domain.Entities;
+﻿using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Common.Interfaces
 {
@@ -17,8 +12,10 @@ namespace XYZ.Application.Common.Interfaces
         IQueryable<ProgressRecord> ProgressRecords();
         IQueryable<Payment> Payments();
         IQueryable<PaymentPlan> PaymentPlans();
-        IQueryable<PaymentPlan> StudentPaymentPlans(int studentId);
         IQueryable<Announcement> Announcements();
+        IQueryable<Branch> Branches();
+
+        IQueryable<PaymentPlan> StudentPaymentPlans(int studentId);
 
         IQueryable<Student> TenantStudents(int tenantId);
         IQueryable<Student> ClassStudents(int classId);
@@ -28,8 +25,10 @@ namespace XYZ.Application.Common.Interfaces
         Task<bool> CanAccessStudentAsync(int studentId, CancellationToken ct = default);
         Task<bool> CanAccessClassAsync(int classId, CancellationToken ct = default);
         Task<bool> CanAccessDocumentAsync(int documentId, CancellationToken ct = default);
+        Task<bool> CanAccessBranchAsync(int branchId, CancellationToken ct = default);
 
         Task EnsureStudentAccessAsync(int studentId, CancellationToken ct = default);
         Task EnsureClassAccessAsync(int classId, CancellationToken ct = default);
+        Task EnsureBranchAccessAsync(int branchId, CancellationToken ct = default);
     }
 }

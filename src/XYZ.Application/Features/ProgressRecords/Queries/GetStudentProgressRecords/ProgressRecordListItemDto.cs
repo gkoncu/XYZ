@@ -9,17 +9,13 @@ namespace XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRec
     public class ProgressRecordListItemDto
     {
         public int Id { get; set; }
-        public DateTime RecordDate { get; set; }
+        public int BranchId { get; set; }
+        public string? BranchName { get; set; }
 
-        public decimal? Height { get; set; }
-        public decimal? Weight { get; set; }
-        public decimal? BodyFatPercentage { get; set; }
+        public DateOnly RecordDate { get; set; }
+        public int Sequence { get; set; }
 
-        public int? TechnicalScore { get; set; }
-        public int? TacticalScore { get; set; }
-        public int? PhysicalScore { get; set; }
-        public int? MentalScore { get; set; }
-
-        public string? CoachNotes { get; set; }
+        public string? CreatedByDisplayName { get; set; }
+        public int FilledMetricsCount { get; set; }
     }
 }
