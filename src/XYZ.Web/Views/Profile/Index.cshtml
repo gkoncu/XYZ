@@ -83,7 +83,7 @@
                      style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
                     @if (hasPhoto)
                     {
-                        <img src="@p.ProfilePictureUrl" alt="Profil Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
+                        <img src="@ViewData["ProfilePictureUrl"] as string" alt="Profil Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
                     }
                     else
                     {

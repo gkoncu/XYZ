@@ -30,7 +30,9 @@
 
     var initials = (User?.Identity?.IsAuthenticated ?? false) ? BuildInitials(displayName) : "?";
 
-    var profilePictureUrl = ViewData["ProfilePictureUrl"] as string;
+    var profilePictureUrl =
+    (ViewData["ProfilePictureUrl"] as string)
+    ?? Context.Request.Cookies["xyz_pp_url"];
 }
 
 <!DOCTYPE html>
