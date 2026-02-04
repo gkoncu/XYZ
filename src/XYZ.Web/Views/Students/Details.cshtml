@@ -1,4 +1,5 @@
 ﻿@model StudentDetailDto
+@inject IConfiguration Config
 @{
     ViewData["Title"] = "Öğrenci Detayı";
 
@@ -24,6 +25,37 @@
         _ => string.IsNullOrWhiteSpace(value) ? "-" : value
     };
 
+    string BuildInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Take(2)
+                        .ToArray();
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+        return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+    }
+
+    string? NormalizeAssetUrl(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return raw;
+
+        var baseUrl = (Config["Api:BaseUrl"] ?? string.Empty);
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var apiUri))
+            return raw;
+
+        var origin = apiUri.GetLeftPart(UriPartial.Authority);
+        if (!raw.StartsWith("/")) raw = "/" + raw;
+
+        return $"{origin}{raw}?v={DateTime.UtcNow.Ticks}";
+    }
+
+    var initials = BuildInitials(Model.FullName ?? "");
+    var profilePictureUrl = NormalizeAssetUrl(Model.ProfilePictureUrl);
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
+
     var canManageStudent = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin");
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 }
@@ -32,7 +64,6 @@
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Öğrenci listesine dön</a>
 </section>
 
-@* Mobil-first: Hızlı işlemler *@
 @if (canManageStudent)
 {
     <section class="card-surface mb-3 d-md-none">
@@ -40,58 +71,22 @@
             <div class="fw-semibold mb-2">Hızlı İşlemler</div>
 
             <div class="d-grid gap-2">
-                <a asp-controller="Attendance"
-                   asp-action="List"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Yoklama Geçmişi
-                </a>
-
-                <a asp-controller="Documents"
-                   asp-action="Student"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Belgeler
-                </a>
-
-                <a asp-controller="Payments"
-                   asp-action="Index"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Aidatlar
-                </a>
-
-                <a asp-controller="PaymentPlans"
-                   asp-action="Student"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Aidat Planı
-                </a>
-
-                <a asp-controller="ProgressRecords"
-                   asp-action="Student"
-                   asp-route-studentId="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Gelişim Kayıtları
-                </a>
+                <a asp-controller="Attendance" asp-action="List" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Yoklama Geçmişi</a>
+                <a asp-controller="Documents" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Belgeler</a>
+                <a asp-controller="Payments" asp-action="Index" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Aidatlar</a>
+                <a asp-controller="PaymentPlans" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Aidat Planı</a>
+                <a asp-controller="ProgressRecords" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Gelişim Kayıtları</a>
             </div>
 
             @if (isAdmin)
             {
                 <hr class="my-3" />
                 <div class="d-grid gap-2">
-                    <a asp-action="Edit"
-                       asp-route-id="@Model.Id"
-                       class="btn btn-outline-secondary">
-                        Düzenle
-                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Düzenle</a>
 
-                    <form asp-action="Delete"
-                          asp-route-id="@Model.Id"
-                          method="post">
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
                         @Html.AntiForgeryToken()
-                        <button type="submit"
-                                class="btn btn-outline-danger w-100"
+                        <button type="submit" class="btn btn-outline-danger w-100"
                                 onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
                             Sil
                         </button>
@@ -103,17 +98,30 @@
 }
 
 <section class="detail-grid">
-    <!-- LEFT: Öğrenci Bilgileri -->
     <div class="card-surface">
         <h2 class="h5 mb-3">Öğrenci Bilgileri</h2>
 
-        <div class="mb-3">
-            <div class="fw-semibold fs-5">@Model.FullName</div>
-            <div class="small text-muted">@Model.Email</div>
-            @if (!string.IsNullOrWhiteSpace(Model.PhoneNumber))
-            {
-                <div class="small text-muted">@Model.PhoneNumber</div>
-            }
+        <div class="d-flex align-items-start gap-3 mb-3">
+            <div class="rounded-circle border d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
+                @if (hasPhoto)
+                {
+                    <img src="@profilePictureUrl" alt="Profil Fotoğrafı" style="width:100%;height:100%;object-fit:cover;" />
+                }
+                else
+                {
+                    <span class="fw-semibold" style="font-size:22px; letter-spacing:.5px;">@initials</span>
+                }
+            </div>
+
+            <div class="flex-grow-1">
+                <div class="fw-semibold fs-5">@Model.FullName</div>
+                <div class="small text-muted">@Model.Email</div>
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneNumber))
+                {
+                    <div class="small text-muted">@Model.PhoneNumber</div>
+                }
+            </div>
         </div>
 
         <div class="row g-3 mb-3">
@@ -196,7 +204,6 @@
         }
     </div>
 
-    <!-- RIGHT: Hızlı İşlemler + Özet -->
     <div class="vstack gap-3">
         @if (canManageStudent)
         {
@@ -204,73 +211,28 @@
                 <h2 class="h6 mb-3">Hızlı İşlemler</h2>
 
                 <div class="d-grid gap-2">
-                    <a asp-controller="Attendance"
-                       asp-action="List"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-outline-primary">
-                        Yoklama Geçmişi
-                    </a>
-
-                    <a asp-controller="Documents"
-                       asp-action="Student"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-outline-primary">
-                        Belgeler
-                    </a>
-
-                    <a asp-controller="Payments"
-                       asp-action="Index"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-outline-primary">
-                        Aidatlar
-                    </a>
+                    <a asp-controller="Attendance" asp-action="List" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Yoklama Geçmişi</a>
+                    <a asp-controller="Documents" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Belgeler</a>
+                    <a asp-controller="Payments" asp-action="Index" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Aidatlar</a>
 
                     <div class="d-flex gap-2">
-                        <a asp-controller="Payments"
-                           asp-action="Index"
-                           asp-route-studentId="@Model.Id"
-                           asp-route-status="Pending"
-                           class="btn btn-outline-secondary w-100">
-                            Beklemede
-                        </a>
-                        <a asp-controller="Payments"
-                           asp-action="Index"
-                           asp-route-studentId="@Model.Id"
-                           asp-route-status="Overdue"
-                           class="btn btn-outline-secondary w-100">
-                            Gecikmiş
-                        </a>
+                        <a asp-controller="Payments" asp-action="Index" asp-route-studentId="@Model.Id" asp-route-status="Pending" class="btn btn-outline-secondary w-100">Beklemede</a>
+                        <a asp-controller="Payments" asp-action="Index" asp-route-studentId="@Model.Id" asp-route-status="Overdue" class="btn btn-outline-secondary w-100">Gecikmiş</a>
                     </div>
 
-                    <a asp-controller="PaymentPlans"
-                       asp-action="Student"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-outline-primary">
-                        Aidat Planı
-                    </a>
-
-                    <a asp-controller="ProgressRecords"
-                       asp-action="Student"
-                       asp-route-studentId="@Model.Id"
-                       class="btn btn-outline-primary">
-                        Gelişim Kayıtları
-                    </a>
+                    <a asp-controller="PaymentPlans" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Aidat Planı</a>
+                    <a asp-controller="ProgressRecords" asp-action="Student" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">Gelişim Kayıtları</a>
                 </div>
 
                 @if (isAdmin)
                 {
                     <hr class="my-3" />
                     <div class="d-grid gap-2">
-                        <a asp-action="Edit"
-                           asp-route-id="@Model.Id"
-                           class="btn btn-outline-secondary">
-                            Düzenle
-                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Düzenle</a>
 
                         <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
                             @Html.AntiForgeryToken()
-                            <button type="submit"
-                                    class="btn btn-outline-danger w-100"
+                            <button type="submit" class="btn btn-outline-danger w-100"
                                     onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
                                 Sil
                             </button>
@@ -298,7 +260,6 @@
 
 @if (isAdmin)
 {
-    <!-- Mobile sticky action bar (admin only) -->
     <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
         <div class="container-fluid py-2">
             <div class="d-flex gap-2">
@@ -306,8 +267,7 @@
 
                 <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="flex-fill">
                     @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn btn-outline-danger w-100"
+                    <button type="submit" class="btn btn-outline-danger w-100"
                             onclick="return confirm('Bu öğrenciyi silmek istediğinize emin misiniz?');">
                         Sil
                     </button>

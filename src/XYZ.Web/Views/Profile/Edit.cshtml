@@ -109,13 +109,26 @@
                     }
                 </div>
 
-                <form asp-action="UploadPicture" method="post" enctype="multipart/form-data" class="flex-grow-1">
-                    @Html.AntiForgeryToken()
-                    <input type="file" name="file" class="form-control form-control-sm" accept="image/*" />
-                    <button type="submit" class="btn btn-sm btn-primary mt-2">
-                        Fotoğraf Yükle
-                    </button>
-                </form>
+                <div class="flex-grow-1">
+                    <form asp-action="UploadPicture" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="file" name="file" class="form-control form-control-sm" accept="image/*" />
+                        <button type="submit" class="btn btn-sm btn-primary mt-2">
+                            Fotoğraf Yükle
+                        </button>
+                    </form>
+
+                    @if (hasPhoto)
+                    {
+                        <form asp-action="DeletePicture" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Profil fotoğrafı silinsin mi?');">
+                                Fotoğrafı Sil
+                            </button>
+                        </form>
+                    }
+                </div>
             </div>
         </div>
     </div>

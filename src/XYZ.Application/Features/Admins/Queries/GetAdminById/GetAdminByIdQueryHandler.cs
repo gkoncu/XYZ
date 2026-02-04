@@ -61,6 +61,7 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
                 PhoneNumber = admin.User.PhoneNumber,
                 TenantId = admin.TenantId,
                 TenantName = admin.Tenant.Name,
+                ProfilePictureUrl = admin.User.ProfilePictureUrl,
                 IdentityNumber = admin.IdentityNumber ?? string.Empty,
                 CanManageUsers = admin.CanManageUsers,
                 CanManageFinance = admin.CanManageFinance,

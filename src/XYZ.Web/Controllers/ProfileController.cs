@@ -136,6 +136,23 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Edit));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeletePicture(CancellationToken ct)
+        {
+            var ok = await _api.DeleteMyProfilePictureAsync(ct);
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = "Profil fotoğrafı silinirken bir hata oluştu.";
+                return RedirectToAction(nameof(Edit));
+            }
+
+            Response.Cookies.Delete(XYZ.Web.Common.WebCookieNames.ProfilePictureUrl);
+
+            TempData["SuccessMessage"] = "Profil fotoğrafı silindi.";
+            return RedirectToAction(nameof(Edit));
+        }
+
         private string? NormalizeAssetUrl(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw))

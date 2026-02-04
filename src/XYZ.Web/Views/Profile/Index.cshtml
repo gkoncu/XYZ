@@ -7,7 +7,8 @@
     var p = Model.Profile;
     var role = p.Role ?? "";
 
-    var hasPhoto = !string.IsNullOrWhiteSpace(p.ProfilePictureUrl);
+    var profilePictureUrl = ViewData["ProfilePictureUrl"] as string;
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
 
     string RoleLabel(string r) => r switch
     {
@@ -83,7 +84,7 @@
                      style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
                     @if (hasPhoto)
                     {
-                        <img src="@ViewData["ProfilePictureUrl"] as string" alt="Profil Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
+                        <img src="@profilePictureUrl" alt="Profil Fotoğrafı" Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
                     }
                     else
                     {

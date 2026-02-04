@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.Profile.Commands.ChangeMyPassword;
+using XYZ.Application.Features.Profile.Commands.DeleteMyProfilePicture;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Commands.UploadMyProfilePicture;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
@@ -66,6 +67,13 @@ public sealed class ProfileController : ControllerBase
         {
             return BadRequest(new { error = "Geçersiz dosya türü." });
         }
+    }
+
+    [HttpDelete("me/picture")]
+    public async Task<IActionResult> DeleteMyProfilePicture(CancellationToken ct)
+    {
+        await _mediator.Send(new DeleteMyProfilePictureCommand(), ct);
+        return NoContent();
     }
 
     [HttpPost("me/password")]

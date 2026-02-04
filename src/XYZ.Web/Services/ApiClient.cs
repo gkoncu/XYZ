@@ -1269,25 +1269,34 @@ namespace XYZ.Web.Services
             CancellationToken cancellationToken = default)
         {
             using var content = new MultipartFormDataContent();
-
-            var fileContent = new StreamContent(fileStream);
+            using var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
             content.Add(fileContent, "file", fileName);
 
             var resp = await _httpClient.PostAsync("profile/me/picture", content, cancellationToken);
             if (!resp.IsSuccessStatusCode) return null;
 
-            var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+            try
+            {
+                using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-            if (string.IsNullOrWhiteSpace(raw))
+                if (doc.RootElement.TryGetProperty("url", out var urlProp))
+                    return urlProp.GetString();
+
                 return null;
-
-            raw = raw.Trim();
-            if (raw.Length >= 2 && raw[0] == '"' && raw[^1] == '"')
-                raw = raw[1..^1];
-
-            return raw;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
+        public async Task<bool> DeleteMyProfilePictureAsync(CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync("profile/me/picture", cancellationToken);
+            return resp.IsSuccessStatusCode;
+        }
 
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {

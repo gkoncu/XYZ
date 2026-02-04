@@ -40,6 +40,7 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
 
                     TenantId = s.TenantId,
 
+                    ProfilePictureUrl = s.User.ProfilePictureUrl,
                     ClassId = s.ClassId,
                     ClassName = s.Class != null ? s.Class.Name : null,
                     BranchId = s.Class != null ? (int?)s.Class.BranchId : null,

@@ -35,6 +35,7 @@ namespace XYZ.Application.Features.Coaches.Queries.GetCoachById
                     Email = c.User.Email ?? string.Empty,
                     PhoneNumber = c.User.PhoneNumber,
 
+                    ProfilePictureUrl = c.User.ProfilePictureUrl,
                     Gender = c.User.Gender.ToString(),
                     BloodType = c.User.BloodType.ToString(),
                     BirthDate = c.User.BirthDate,
