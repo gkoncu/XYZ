@@ -30,22 +30,6 @@ namespace XYZ.Web.Controllers
 
             ViewData["ProfilePictureUrl"] = NormalizeAssetUrl(dto.ProfilePictureUrl);
 
-            var pp = ViewData["ProfilePictureUrl"] as string;
-            if (!string.IsNullOrWhiteSpace(pp))
-            {
-                Response.Cookies.Append(
-                    XYZ.Web.Common.WebCookieNames.ProfilePictureUrl,
-                    pp,
-                    new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddDays(7),
-                        HttpOnly = false,
-                        Secure = true,
-                        SameSite = SameSiteMode.Lax,
-                        IsEssential = true
-                    });
-            }
-
             var initials = BuildInitials($"{dto.FirstName} {dto.LastName}".Trim());
 
             var model = new ProfileViewModel
@@ -64,22 +48,6 @@ namespace XYZ.Web.Controllers
             if (dto is null) return RedirectToAction("Login", "Account");
 
             ViewData["ProfilePictureUrl"] = NormalizeAssetUrl(dto.ProfilePictureUrl);
-
-            var pp = ViewData["ProfilePictureUrl"] as string;
-            if (!string.IsNullOrWhiteSpace(pp))
-            {
-                Response.Cookies.Append(
-                    XYZ.Web.Common.WebCookieNames.ProfilePictureUrl,
-                    pp,
-                    new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddDays(7),
-                        HttpOnly = false,
-                        Secure = true,
-                        SameSite = SameSiteMode.Lax,
-                        IsEssential = true
-                    });
-            }
 
             var vm = new ProfileEditViewModel
             {
