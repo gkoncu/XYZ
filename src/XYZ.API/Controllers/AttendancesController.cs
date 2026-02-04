@@ -83,15 +83,31 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("list")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(PaginationResult<AttendanceListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<AttendanceListItemDto>>> GetList(
-    [FromQuery] GetAttendanceListQuery query,
-    CancellationToken cancellationToken)
+            [FromQuery] GetAttendanceListQuery query,
+            CancellationToken cancellationToken)
         {
+            if (User.IsInRole("Student"))
+            {
+                if (!_current.StudentId.HasValue)
+                {
+                    return Forbid();
+                }
+
+                var myStudentId = _current.StudentId.Value;
+
+                if (query.StudentId.HasValue && query.StudentId.Value != myStudentId)
+                {
+                    return Forbid();
+                }
+
+                query.StudentId = myStudentId;
+            }
+
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }
-
     }
 }

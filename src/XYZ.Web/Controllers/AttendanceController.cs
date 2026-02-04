@@ -16,7 +16,7 @@ using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize]
     public class AttendanceController : Controller
     {
         private readonly IApiClient _apiClient;
@@ -31,10 +31,10 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [Obsolete("Use ClassSession Detail Screen for Navigate to Attendance")]
         public async Task<IActionResult> Index(string? date, CancellationToken ct)
         {
-
             var d = DateOnly.TryParse(date, out var parsed)
                 ? parsed
                 : DateOnly.FromDateTime(DateTime.Today);
@@ -45,200 +45,106 @@ namespace XYZ.Web.Controllers
                 actionName: "Index",
                 controllerName: "ClassSessions",
                 routeValues: new { from = dStr, to = dStr });
-            //    try
-            //    {
-            //        var path = "attendances/today-sessions";
+        }
 
-            //        if (!string.IsNullOrWhiteSpace(date))
-            //        {
-            //            path += $"?date={WebUtility.UrlEncode(date)}";
-            //        }
+        [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        public async Task<IActionResult> List(
+            int? studentId,
+            int? classId,
+            string? from,
+            string? to,
+            int? status,
+            int pageNumber = 1,
+            int pageSize = 50,
+            CancellationToken ct = default)
+        {
+            var vm = new AttendanceListViewModel
+            {
+                Filter = new AttendanceListFilter
+                {
+                    StudentId = studentId,
+                    ClassId = classId,
+                    From = from,
+                    To = to,
+                    Status = status,
+                    PageNumber = pageNumber <= 0 ? 1 : pageNumber,
+                    PageSize = pageSize <= 0 ? 50 : pageSize
+                }
+            };
 
-            //        var response = await _apiClient.GetAsync(path, ct);
+            try
+            {
+                if (User.IsInRole("Student"))
+                {
+                    vm.Filter.StudentId = null;
+                    vm.Filter.ClassId = null;
+                }
 
-            //        if (response.StatusCode == HttpStatusCode.Unauthorized)
-            //        {
-            //            return RedirectToAction("Login", "Account");
-            //        }
+                var path = BuildAttendanceListPath(vm.Filter);
 
-            //        if (!response.IsSuccessStatusCode)
-            //        {
-            //            _logger.LogError("today-sessions isteği başarısız. StatusCode: {StatusCode}",
-            //                response.StatusCode);
-            //            ViewData["ErrorMessage"] = "Seanslar yüklenirken bir hata oluştu.";
-            //            ViewBag.SelectedDate = date;
-            //            return View(new List<TodaySessionViewModel>());
-            //        }
+                var response = await _apiClient.GetAsync(path, ct);
 
-            //        var sessions = await response.Content
-            //            .ReadFromJsonAsync<IList<TodaySessionViewModel>>(cancellationToken: ct)
-            //            ?? new List<TodaySessionViewModel>();
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
 
-            //        ViewBag.SelectedDate = date;
-            //        return View(sessions);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        _logger.LogError(ex, "Seanslar alınırken beklenmeyen hata oluştu.");
-            //        ViewData["ErrorMessage"] = "Seanslar yüklenirken beklenmeyen bir hata oluştu.";
-            //        ViewBag.SelectedDate = date;
-            //        return View(new List<TodaySessionViewModel>());
-            //    }
+                if (response.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    TempData["ErrorMessage"] = "Bu yoklama kayıtlarına erişim yetkiniz yok.";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("attendances/list isteği başarısız. StatusCode: {StatusCode}", response.StatusCode);
+                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+
+                    return View(vm);
+                }
+
+                var dto = await response.Content
+                    .ReadFromJsonAsync<PaginationResult<AttendanceListItemDto>>(cancellationToken: ct);
+
+                if (dto is null)
+                {
+                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+                    return View(vm);
+                }
+
+                vm.Result = dto;
+                return View(vm);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Yoklama listesi alınırken beklenmeyen hata oluştu.");
+                ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken beklenmeyen bir hata oluştu.";
+                return View(vm);
+            }
+        }
 
-            //[HttpGet]
-            //public async Task<IActionResult> List(
-            //    int? studentId,
-            //    int? classId,
-            //    int? classSessionId,
-            //    string? from,
-            //    string? to,
-            //    int? status,
-            //    int pageNumber = 1,
-            //    int pageSize = 50,
-            //    CancellationToken ct = default)
-            //{
-            //    try
-            //    {
-            //        var path = "attendances/list";
+        private static string BuildAttendanceListPath(AttendanceListFilter f)
+        {
+            var path = "attendances/list";
 
-            //        var queryParams = new Dictionary<string, string?>();
+            var q = new Dictionary<string, string?>();
 
-            //        if (studentId.HasValue)
-            //        {
-            //            queryParams["StudentId"] = studentId.Value.ToString();
-            //        }
+            if (f.StudentId.HasValue) q["StudentId"] = f.StudentId.Value.ToString();
+            if (f.ClassId.HasValue) q["ClassId"] = f.ClassId.Value.ToString();
 
-            //        if (classId.HasValue)
-            //        {
-            //            queryParams["ClassId"] = classId.Value.ToString();
-            //        }
+            if (!string.IsNullOrWhiteSpace(f.From)) q["From"] = f.From;
+            if (!string.IsNullOrWhiteSpace(f.To)) q["To"] = f.To;
 
-            //        if (classSessionId.HasValue)
-            //        {
-            //            queryParams["ClassSessionId"] = classSessionId.Value.ToString();
-            //        }
+            if (f.Status.HasValue) q["Status"] = f.Status.Value.ToString();
 
-            //        if (!string.IsNullOrWhiteSpace(from))
-            //        {
-            //            queryParams["From"] = from;
-            //        }
+            q["PageNumber"] = f.PageNumber.ToString();
+            q["PageSize"] = f.PageSize.ToString();
 
-            //        if (!string.IsNullOrWhiteSpace(to))
-            //        {
-            //            queryParams["To"] = to;
-            //        }
-
-            //        if (status.HasValue)
-            //        {
-            //            queryParams["Status"] = status.Value.ToString();
-            //        }
-
-            //        if (pageNumber <= 0) pageNumber = 1;
-            //        if (pageSize <= 0) pageSize = 50;
-
-            //        queryParams["PageNumber"] = pageNumber.ToString();
-            //        queryParams["PageSize"] = pageSize.ToString();
-
-            //        if (queryParams.Any())
-            //        {
-            //            path = QueryHelpers.AddQueryString(path, queryParams!);
-            //        }
-
-            //        var response = await _apiClient.GetAsync(path, ct);
-
-            //        if (response.StatusCode == HttpStatusCode.Unauthorized)
-            //        {
-            //            return RedirectToAction("Login", "Account");
-            //        }
-
-            //        if (!response.IsSuccessStatusCode)
-            //        {
-            //            _logger.LogError(
-            //                "attendances/list isteği başarısız. StatusCode: {StatusCode}",
-            //                response.StatusCode);
-
-            //            ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
-
-            //            ViewBag.StudentId = studentId;
-            //            ViewBag.ClassId = classId;
-            //            ViewBag.ClassSessionId = classSessionId;
-            //            ViewBag.From = from;
-            //            ViewBag.To = to;
-            //            ViewBag.Status = status;
-
-            //            var empty = new PaginationResult<AttendanceListItemDto>
-            //            {
-            //                Items = new List<AttendanceListItemDto>(),
-            //                PageNumber = pageNumber,
-            //                PageSize = pageSize,
-            //                TotalCount = 0
-            //            };
-
-            //            return View(empty);
-            //        }
-
-            //        var dto = await response.Content
-            //            .ReadFromJsonAsync<PaginationResult<AttendanceListItemDto>>(cancellationToken: ct);
-
-            //        if (dto is null)
-            //        {
-            //            ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
-
-            //            ViewBag.StudentId = studentId;
-            //            ViewBag.ClassId = classId;
-            //            ViewBag.ClassSessionId = classSessionId;
-            //            ViewBag.From = from;
-            //            ViewBag.To = to;
-            //            ViewBag.Status = status;
-
-            //            var empty = new PaginationResult<AttendanceListItemDto>
-            //            {
-            //                Items = new List<AttendanceListItemDto>(),
-            //                PageNumber = pageNumber,
-            //                PageSize = pageSize,
-            //                TotalCount = 0
-            //            };
-
-            //            return View(empty);
-            //        }
-
-            //        ViewBag.StudentId = studentId;
-            //        ViewBag.ClassId = classId;
-            //        ViewBag.ClassSessionId = classSessionId;
-            //        ViewBag.From = from;
-            //        ViewBag.To = to;
-            //        ViewBag.Status = status;
-
-            //        return View(dto);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        _logger.LogError(ex, "Yoklama listesi alınırken beklenmeyen hata oluştu.");
-
-            //        ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken beklenmeyen bir hata oluştu.";
-
-            //        ViewBag.StudentId = studentId;
-            //        ViewBag.ClassId = classId;
-            //        ViewBag.ClassSessionId = classSessionId;
-            //        ViewBag.From = from;
-            //        ViewBag.To = to;
-            //        ViewBag.Status = status;
-
-            //        var empty = new PaginationResult<AttendanceListItemDto>
-            //        {
-            //            Items = new List<AttendanceListItemDto>(),
-            //            PageNumber = pageNumber,
-            //            PageSize = pageSize,
-            //            TotalCount = 0
-            //        };
-
-            //        return View(empty);
-            //    }
-            //}
+            return QueryHelpers.AddQueryString(path, q);
+        }
 
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> Session(int id, CancellationToken ct)
         {
             try
@@ -247,14 +153,10 @@ namespace XYZ.Web.Controllers
                     $"attendances/session/{id}", ct);
 
                 if (response.StatusCode == HttpStatusCode.NotFound)
-                {
                     return NotFound();
-                }
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
                     return RedirectToAction("Login", "Account");
-                }
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -312,6 +214,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Session(SessionAttendanceViewModel model, CancellationToken ct)
         {
@@ -341,9 +244,7 @@ namespace XYZ.Web.Controllers
                     ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
                     return RedirectToAction("Login", "Account");
-                }
 
                 if (!response.IsSuccessStatusCode)
                 {
