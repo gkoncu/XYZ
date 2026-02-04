@@ -1263,6 +1263,31 @@ namespace XYZ.Web.Services
                 return (false, "change_password_failed");
             }
         }
+        public async Task<string?> UploadMyProfilePictureAsync(
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            using var content = new MultipartFormDataContent();
+
+            var fileContent = new StreamContent(fileStream);
+            content.Add(fileContent, "file", fileName);
+
+            var resp = await _httpClient.PostAsync("profile/me/picture", content, cancellationToken);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            raw = raw.Trim();
+            if (raw.Length >= 2 && raw[0] == '"' && raw[^1] == '"')
+                raw = raw[1..^1];
+
+            return raw;
+        }
+
 
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {

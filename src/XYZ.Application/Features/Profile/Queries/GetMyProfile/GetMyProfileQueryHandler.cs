@@ -42,6 +42,7 @@ public sealed class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery
         {
             UserId = user.Id,
             Role = _current.Role ?? string.Empty,
+
             TenantId = user.TenantId,
             TenantName = user.Tenant?.Name,
 
@@ -55,7 +56,10 @@ public sealed class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery
             BloodType = user.BloodType,
             BirthDate = user.BirthDate,
 
-            ProfilePictureUrl = user.ProfilePictureUrl
+            ProfilePictureUrl = user.ProfilePictureUrl,
+
+            StudentProfileId = user.StudentProfile?.Id,
+            CoachProfileId = user.CoachProfile?.Id
         };
 
         if (dto.Role == "Student" && user.StudentProfile?.Class is not null)

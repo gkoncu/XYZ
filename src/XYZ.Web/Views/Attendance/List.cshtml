@@ -113,12 +113,12 @@
             <div class="col-md-6">
                 <label class="form-label mb-1">Durum</label>
                 <select class="form-select" name="status">
-                    <option value="" selected="@(statusFilter is null)">Tümü</option>
-                    <option value="@((int)AttendanceStatus.Present)" selected="@(statusFilter == (int)AttendanceStatus.Present)">Katıldı</option>
-                    <option value="@((int)AttendanceStatus.Absent)" selected="@(statusFilter == (int)AttendanceStatus.Absent)">Katılmadı</option>
-                    <option value="@((int)AttendanceStatus.Excused)" selected="@(statusFilter == (int)AttendanceStatus.Excused)">İzinli</option>
-                    <option value="@((int)AttendanceStatus.Late)" selected="@(statusFilter == (int)AttendanceStatus.Late)">Geç Kaldı</option>
-                    <option value="@((int)AttendanceStatus.Unknown)" selected="@(statusFilter == (int)AttendanceStatus.Unknown)">Bilinmiyor</option>
+                    <option value="" selected=@(statusFilter is null)>Tümü</option>
+                    <option value="@((int)AttendanceStatus.Present)" selected=@(statusFilter == (int)AttendanceStatus.Present)>Katıldı</option>
+                    <option value="@((int)AttendanceStatus.Absent)" selected=@(statusFilter == (int)AttendanceStatus.Absent)>Katılmadı</option>
+                    <option value="@((int)AttendanceStatus.Excused)" selected=@(statusFilter == (int)AttendanceStatus.Excused)>İzinli</option>
+                    <option value="@((int)AttendanceStatus.Late)" selected=@(statusFilter == (int)AttendanceStatus.Late)>Geç Kaldı</option>
+                    <option value="@((int)AttendanceStatus.Unknown)" selected=@(statusFilter == (int)AttendanceStatus.Unknown)>Bilinmiyor</option>
                 </select>
             </div>
 

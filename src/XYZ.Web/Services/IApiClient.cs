@@ -402,6 +402,8 @@ namespace XYZ.Web.Services
         Task<MyProfileDto?> GetMyProfileAsync(CancellationToken cancellationToken = default);
         Task<bool> UpdateMyProfileAsync(UpdateMyProfileCommand command, CancellationToken cancellationToken = default);
         Task<(bool Ok, string? ErrorCode)> ChangeMyPasswordAsync( string currentPassword, string newPassword, CancellationToken cancellationToken = default);
+        Task<string?> UploadMyProfilePictureAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+
 
         Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default);
         Task<bool> UpdateCurrentTenantThemeAsync(UpdateCurrentTenantThemeCommand command, CancellationToken cancellationToken = default);
