@@ -25,7 +25,6 @@ namespace XYZ.Application.Features.Attendances.Queries.GetAttendanceList
                 .Include(a => a.ClassSession)
                 .AsQueryable();
 
-
             if (request.StudentId.HasValue)
             {
                 query = query.Where(a => a.StudentId == request.StudentId.Value);
@@ -56,17 +55,19 @@ namespace XYZ.Application.Features.Attendances.Queries.GetAttendanceList
                 query = query.Where(a => a.ClassSession.Date <= request.To.Value);
             }
 
+            query = query
+                .OrderByDescending(a => a.ClassSession.Date)
+                .ThenBy(a => a.Class.Name)
+                .ThenBy(a => a.Student.User.LastName)
+                .ThenBy(a => a.Student.User.FirstName);
+
             var totalCount = await query.CountAsync(cancellationToken);
 
             var page = request.PageNumber <= 0 ? 1 : request.PageNumber;
             var size = request.PageSize <= 0 ? 50 : request.PageSize;
 
-            query = query
-                .OrderByDescending(a => a.ClassSession.Date)
-                .ThenBy(a => a.Class.Name)
-                .ThenBy(a => a.Student.User.FullName);
-
             var items = await query
+                .AsNoTracking()
                 .Skip((page - 1) * size)
                 .Take(size)
                 .Select(a => new AttendanceListItemDto
@@ -77,13 +78,14 @@ namespace XYZ.Application.Features.Attendances.Queries.GetAttendanceList
                     ClassId = a.ClassId,
                     ClassName = a.Class.Name,
                     StudentId = a.StudentId,
-                    StudentFullName = a.Student.User.FullName,
+
+                    StudentFullName = (a.Student.User.FirstName + " " + a.Student.User.LastName),
+
                     Status = a.Status,
                     Score = a.Score,
                     Note = a.Note,
                     CoachComment = a.CoachComment
                 })
-                .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
             return new PaginationResult<AttendanceListItemDto>

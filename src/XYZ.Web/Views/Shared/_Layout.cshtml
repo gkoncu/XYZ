@@ -95,7 +95,7 @@
                                         <a class="dropdown-item" asp-controller="Classes" asp-action="Index">Sınıflar</a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="ClassSessions" asp-action="Index">Seanslar</a>
+                                        <a class="dropdown-item" asp-controller="ClassSessions" asp-action="Index">Antrenmanlar</a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
@@ -182,12 +182,16 @@
                         else if (User.IsInRole("Student"))
                         {
                             <li class="nav-item">
+                                <a class="nav-link" asp-controller="Attendance" asp-action="List">Yoklama Geçmişim</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" asp-controller="Payments" asp-action="My">Aidatlarım</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="PaymentPlans" asp-action="My">Aidat Planım</a>
                             </li>
                         }
+
 
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Announcements" asp-action="Index">Duyurular</a>
