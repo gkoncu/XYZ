@@ -47,9 +47,11 @@ public sealed class ProfileController : ControllerBase
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(2 * 1024 * 1024)]
     public async Task<ActionResult<string>> UploadMyProfilePicture(
-    [FromForm] IFormFile file,
+    [FromForm] UploadProfilePictureRequest request,
     CancellationToken ct)
     {
+        var file = request.File;
+
         if (file == null || file.Length == 0)
             return BadRequest("Dosya bulunamadı.");
 
