@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 
@@ -23,7 +21,11 @@ namespace XYZ.Application.Services
             var safeFileName = Path.GetFileName(fileName);
             var filePath = Path.Combine(_uploadPath, safeFileName);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            await using (var stream = new FileStream(
+                filePath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.Read))
             {
                 await fileStream.CopyToAsync(stream);
             }
@@ -33,9 +35,27 @@ namespace XYZ.Application.Services
 
         public Task DeleteFileAsync(string filePath)
         {
-            var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filePath.TrimStart('/'));
-            if (File.Exists(physicalPath))
-                File.Delete(physicalPath);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                    return Task.CompletedTask;
+
+                var physicalPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    filePath.TrimStart('/'));
+
+                if (File.Exists(physicalPath))
+                {
+                    File.Delete(physicalPath);
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
 
             return Task.CompletedTask;
         }
@@ -46,7 +66,7 @@ namespace XYZ.Application.Services
             if (!File.Exists(physicalPath))
                 throw new FileNotFoundException("File not found");
 
-            var stream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read);
+            var stream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             return Task.FromResult<Stream>(stream);
         }
     }

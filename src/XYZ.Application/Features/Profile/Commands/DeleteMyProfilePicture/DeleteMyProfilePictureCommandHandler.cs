@@ -28,7 +28,13 @@ public sealed class DeleteMyProfilePictureCommandHandler(
         if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl) &&
             user.ProfilePictureUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
         {
-            await _fileService.DeleteFileAsync(user.ProfilePictureUrl);
+            try
+            {
+                await _fileService.DeleteFileAsync(user.ProfilePictureUrl);
+            }
+            catch
+            {
+            }
         }
 
         user.ProfilePictureUrl = null;
