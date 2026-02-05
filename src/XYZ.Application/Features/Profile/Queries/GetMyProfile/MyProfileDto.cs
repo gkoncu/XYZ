@@ -22,6 +22,9 @@ public sealed class MyProfileDto
 
     public string? ProfilePictureUrl { get; set; }
 
+    public int? StudentProfileId { get; set; }
+    public int? CoachProfileId { get; set; }
+
     public string? BranchName { get; set; }
     public string? ClassName { get; set; }
 }

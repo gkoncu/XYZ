@@ -1,44 +1,59 @@
-﻿﻿﻿@using XYZ.Application.Features.Coaches.Queries.GetAllCoaches
+﻿﻿﻿﻿@using XYZ.Application.Features.Coaches.Queries.GetAllCoaches
 @using XYZ.Web.Extensions
 @model CoachDetailDto
+@inject IConfiguration Config
 
 @{
     ViewData["Title"] = "Koç Detayı";
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+
+    string BuildInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Take(2)
+                        .ToArray();
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+        return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+    }
+
+    string? NormalizeAssetUrl(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return raw;
+
+        var baseUrl = (Config["Api:BaseUrl"] ?? string.Empty);
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var apiUri))
+            return raw;
+
+        var origin = apiUri.GetLeftPart(UriPartial.Authority);
+        if (!raw.StartsWith("/")) raw = "/" + raw;
+
+        return $"{origin}{raw}?v={DateTime.UtcNow.Ticks}";
+    }
+
+    var initials = BuildInitials(Model.FullName ?? "");
+    var profilePictureUrl = NormalizeAssetUrl(Model.ProfilePictureUrl);
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
 }
 
 <section class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Koç listesine dön</a>
 
     <div class="d-none d-md-flex gap-2">
-        <a asp-controller="Documents"
-           asp-action="Coach"
-           asp-route-coachId="@Model.Id"
-           class="btn btn-sm btn-outline-primary">
-            Belgeleri Gör
-        </a>
+        <a asp-controller="Documents" asp-action="Coach" asp-route-coachId="@Model.Id" class="btn btn-sm btn-outline-primary">Belgeleri Gör</a>
 
-        <a asp-controller="ClassSessions"
-           asp-action="Index"
-           class="btn btn-sm btn-outline-primary">
-            Antrenman Programı
-        </a>
+        <a asp-controller="ClassSessions" asp-action="Index" class="btn btn-sm btn-outline-primary">Antrenman Programı</a>
 
         @if (isAdmin)
         {
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-sm btn-outline-secondary">
-                Düzenle
-            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
 
-            <form asp-action="Delete"
-                  asp-route-id="@Model.Id"
-                  method="post"
-                  class="d-inline">
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
                 @Html.AntiForgeryToken()
-                <button type="submit"
-                        class="btn btn-sm btn-outline-danger"
+                <button type="submit" class="btn btn-sm btn-outline-danger"
                         onclick="return confirm('Bu koçu silmek istediğinize emin misiniz?');">
                     Sil
                 </button>
@@ -47,50 +62,25 @@
     </div>
 </section>
 
-<!-- Mobile quick actions -->
 <section class="card-surface mb-3 d-md-none">
     <div class="fw-semibold mb-2">Hızlı İşlemler</div>
 
     <div class="d-grid gap-2">
-        <a asp-controller="Documents"
-           asp-action="Coach"
-           asp-route-coachId="@Model.Id"
-           class="btn btn-outline-primary">
-            Belgeler
-        </a>
-
-        <a asp-controller="Classes"
-           asp-action="Index"
-           class="btn btn-outline-primary">
-            Sınıflar
-        </a>
-
-        <a asp-controller="ClassSessions"
-           asp-action="Index"
-           class="btn btn-outline-primary">
-            Seanslar
-        </a>
-
+        <a asp-controller="Documents" asp-action="Coach" asp-route-coachId="@Model.Id" class="btn btn-outline-primary">Belgeler</a>
+        <a asp-controller="Classes" asp-action="Index" class="btn btn-outline-primary">Sınıflar</a>
+        <a asp-controller="ClassSessions" asp-action="Index" class="btn btn-outline-primary">Seanslar</a>
         <a asp-action="Index" class="btn btn-outline-secondary">Koç Listesi</a>
     </div>
 
     @if (isAdmin)
     {
         <hr class="my-3" />
-
         <div class="d-grid gap-2">
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-secondary">
-                Düzenle
-            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Düzenle</a>
 
-            <form asp-action="Delete"
-                  asp-route-id="@Model.Id"
-                  method="post">
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
                 @Html.AntiForgeryToken()
-                <button type="submit"
-                        class="btn btn-outline-danger w-100"
+                <button type="submit" class="btn btn-outline-danger w-100"
                         onclick="return confirm('Bu koçu silmek istediğinize emin misiniz?');">
                     Sil
                 </button>
@@ -100,12 +90,25 @@
 </section>
 
 <section class="detail-grid">
-    <!-- Left: Coach info -->
     <div class="card-surface">
-        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-            <div>
-                <h2 class="h5 mb-1">@Model.FullName</h2>
-                <div class="small text-muted">Branş: @Model.BranchName</div>
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+            <div class="d-flex align-items-start gap-3">
+                <div class="rounded-circle border d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
+                    @if (hasPhoto)
+                    {
+                        <img src="@profilePictureUrl" alt="Profil Fotoğrafı" style="width:100%;height:100%;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <span class="fw-semibold" style="font-size:22px; letter-spacing:.5px;">@initials</span>
+                    }
+                </div>
+
+                <div>
+                    <h2 class="h5 mb-1">@Model.FullName</h2>
+                    <div class="small text-muted">Branş: @Model.BranchName</div>
+                </div>
             </div>
 
             @if (Model.IsActive)
@@ -142,7 +145,6 @@
         </dl>
     </div>
 
-    <!-- Right: Classes -->
     <div class="card-surface">
         <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
             <h3 class="h6 mb-0">Sınıflar</h3>
@@ -151,13 +153,10 @@
 
         @if (Model.Classes == null || Model.Classes.Count == 0)
         {
-            <div class="text-muted small">
-                Bu koça atanmış sınıf bulunmuyor.
-            </div>
+            <div class="text-muted small">Bu koça atanmış sınıf bulunmuyor.</div>
         }
         else
         {
-            <!-- Desktop table -->
             <div class="table-responsive d-none d-md-block">
                 <table class="table table-sm table-modern align-middle mb-0">
                     <thead>
@@ -173,10 +172,7 @@
                         {
                             <tr>
                                 <td>
-                                    <a asp-controller="Classes"
-                                       asp-action="Details"
-                                       asp-route-id="@cls.Id"
-                                       class="text-decoration-none">
+                                    <a asp-controller="Classes" asp-action="Details" asp-route-id="@cls.Id" class="text-decoration-none">
                                         @cls.FullName
                                     </a>
                                 </td>
@@ -192,10 +188,7 @@
                                     }
                                 </td>
                                 <td class="text-end">
-                                    <a asp-controller="Attendance"
-                                       asp-action="Index"
-                                       asp-route-classId="@cls.Id"
-                                       class="btn btn-sm btn-outline-primary">
+                                    <a asp-controller="Attendance" asp-action="Index" asp-route-classId="@cls.Id" class="btn btn-sm btn-outline-primary">
                                         Yoklama
                                     </a>
                                 </td>
@@ -205,7 +198,6 @@
                 </table>
             </div>
 
-            <!-- Mobile cards -->
             <div class="d-md-none vstack gap-3">
                 @foreach (var cls in Model.Classes)
                 {
@@ -228,17 +220,11 @@
                             </div>
 
                             <div class="d-grid gap-2 mt-3">
-                                <a asp-controller="Classes"
-                                   asp-action="Details"
-                                   asp-route-id="@cls.Id"
-                                   class="btn btn-outline-secondary">
+                                <a asp-controller="Classes" asp-action="Details" asp-route-id="@cls.Id" class="btn btn-outline-secondary">
                                     Sınıf Detayı
                                 </a>
 
-                                <a asp-controller="Attendance"
-                                   asp-action="List"
-                                   asp-route-classId="@cls.Id"
-                                   class="btn btn-outline-primary">
+                                <a asp-controller="Attendance" asp-action="List" asp-route-classId="@cls.Id" class="btn btn-outline-primary">
                                     Yoklama
                                 </a>
                             </div>
@@ -252,7 +238,6 @@
 
 @if (isAdmin)
 {
-    <!-- Mobile sticky action bar (admin only) -->
     <div class="d-md-none position-sticky bottom-0 start-0 end-0 bg-white border-top mt-4" style="z-index: 1020;">
         <div class="container-fluid py-2">
             <div class="d-flex gap-2">
@@ -260,8 +245,7 @@
 
                 <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="flex-fill">
                     @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn btn-outline-danger w-100"
+                    <button type="submit" class="btn btn-outline-danger w-100"
                             onclick="return confirm('Bu koçu silmek istediğinize emin misiniz?');">
                         Sil
                     </button>

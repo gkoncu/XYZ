@@ -14,10 +14,12 @@ namespace XYZ.Web.Controllers
     public class ProfileController : Controller
     {
         private readonly IApiClient _api;
+        private readonly IConfiguration _config;
 
-        public ProfileController(IApiClient api)
+        public ProfileController(IApiClient api, IConfiguration config)
         {
             _api = api;
+            _config = config;
         }
 
         [HttpGet]
@@ -26,7 +28,7 @@ namespace XYZ.Web.Controllers
             var dto = await _api.GetMyProfileAsync(ct);
             if (dto is null) return RedirectToAction("Login", "Account");
 
-            ViewData["ProfilePictureUrl"] = dto.ProfilePictureUrl;
+            ViewData["ProfilePictureUrl"] = NormalizeAssetUrl(dto.ProfilePictureUrl);
 
             var initials = BuildInitials($"{dto.FirstName} {dto.LastName}".Trim());
 
@@ -45,7 +47,7 @@ namespace XYZ.Web.Controllers
             var dto = await _api.GetMyProfileAsync(ct);
             if (dto is null) return RedirectToAction("Login", "Account");
 
-            ViewData["ProfilePictureUrl"] = dto.ProfilePictureUrl;
+            ViewData["ProfilePictureUrl"] = NormalizeAssetUrl(dto.ProfilePictureUrl);
 
             var vm = new ProfileEditViewModel
             {
@@ -86,44 +88,99 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
-        public IActionResult ChangePassword()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadPicture(IFormFile file, CancellationToken ct)
         {
-            return View(new ChangePasswordViewModel());
+            if (file is null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Lütfen bir dosya seçin.";
+                return RedirectToAction(nameof(Edit));
+            }
+
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(file.FileName);
+            if (string.IsNullOrWhiteSpace(ext) || !allowed.Contains(ext, StringComparer.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "Sadece JPG, PNG veya WEBP yükleyebilirsiniz.";
+                return RedirectToAction(nameof(Edit));
+            }
+
+            await using var stream = file.OpenReadStream();
+            var url = await _api.UploadMyProfilePictureAsync(stream, file.FileName, ct);
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                TempData["ErrorMessage"] = "Fotoğraf yüklenirken bir hata oluştu.";
+                return RedirectToAction(nameof(Edit));
+            }
+
+            var normalized = NormalizeAssetUrl(url);
+
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                Response.Cookies.Append(
+                    XYZ.Web.Common.WebCookieNames.ProfilePictureUrl,
+                    normalized,
+                    new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddDays(7),
+                        HttpOnly = false,
+                        Secure = true,
+                        SameSite = SameSiteMode.Lax,
+                        IsEssential = true
+                    });
+            }
+
+            TempData["SuccessMessage"] = "Profil fotoğrafı güncellendi.";
+            return RedirectToAction(nameof(Edit));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model, CancellationToken ct)
+        public async Task<IActionResult> DeletePicture(CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var (ok, errorCode) = await _api.ChangeMyPasswordAsync(model.CurrentPassword, model.NewPassword, ct);
-            if (ok)
+            var ok = await _api.DeleteMyProfilePictureAsync(ct);
+            if (!ok)
             {
-                TempData["SuccessMessage"] = "Şifre güncellendi.";
-                return RedirectToAction("Index", "Settings");
+                TempData["ErrorMessage"] = "Profil fotoğrafı silinirken bir hata oluştu.";
+                return RedirectToAction(nameof(Edit));
             }
 
-            var msg = errorCode switch
-            {
-                "invalid_current_password" => "Mevcut şifre hatalı.",
-                "password_policy_failed" => "Yeni şifre kurallara uymuyor.",
-                _ => "Şifre güncellenemedi. Lütfen tekrar deneyin."
-            };
+            Response.Cookies.Delete(XYZ.Web.Common.WebCookieNames.ProfilePictureUrl);
 
-            ModelState.AddModelError("", msg);
-            return View(model);
+            TempData["SuccessMessage"] = "Profil fotoğrafı silindi.";
+            return RedirectToAction(nameof(Edit));
         }
 
-        private static string BuildInitials(string fullName)
+        private string? NormalizeAssetUrl(string? raw)
         {
-            if (string.IsNullOrWhiteSpace(fullName)) return "?";
-            var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(2).ToArray();
-            if (parts.Length == 0) return "?";
-            if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
-            return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return raw;
+
+            var baseUrl = _config["Api:BaseUrl"] ?? string.Empty;
+
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var apiUri))
+                return raw;
+
+            var origin = apiUri.GetLeftPart(UriPartial.Authority);
+
+            if (!raw.StartsWith("/"))
+                raw = "/" + raw;
+
+            return $"{origin}{raw}?v={DateTime.UtcNow.Ticks}";
+        }
+
+        private static string BuildInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var initials = string.Concat(parts.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+            return string.IsNullOrWhiteSpace(initials) ? "?" : initials;
         }
     }
 }

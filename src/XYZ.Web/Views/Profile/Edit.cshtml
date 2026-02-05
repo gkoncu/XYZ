@@ -2,6 +2,8 @@
 @using XYZ.Domain.Enums
 @{
     ViewData["Title"] = "Bilgilerimi Düzenle";
+    var profilePictureUrl = ViewData["ProfilePictureUrl"] as string;
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -14,6 +16,15 @@
         <a asp-controller="Settings" asp-action="Index" class="btn btn-sm btn-outline-primary">Ayarlar</a>
     </div>
 </div>
+
+@if (TempData["SuccessMessage"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert alert-danger">@err</div>
+}
 
 <div class="row g-3">
     <div class="col-12 col-lg-8">
@@ -36,7 +47,7 @@
                     </div>
 
                     <div class="col-12 col-md-6">
-                        <label class="form-label">Telefon (opsiyonel)</label>
+                        <label class="form-label">Telefon</label>
                         <input asp-for="PhoneNumber" class="form-control" />
                         <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                     </div>
@@ -49,24 +60,32 @@
 
                     <div class="col-12 col-md-6">
                         <label class="form-label">Cinsiyet</label>
-                        <select asp-for="Gender" class="form-select"
-                                asp-items="Html.GetEnumSelectList<Gender>()"></select>
+                        <select asp-for="Gender" class="form-select">
+                            <option value="@Gender.Male">Erkek</option>
+                            <option value="@Gender.Female">Kadın</option>
+                            <option value="@Gender.PreferNotToSay">Belirtmek İstemiyorum</option>
+                        </select>
                     </div>
 
                     <div class="col-12 col-md-6">
                         <label class="form-label">Kan Grubu</label>
-                        <select asp-for="BloodType" class="form-select"
-                                asp-items="Html.GetEnumSelectList<BloodType>()"></select>
+                        <select asp-for="BloodType" class="form-select">
+                            <option value="@BloodType.Unknown">Bilinmiyor</option>
+                            <option value="@BloodType.A_Positive">A Rh+</option>
+                            <option value="@BloodType.A_Negative">A Rh-</option>
+                            <option value="@BloodType.B_Positive">B Rh+</option>
+                            <option value="@BloodType.B_Negative">B Rh-</option>
+                            <option value="@BloodType.AB_Positive">AB Rh+</option>
+                            <option value="@BloodType.AB_Negative">AB Rh-</option>
+                            <option value="@BloodType.O_Positive">0 Rh+</option>
+                            <option value="@BloodType.O_Negative">0 Rh-</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap gap-2">
+                <div class="mt-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Kaydet</button>
-                    <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
-                </div>
-
-                <div class="text-muted small mt-3">
-                    Not: Şube/sınıf gibi operasyonel bilgiler yönetim tarafından atanır; buradan değiştirilemez.
+                    <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
                 </div>
             </form>
         </div>
@@ -75,11 +94,42 @@
     <div class="col-12 col-lg-4">
         <div class="card-surface p-3 h-100">
             <div class="fw-semibold">Profil Fotoğrafı</div>
-            <div class="text-muted small mt-1">Yükleme özelliği yakında eklenecek.</div>
+            <div class="text-muted small mt-1">JPG, PNG veya WEBP yükleyebilirsiniz (max 2MB).</div>
 
-            <button class="btn btn-sm btn-outline-dark mt-3" disabled title="Yakında">
-                Fotoğraf Yükle (Yakında)
-            </button>
+            <div class="mt-3 d-flex align-items-center gap-3">
+                <div class="rounded-circle border d-inline-flex align-items-center justify-content-center"
+                     style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
+                    @if (hasPhoto)
+                    {
+                        <img src="@profilePictureUrl" alt="Profil Fotoğrafı" style="width:100%;height:100%;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Yok</span>
+                    }
+                </div>
+
+                <div class="flex-grow-1">
+                    <form asp-action="UploadPicture" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="file" name="file" class="form-control form-control-sm" accept="image/*" />
+                        <button type="submit" class="btn btn-sm btn-primary mt-2">
+                            Fotoğraf Yükle
+                        </button>
+                    </form>
+
+                    @if (hasPhoto)
+                    {
+                        <form asp-action="DeletePicture" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Profil fotoğrafı silinsin mi?');">
+                                Fotoğrafı Sil
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>

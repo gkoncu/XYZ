@@ -21,6 +21,7 @@ namespace XYZ.Application.Features.Students.Queries.GetStudentById
 
         public int TenantId { get; set; }
 
+        public string? ProfilePictureUrl { get; set; }
         public int? ClassId { get; set; }
         public string? ClassName { get; set; }
         public int? BranchId { get; set; }

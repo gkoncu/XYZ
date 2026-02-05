@@ -163,6 +163,10 @@ if (app.Environment.IsDevelopment())
     await DevIdentitySeeder.RunAsync(app.Services);
 }
 
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

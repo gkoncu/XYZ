@@ -1263,6 +1263,40 @@ namespace XYZ.Web.Services
                 return (false, "change_password_failed");
             }
         }
+        public async Task<string?> UploadMyProfilePictureAsync(
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            using var content = new MultipartFormDataContent();
+            using var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(fileContent, "file", fileName);
+
+            var resp = await _httpClient.PostAsync("profile/me/picture", content, cancellationToken);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            try
+            {
+                using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                if (doc.RootElement.TryGetProperty("url", out var urlProp))
+                    return urlProp.GetString();
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool> DeleteMyProfilePictureAsync(CancellationToken cancellationToken = default)
+        {
+            var resp = await _httpClient.DeleteAsync("profile/me/picture", cancellationToken);
+            return resp.IsSuccessStatusCode;
+        }
 
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {

@@ -1,12 +1,14 @@
 ﻿@model XYZ.Web.Models.Profile.ProfileViewModel
 @using XYZ.Domain.Enums
+
 @{
     ViewData["Title"] = "Profilim";
 
     var p = Model.Profile;
     var role = p.Role ?? "";
 
-    var hasPhoto = !string.IsNullOrWhiteSpace(p.ProfilePictureUrl);
+    var profilePictureUrl = ViewData["ProfilePictureUrl"] as string;
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
 
     string RoleLabel(string r) => r switch
     {
@@ -26,7 +28,27 @@
         _ => "bg-light text-dark border"
     };
 
-    string EnumLabel<T>(T value) where T : struct, Enum => value.ToString();
+    string GenderLabel(Gender g) => g switch
+    {
+        Gender.Male => "Erkek",
+        Gender.Female => "Kadın",
+        Gender.PreferNotToSay => "Belirtmek İstemiyorum",
+        _ => "-"
+    };
+
+    string BloodLabel(BloodType b) => b switch
+    {
+        BloodType.Unknown => "Bilinmiyor",
+        BloodType.A_Positive => "A Rh+",
+        BloodType.A_Negative => "A Rh-",
+        BloodType.B_Positive => "B Rh+",
+        BloodType.B_Negative => "B Rh-",
+        BloodType.AB_Positive => "AB Rh+",
+        BloodType.AB_Negative => "AB Rh-",
+        BloodType.O_Positive => "0 Rh+",
+        BloodType.O_Negative => "0 Rh-",
+        _ => "-"
+    };
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -62,7 +84,7 @@
                      style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
                     @if (hasPhoto)
                     {
-                        <img src="@p.ProfilePictureUrl" alt="Profil Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
+                        <img src="@profilePictureUrl" alt="Profil Fotoğrafı" Fotoğrafı" style="width:72px;height:72px;object-fit:cover;" />
                     }
                     else
                     {
@@ -158,12 +180,12 @@
 
                 <div class="col-12 col-md-6">
                     <div class="text-muted small">Cinsiyet</div>
-                    <div class="fw-semibold">@EnumLabel(p.Gender)</div>
+                    <div class="fw-semibold">@GenderLabel(p.Gender)</div>
                 </div>
 
                 <div class="col-12 col-md-6">
                     <div class="text-muted small">Kan Grubu</div>
-                    <div class="fw-semibold">@EnumLabel(p.BloodType)</div>
+                    <div class="fw-semibold">@BloodLabel(p.BloodType)</div>
                 </div>
 
                 <div class="col-12 col-md-6">
@@ -183,7 +205,7 @@
 
             <div class="row g-3 mt-1">
                 <div class="col-12 col-md-6">
-                    <div class="text-muted small">Kulüp (Tenant)</div>
+                    <div class="text-muted small">Kulüp</div>
                     <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(p.TenantName) ? p.TenantName : "-")</div>
                 </div>
 
@@ -232,14 +254,36 @@
                 @if (role == "Student")
                 {
                     <a asp-controller="StudentDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Dashboard</a>
+
+                    <a asp-controller="Documents" asp-action="Student"
+                       asp-route-studentId="@p.StudentProfileId"
+                       class="btn btn-sm btn-outline-secondary">
+                        Belgelerim
+                    </a>
+
+                    <a asp-controller="Attendance" asp-action="List" class="btn btn-sm btn-outline-secondary">
+                        Yoklamalarım
+                    </a>
+
+                    <a asp-controller="ProgressRecords" asp-action="Student"
+                       asp-route-studentId="@p.StudentProfileId"
+                       class="btn btn-sm btn-outline-secondary">
+                        Gelişim Kayıtlarım
+                    </a>
+
                     <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-secondary">Aidatlarım</a>
-                    <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">Aidat Planım</a>
+                    <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">Aidat Planlarım</a>
                 }
                 else if (role == "Coach")
                 {
                     <a asp-controller="CoachDashboard" asp-action="Index" class="btn btn-sm btn-outline-primary">Koç Paneli</a>
                     <a asp-controller="Attendance" asp-action="Index" class="btn btn-sm btn-outline-secondary">Antrenmanlar</a>
                     <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Aidatlar</a>
+                    <a asp-controller="Documents" asp-action="Coach"
+                       asp-route-coachId="@p.CoachProfileId"
+                       class="btn btn-sm btn-outline-secondary">
+                        Belgelerim
+                    </a>
                     <a asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true" class="btn btn-sm btn-outline-secondary">Eksik Belgeler</a>
                 }
                 else if (role == "Admin" || role == "SuperAdmin")

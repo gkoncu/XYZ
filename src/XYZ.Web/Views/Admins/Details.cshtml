@@ -1,16 +1,46 @@
-﻿@using XYZ.Application.Features.Admins.Queries.GetAdminById
+﻿﻿@using XYZ.Application.Features.Admins.Queries.GetAdminById
 @model AdminDetailDto
+@inject IConfiguration Config
 
 @{
     ViewData["Title"] = "Admin Detayı";
+
+    string BuildInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Take(2)
+                        .ToArray();
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+        return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+    }
+
+    string? NormalizeAssetUrl(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return raw;
+
+        var baseUrl = (Config["Api:BaseUrl"] ?? string.Empty);
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var apiUri))
+            return raw;
+
+        var origin = apiUri.GetLeftPart(UriPartial.Authority);
+        if (!raw.StartsWith("/")) raw = "/" + raw;
+
+        return $"{origin}{raw}?v={DateTime.UtcNow.Ticks}";
+    }
+
+    var initials = BuildInitials(Model.FullName ?? "");
+    var profilePictureUrl = NormalizeAssetUrl(Model.ProfilePictureUrl);
+    var hasPhoto = !string.IsNullOrWhiteSpace(profilePictureUrl);
 }
 
 <section class="mb-3 d-flex justify-content-between align-items-center">
     <a asp-action="Index" class="text-muted small text-decoration-none">&larr; Admin listesine dön</a>
     <div>
-        <a asp-action="Edit"
-           asp-route-id="@Model.Id"
-           class="btn btn-sm btn-outline-light me-1">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-light me-1">
             Admin Düzenle
         </a>
 
@@ -22,9 +52,7 @@
                   class="d-inline"
                   onsubmit="return confirm('Bu admin kaydını silmek istediğinize emin misiniz?');">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-sm btn-danger">
-                    Admini Sil
-                </button>
+                <button type="submit" class="btn btn-sm btn-danger">Admini Sil</button>
             </form>
         }
     </div>
@@ -32,7 +60,24 @@
 
 <section class="detail-grid">
     <div class="detail-card">
-        <h2 class="h5 mb-3">@Model.FullName</h2>
+        <div class="d-flex align-items-start gap-3 mb-3">
+            <div class="rounded-circle border d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:72px;height:72px;overflow:hidden;background:rgba(0,0,0,.04);">
+                @if (hasPhoto)
+                {
+                    <img src="@profilePictureUrl" alt="Profil Fotoğrafı" style="width:100%;height:100%;object-fit:cover;" />
+                }
+                else
+                {
+                    <span class="fw-semibold" style="font-size:22px; letter-spacing:.5px;">@initials</span>
+                }
+            </div>
+
+            <div class="flex-grow-1">
+                <h2 class="h5 mb-1">@Model.FullName</h2>
+                <div class="text-muted small">@Model.Email</div>
+            </div>
+        </div>
 
         <dl class="row mb-0">
             <dt class="col-sm-3">E-posta</dt>
@@ -71,19 +116,13 @@
         <h3 class="h6 mb-2">Yetkiler</h3>
 
         <p class="mb-1">
-            <span class="badge-soft @(Model.CanManageUsers ? "badge-soft-success" : "badge-soft-secondary")">
-                Kullanıcı Yönetimi
-            </span>
+            <span class="badge-soft @(Model.CanManageUsers ? "badge-soft-success" : "badge-soft-secondary")">Kullanıcı Yönetimi</span>
         </p>
         <p class="mb-1">
-            <span class="badge-soft @(Model.CanManageFinance ? "badge-soft-success" : "badge-soft-secondary")">
-                Finans Yönetimi
-            </span>
+            <span class="badge-soft @(Model.CanManageFinance ? "badge-soft-success" : "badge-soft-secondary")">Finans Yönetimi</span>
         </p>
         <p class="mb-0">
-            <span class="badge-soft @(Model.CanManageSettings ? "badge-soft-success" : "badge-soft-secondary")">
-                Ayarlar Yönetimi
-            </span>
+            <span class="badge-soft @(Model.CanManageSettings ? "badge-soft-success" : "badge-soft-secondary")">Ayarlar Yönetimi</span>
         </p>
     </div>
 </section>

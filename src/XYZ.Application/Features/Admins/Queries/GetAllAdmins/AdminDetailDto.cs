@@ -19,6 +19,7 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
         public string TenantName { get; set; } = string.Empty;
 
         public string IdentityNumber { get; set; } = string.Empty;
+        public string? ProfilePictureUrl { get; set; }
 
         public bool CanManageUsers { get; set; }
 
