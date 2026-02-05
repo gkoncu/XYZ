@@ -118,6 +118,22 @@ namespace XYZ.Web.Controllers
                 principal,
                 authProps);
 
+            var me = await _apiClient.GetMyProfileAsync(ct);
+
+            if (!string.IsNullOrWhiteSpace(me?.ProfilePictureUrl))
+            {
+                Response.Cookies.Append(
+                    $"xyz_pp_{me.UserId}",
+                    me.ProfilePictureUrl,
+                    new CookieOptions
+                    {
+                        Path = "/",
+                        Secure = true,
+                        SameSite = SameSiteMode.Lax
+                    });
+            }
+
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
@@ -152,6 +168,13 @@ namespace XYZ.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                Response.Cookies.Delete($"xyz_pp_{userId}", new CookieOptions { Path = "/" });
+            }
+
             return RedirectToAction(nameof(Login));
         }
 

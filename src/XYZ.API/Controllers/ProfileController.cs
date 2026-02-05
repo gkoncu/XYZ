@@ -50,13 +50,12 @@ public sealed class ProfileController : ControllerBase
     [FromForm] UploadProfilePictureRequest request,
     CancellationToken ct)
     {
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
         var file = request.File;
 
         if (file == null || file.Length == 0)
             return BadRequest("Dosya bulunamadı.");
-
-        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Sadece resim dosyaları yüklenebilir.");
 
         var userId = _currentUser.UserId;
         if (string.IsNullOrWhiteSpace(userId))
@@ -65,7 +64,7 @@ public sealed class ProfileController : ControllerBase
         var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
         Directory.CreateDirectory(uploadsRoot);
 
-        var fileName = $"profile_{userId}_{DateTime.UtcNow.Ticks}.webp";
+        var fileName = $"profile_{Guid.NewGuid():N}_{DateTime.UtcNow.Ticks}.webp";
         var filePath = Path.Combine(uploadsRoot, fileName);
 
         var user = await _userManager.FindByIdAsync(userId);
@@ -79,22 +78,29 @@ public sealed class ProfileController : ControllerBase
                 System.IO.File.Delete(oldPath);
         }
 
-        await using (var inputStream = file.OpenReadStream())
-        using (var image = await Image.LoadAsync(inputStream, ct))
+        try
         {
-            var encoder = new WebpEncoder
+            await using (var inputStream = file.OpenReadStream())
+            using (var image = await Image.LoadAsync(inputStream, ct))
             {
-                Quality = 80,
-                FileFormat = WebpFileFormatType.Lossy
-            };
+                var encoder = new WebpEncoder
+                {
+                    Quality = 80,
+                    FileFormat = WebpFileFormatType.Lossy
+                };
 
-            await image.SaveAsync(filePath, encoder, ct);
+                await image.SaveAsync(filePath, encoder, ct);
+            }
+        }
+        catch
+        {
+            return BadRequest("Geçersiz resim dosyası. Lütfen farklı bir görsel deneyin.");
         }
 
         user!.ProfilePictureUrl = $"/uploads/{fileName}";
         await _userManager.UpdateAsync(user);
 
-        return Ok(user.ProfilePictureUrl);
+        return Ok($"{baseUrl}{user.ProfilePictureUrl}");
     }
 
     [HttpDelete("me/picture")]

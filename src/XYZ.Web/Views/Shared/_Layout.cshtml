@@ -1,5 +1,6 @@
 ﻿﻿﻿﻿@using System
 @using System.Linq
+@using System.Security.Claims
 @{
     var primaryColor = ViewData["PrimaryColor"] as string ?? "#3B82F6";
     var secondaryColor = ViewData["SecondaryColor"] as string ?? "#1E40AF";
@@ -30,9 +31,14 @@
 
     var initials = (User?.Identity?.IsAuthenticated ?? false) ? BuildInitials(displayName) : "?";
 
-    var profilePictureUrl =
-    (ViewData["ProfilePictureUrl"] as string)
-    ?? Context.Request.Cookies["xyz_pp_url"];
+    string? userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    string? profilePictureUrl = null;
+
+    if (!string.IsNullOrWhiteSpace(userId))
+    {
+        var cookieKey = $"xyz_pp_{userId}";
+        profilePictureUrl = Context.Request.Cookies[cookieKey];
+    }
 }
 
 <!DOCTYPE html>
@@ -211,11 +217,13 @@
                                           style="width:34px;height:34px;overflow:hidden;background:rgba(255,255,255,.12);">
                                         @if (!string.IsNullOrWhiteSpace(profilePictureUrl))
                                         {
-                                            <img src="@profilePictureUrl" alt="Profil" style="width:34px;height:34px;object-fit:cover;" />
+                                            <img src="@profilePictureUrl"
+                                                 class="rounded-circle"
+                                                 style="width:32px;height:32px;object-fit:cover;" />
                                         }
                                         else
                                         {
-                                            <span class="fw-semibold" style="letter-spacing:.5px;">@initials</span>
+                                            <span class="avatar-initials">@initials</span>
                                         }
                                     </span>
 

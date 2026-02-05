@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -1266,37 +1267,48 @@ namespace XYZ.Web.Services
         public async Task<string?> UploadMyProfilePictureAsync(
             Stream fileStream,
             string fileName,
+            string contentType,
             CancellationToken cancellationToken = default)
         {
             using var content = new MultipartFormDataContent();
+
             using var fileContent = new StreamContent(fileStream);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
             content.Add(fileContent, "file", fileName);
 
-            var resp = await _httpClient.PostAsync("profile/me/picture", content, cancellationToken);
-            if (!resp.IsSuccessStatusCode) return null;
+            var resp = await _httpClient.PostAsync(
+                "profile/me/picture",
+                content,
+                cancellationToken);
 
-            try
-            {
-                using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-                if (doc.RootElement.TryGetProperty("url", out var urlProp))
-                    return urlProp.GetString();
-
+            if (!resp.IsSuccessStatusCode)
                 return null;
-            }
-            catch
-            {
+
+            var text = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(text))
                 return null;
-            }
+
+            return text.Trim().Trim('"');
         }
 
-        public async Task<bool> DeleteMyProfilePictureAsync(CancellationToken cancellationToken = default)
+
+        public async Task DeleteMyProfilePictureAsync(CancellationToken cancellationToken)
         {
-            var resp = await _httpClient.DeleteAsync("profile/me/picture", cancellationToken);
-            return resp.IsSuccessStatusCode;
+            var response = await _httpClient.DeleteAsync("profile/me/picture", cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+                throw new UnauthorizedAccessException();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException("Profil fotoğrafı silinemedi.");
+            }
         }
+
 
         public async Task<TenantThemeDto?> GetCurrentTenantThemeRawAsync(CancellationToken cancellationToken = default)
         {

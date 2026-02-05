@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
@@ -107,7 +110,7 @@ namespace XYZ.Web.Controllers
             }
 
             await using var stream = file.OpenReadStream();
-            var url = await _api.UploadMyProfilePictureAsync(stream, file.FileName, ct);
+            var url = await _api.UploadMyProfilePictureAsync(stream, file.FileName, file.ContentType, ct);
 
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -115,22 +118,17 @@ namespace XYZ.Web.Controllers
                 return RedirectToAction(nameof(Edit));
             }
 
-            var normalized = NormalizeAssetUrl(url);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                Response.Cookies.Append(
-                    XYZ.Web.Common.WebCookieNames.ProfilePictureUrl,
-                    normalized,
-                    new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddDays(7),
-                        HttpOnly = false,
-                        Secure = true,
-                        SameSite = SameSiteMode.Lax,
-                        IsEssential = true
-                    });
-            }
+            Response.Cookies.Append(
+                $"xyz_pp_{userId}",
+                url,
+                new CookieOptions
+                {
+                    Path = "/",
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax
+                });
 
             TempData["SuccessMessage"] = "Profil fotoğrafı güncellendi.";
             return RedirectToAction(nameof(Edit));
@@ -140,17 +138,28 @@ namespace XYZ.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePicture(CancellationToken ct)
         {
-            var ok = await _api.DeleteMyProfilePictureAsync(ct);
-            if (!ok)
+            try
+            {
+                var me = await _api.GetMyProfileAsync(ct);
+                if (string.IsNullOrWhiteSpace(me?.ProfilePictureUrl))
+                {
+                    TempData["SuccessMessage"] = "Profil fotoğrafı bulunamadı.";
+                    return RedirectToAction(nameof(Edit));
+                }
+
+                await _api.DeleteMyProfilePictureAsync(ct);
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Response.Cookies.Delete($"xyz_pp_{userId}", new CookieOptions { Path = "/" });
+
+                TempData["SuccessMessage"] = "Profil fotoğrafı silindi.";
+                return RedirectToAction(nameof(Edit));
+            }
+            catch (Exception)
             {
                 TempData["ErrorMessage"] = "Profil fotoğrafı silinirken bir hata oluştu.";
                 return RedirectToAction(nameof(Edit));
             }
-
-            Response.Cookies.Delete(XYZ.Web.Common.WebCookieNames.ProfilePictureUrl);
-
-            TempData["SuccessMessage"] = "Profil fotoğrafı silindi.";
-            return RedirectToAction(nameof(Edit));
         }
 
         private string? NormalizeAssetUrl(string? raw)
