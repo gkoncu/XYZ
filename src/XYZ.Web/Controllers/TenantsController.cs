@@ -119,8 +119,7 @@ namespace XYZ.Web.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Lax,
-                Path = "/",
-                Expires = DateTimeOffset.UtcNow.AddDays(30)
+                Path = "/"
             });
 
             var auth = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);

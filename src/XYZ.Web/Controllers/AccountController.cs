@@ -128,11 +128,6 @@ namespace XYZ.Web.Controllers
                 Path = "/"
             };
 
-            if (model.RememberMe)
-            {
-                rtOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
-            }
-
             Response.Cookies.Append(RefreshTokenCookieName, loginResult.RefreshToken, rtOptions);
 
             var me = await _apiClient.GetMyProfileAsync(ct);
