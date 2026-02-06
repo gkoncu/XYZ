@@ -51,9 +51,6 @@ namespace XYZ.Web.Controllers
         [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<IActionResult> List(
             int? studentId,
-            int? classId,
-            string? from,
-            string? to,
             int? status,
             int pageNumber = 1,
             int pageSize = 50,
@@ -64,9 +61,6 @@ namespace XYZ.Web.Controllers
                 Filter = new AttendanceListFilter
                 {
                     StudentId = studentId,
-                    ClassId = classId,
-                    From = from,
-                    To = to,
                     Status = status,
                     PageNumber = pageNumber <= 0 ? 1 : pageNumber,
                     PageSize = pageSize <= 0 ? 50 : pageSize
@@ -77,12 +71,12 @@ namespace XYZ.Web.Controllers
             {
                 if (User.IsInRole("Student"))
                 {
-                    vm.Filter.StudentId = null;
                     vm.Filter.ClassId = null;
+                    vm.Filter.From = null;
+                    vm.Filter.To = null;
                 }
 
                 var path = BuildAttendanceListPath(vm.Filter);
-
                 var response = await _apiClient.GetAsync(path, ct);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -96,9 +90,11 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError("attendances/list isteği başarısız. StatusCode: {StatusCode}", response.StatusCode);
-                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+                    _logger.LogError(
+                        "attendances/list isteği başarısız. StatusCode: {StatusCode}",
+                        response.StatusCode);
 
+                    ViewData["ErrorMessage"] = "Yoklama geçmişi yüklenirken bir hata oluştu.";
                     return View(vm);
                 }
 
@@ -107,7 +103,7 @@ namespace XYZ.Web.Controllers
 
                 if (dto is null)
                 {
-                    ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken bir hata oluştu.";
+                    ViewData["ErrorMessage"] = "Yoklama geçmişi yüklenirken bir hata oluştu.";
                     return View(vm);
                 }
 
@@ -117,7 +113,7 @@ namespace XYZ.Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Yoklama listesi alınırken beklenmeyen hata oluştu.");
-                ViewData["ErrorMessage"] = "Yoklama listesi yüklenirken beklenmeyen bir hata oluştu.";
+                ViewData["ErrorMessage"] = "Yoklama geçmişi yüklenirken beklenmeyen bir hata oluştu.";
                 return View(vm);
             }
         }
@@ -125,22 +121,29 @@ namespace XYZ.Web.Controllers
         private static string BuildAttendanceListPath(AttendanceListFilter f)
         {
             var path = "attendances/list";
-
             var q = new Dictionary<string, string?>();
 
-            if (f.StudentId.HasValue) q["StudentId"] = f.StudentId.Value.ToString();
-            if (f.ClassId.HasValue) q["ClassId"] = f.ClassId.Value.ToString();
+            if (f.StudentId.HasValue)
+                q["StudentId"] = f.StudentId.Value.ToString();
 
-            if (!string.IsNullOrWhiteSpace(f.From)) q["From"] = f.From;
-            if (!string.IsNullOrWhiteSpace(f.To)) q["To"] = f.To;
+            if (f.ClassId.HasValue)
+                q["ClassId"] = f.ClassId.Value.ToString();
 
-            if (f.Status.HasValue) q["Status"] = f.Status.Value.ToString();
+            if (!string.IsNullOrWhiteSpace(f.From))
+                q["From"] = f.From;
+
+            if (!string.IsNullOrWhiteSpace(f.To))
+                q["To"] = f.To;
+
+            if (f.Status.HasValue)
+                q["Status"] = f.Status.Value.ToString();
 
             q["PageNumber"] = f.PageNumber.ToString();
             q["PageSize"] = f.PageSize.ToString();
 
             return QueryHelpers.AddQueryString(path, q);
         }
+
 
 
         [HttpGet]
