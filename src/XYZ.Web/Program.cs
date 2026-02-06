@@ -40,6 +40,17 @@ builder.Services
     })
     .AddHttpMessageHandler<ApiAuthorizationMessageHandler>();
 
+builder.Services.AddHttpClient("ApiNoAuth", client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        throw new InvalidOperationException("Api:BaseUrl is not configured in appsettings.json");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

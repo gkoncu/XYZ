@@ -10,6 +10,14 @@
         <div class="text-muted small">@Model.Tenant.Subdomain</div>
     </div>
     <div>
+        <form asp-action="SwitchContext" asp-route-id="@Model.Tenant.Id" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="btn btn-sm btn-outline-warning me-1"
+                    title="SuperAdmin bağlı olduğu kulübü değiştir">
+                Switch
+            </button>
+        </form>
         <a asp-action="Edit" asp-route-id="@Model.Tenant.Id" class="btn btn-sm btn-outline-light me-1">Düzenle</a>
 
         <form asp-action="Delete" asp-route-id="@Model.Tenant.Id" method="post" class="d-inline">
