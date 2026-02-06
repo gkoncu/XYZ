@@ -8,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<TenantThemeFilter>();
-builder.Services.AddScoped<XYZ.Web.Infrastructure.Filters.EnsureProfileCookieFilter>();
 
 builder.Services.AddTransient<ApiAuthorizationMessageHandler>();
 
@@ -26,7 +25,6 @@ builder.Services
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.AddService<TenantThemeFilter>();
-    options.Filters.AddService<XYZ.Web.Infrastructure.Filters.EnsureProfileCookieFilter>();
 });
 
 builder.Services

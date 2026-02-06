@@ -1,11 +1,17 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Features.Profile.Commands.ChangeMyPassword;
 using XYZ.Application.Features.Profile.Commands.DeleteMyProfilePicture;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Commands.UploadMyProfilePicture;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
+using XYZ.Domain.Entities;
 
 namespace XYZ.API.Controllers;
 
@@ -15,10 +21,16 @@ namespace XYZ.API.Controllers;
 public sealed class ProfileController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ICurrentUserService _currentUser;
+    private readonly IWebHostEnvironment _env;
 
-    public ProfileController(IMediator mediator)
+    public ProfileController(IMediator mediator, UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IWebHostEnvironment env)
     {
         _mediator = mediator;
+        _userManager = userManager;
+        _currentUser = currentUser;
+        _env = env;
     }
 
     [HttpGet("me")]
@@ -35,38 +47,71 @@ public sealed class ProfileController : ControllerBase
     [HttpPost("me/picture")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(2 * 1024 * 1024)]
-    public async Task<ActionResult<string>> UploadMyProfilePicture(CancellationToken ct)
+    public async Task<ActionResult<string>> UploadMyProfilePicture(
+    [FromForm] UploadProfilePictureRequest request,
+    CancellationToken ct)
     {
-        if (!Request.HasFormContentType)
-            return BadRequest(new { error = "multipart/form-data bekleniyor." });
+        var file = request.File;
+        if (file == null || file.Length == 0)
+            return BadRequest("Dosya bulunamadı.");
 
-        var form = await Request.ReadFormAsync(ct);
-        var file = form.Files.GetFile("file");
+        if (file.Length > 2 * 1024 * 1024)
+            return BadRequest("Dosya boyutu 2 MB'den büyük olamaz.");
 
-        if (file is null || file.Length == 0)
-            return BadRequest(new { error = "Dosya gerekli." });
+        var userId = _currentUser.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
 
-        await using var ms = new MemoryStream();
-        await file.CopyToAsync(ms, ct);
+        var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
+        Directory.CreateDirectory(uploadsRoot);
+
+        var fileName = $"profile_{Guid.NewGuid():N}_{DateTime.UtcNow.Ticks}.webp";
+        var filePath = Path.Combine(uploadsRoot, fileName);
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Unauthorized();
+
+        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+        {
+            var oldPath = Path.Combine(
+                _env.WebRootPath,
+                user.ProfilePictureUrl.TrimStart('/'));
+
+            if (System.IO.File.Exists(oldPath))
+                System.IO.File.Delete(oldPath);
+        }
 
         try
         {
-            var url = await _mediator.Send(new UploadMyProfilePictureCommand
-            {
-                Content = ms.ToArray(),
-                FileName = file.FileName
-            }, ct);
+            await using var inputStream = file.OpenReadStream();
+            using var image = await Image.LoadAsync(inputStream, ct);
 
-            return Ok(new { url });
+            image.Mutate(x =>
+                x.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(512, 512)
+                }));
+
+            var encoder = new WebpEncoder
+            {
+                Quality = 80
+            };
+
+            await using var output = System.IO.File.Create(filePath);
+            await image.SaveAsync(output, encoder, ct);
         }
-        catch (InvalidOperationException ex) when (ex.Message == "FILE_TOO_LARGE")
+        catch
         {
-            return BadRequest(new { error = "Dosya boyutu çok büyük." });
+            return BadRequest("Geçersiz resim dosyası. Lütfen farklı bir görsel deneyin.");
         }
-        catch (InvalidOperationException ex) when (ex.Message == "INVALID_FILE_TYPE")
-        {
-            return BadRequest(new { error = "Geçersiz dosya türü." });
-        }
+
+        user.ProfilePictureUrl = $"/uploads/{fileName}";
+        await _userManager.UpdateAsync(user);
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        return Ok($"{baseUrl}{user.ProfilePictureUrl}");
     }
 
     [HttpDelete("me/picture")]
