@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Features.Profile.Commands.ChangeMyPassword;
 using XYZ.Application.Features.Profile.Commands.DeleteMyProfilePicture;
@@ -50,12 +51,12 @@ public sealed class ProfileController : ControllerBase
     [FromForm] UploadProfilePictureRequest request,
     CancellationToken ct)
     {
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
         var file = request.File;
-
         if (file == null || file.Length == 0)
             return BadRequest("Dosya bulunamadı.");
+
+        if (file.Length > 2 * 1024 * 1024)
+            return BadRequest("Dosya boyutu 2 MB'den büyük olamaz.");
 
         var userId = _currentUser.UserId;
         if (string.IsNullOrWhiteSpace(userId))
@@ -68,7 +69,10 @@ public sealed class ProfileController : ControllerBase
         var filePath = Path.Combine(uploadsRoot, fileName);
 
         var user = await _userManager.FindByIdAsync(userId);
-        if (!string.IsNullOrWhiteSpace(user?.ProfilePictureUrl))
+        if (user == null)
+            return Unauthorized();
+
+        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
         {
             var oldPath = Path.Combine(
                 _env.WebRootPath,
@@ -80,26 +84,33 @@ public sealed class ProfileController : ControllerBase
 
         try
         {
-            await using (var inputStream = file.OpenReadStream())
-            using (var image = await Image.LoadAsync(inputStream, ct))
-            {
-                var encoder = new WebpEncoder
-                {
-                    Quality = 80,
-                    FileFormat = WebpFileFormatType.Lossy
-                };
+            await using var inputStream = file.OpenReadStream();
+            using var image = await Image.LoadAsync(inputStream, ct);
 
-                await image.SaveAsync(filePath, encoder, ct);
-            }
+            image.Mutate(x =>
+                x.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(512, 512)
+                }));
+
+            var encoder = new WebpEncoder
+            {
+                Quality = 80
+            };
+
+            await using var output = System.IO.File.Create(filePath);
+            await image.SaveAsync(output, encoder, ct);
         }
         catch
         {
             return BadRequest("Geçersiz resim dosyası. Lütfen farklı bir görsel deneyin.");
         }
 
-        user!.ProfilePictureUrl = $"/uploads/{fileName}";
+        user.ProfilePictureUrl = $"/uploads/{fileName}";
         await _userManager.UpdateAsync(user);
 
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
         return Ok($"{baseUrl}{user.ProfilePictureUrl}");
     }
 
