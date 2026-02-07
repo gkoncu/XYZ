@@ -1,7 +1,11 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Tenants.Commands.CreateTenant;
 using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
 using XYZ.Web.Models.Tenants;
@@ -12,11 +16,15 @@ namespace XYZ.Web.Controllers
     [Authorize(Roles = "SuperAdmin")]
     public class TenantsController : Controller
     {
-        private readonly IApiClient _apiClient;
+        private const string RefreshTokenCookieName = "xyz_rt";
 
-        public TenantsController(IApiClient apiClient)
+        private readonly IApiClient _apiClient;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public TenantsController(IApiClient apiClient, IHttpClientFactory httpClientFactory)
         {
             _apiClient = apiClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet]
@@ -39,62 +47,114 @@ namespace XYZ.Web.Controllers
 
             var vm = new TenantDetailsViewModel
             {
-                Tenant = tenant,
-                CreateAdmin = new CreateTenantAdminViewModel()
+                Tenant = tenant
             };
 
             return View(vm);
         }
 
+        // === SWITCH CONTEXT: "Work with this tenant" ===
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAdmin(int id, TenantDetailsViewModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> SwitchContext(int id, CancellationToken cancellationToken)
         {
-            var tenant = await _apiClient.GetTenantAsync(id, cancellationToken);
-            if (tenant is null) return NotFound();
+            var switchResponse = await _apiClient.PostAsJsonAsync("profile/me/tenant", new { tenantId = id }, cancellationToken);
 
-            ModelState.Clear();
-            TryValidateModel(model.CreateAdmin, nameof(TenantDetailsViewModel.CreateAdmin));
-            if (!ModelState.IsValid)
+            if (switchResponse.StatusCode == HttpStatusCode.Unauthorized) return RedirectToAction("Login", "Account");
+            if (switchResponse.StatusCode == HttpStatusCode.Forbidden)
             {
-                return View("Details", new TenantDetailsViewModel
-                {
-                    Tenant = tenant,
-                    CreateAdmin = model.CreateAdmin
-                });
+                TempData["ErrorMessage"] = "Tenant değiştirme yetkiniz yok.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            if (switchResponse.StatusCode == HttpStatusCode.NotFound)
+            {
+                TempData["ErrorMessage"] = "Tenant bulunamadı.";
+                return RedirectToAction(nameof(Index));
+            }
+            if (!switchResponse.IsSuccessStatusCode)
+            {
+                var body = await switchResponse.Content.ReadAsStringAsync(cancellationToken);
+                TempData["ErrorMessage"] = $"Tenant değiştirilemedi: {body}";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
-            var payload = new
+            var ok = await RefreshAndUpdateCookieAsync(cancellationToken);
+            if (!ok)
             {
-                FirstName = model.CreateAdmin.FirstName.Trim(),
-                LastName = model.CreateAdmin.LastName.Trim(),
-                Email = model.CreateAdmin.Email.Trim(),
-                PhoneNumber = string.IsNullOrWhiteSpace(model.CreateAdmin.PhoneNumber) ? null : model.CreateAdmin.PhoneNumber.Trim(),
-                TenantId = id,
-                IdentityNumber = string.IsNullOrWhiteSpace(model.CreateAdmin.IdentityNumber) ? null : model.CreateAdmin.IdentityNumber.Trim(),
-                CanManageUsers = model.CreateAdmin.CanManageUsers,
-                CanManageFinance = model.CreateAdmin.CanManageFinance,
-                CanManageSettings = model.CreateAdmin.CanManageSettings
-            };
-
-            var response = await _apiClient.PostAsJsonAsync("admins", payload, cancellationToken);
-
-            if (response.StatusCode == HttpStatusCode.Unauthorized) return RedirectToAction("Login", "Account");
-            if (response.StatusCode == HttpStatusCode.Forbidden)
-            {
-                ModelState.AddModelError(string.Empty, "Admin oluşturma yetkiniz yok.");
-                return View("Details", new TenantDetailsViewModel { Tenant = tenant, CreateAdmin = model.CreateAdmin });
+                TempData["ErrorMessage"] = "Kulüp değişti ancak oturum yenilenemedi. Lütfen çıkış yapıp tekrar giriş yapın.";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                ModelState.AddModelError(string.Empty, $"API Hatası: {body}");
-                return View("Details", new TenantDetailsViewModel { Tenant = tenant, CreateAdmin = model.CreateAdmin });
-            }
-
-            TempData["SuccessMessage"] = "Admin oluşturuldu. İlk şifre: Admin123!";
+            TempData["SuccessMessage"] = "Aktif kulüp değiştirildi (token yenilendi).";
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private async Task<bool> RefreshAndUpdateCookieAsync(CancellationToken ct)
+        {
+            if (!Request.Cookies.TryGetValue(RefreshTokenCookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                return false;
+
+            var client = _httpClientFactory.CreateClient("ApiNoAuth");
+
+            HttpResponseMessage resp;
+            try
+            {
+                resp = await client.PostAsJsonAsync("auth/refresh", new { RefreshToken = refreshToken }, ct);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (!resp.IsSuccessStatusCode)
+                return false;
+
+            var result = await resp.Content.ReadFromJsonAsync<LoginResultDto>(cancellationToken: ct);
+            if (result is null || string.IsNullOrWhiteSpace(result.AccessToken) || string.IsNullOrWhiteSpace(result.RefreshToken))
+                return false;
+
+            Response.Cookies.Append(RefreshTokenCookieName, result.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            });
+
+            var auth = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (!auth.Succeeded || auth.Principal is null)
+                return true;
+
+            var identity = auth.Principal.Identities
+                .FirstOrDefault(i => i.AuthenticationType == CookieAuthenticationDefaults.AuthenticationScheme)
+                ?? (auth.Principal.Identity as ClaimsIdentity);
+
+            if (identity is null)
+                return true;
+
+            ReplaceClaim(identity, "access_token", result.AccessToken);
+
+            if (!string.IsNullOrWhiteSpace(result.TenantId))
+                ReplaceClaim(identity, "tenant_id", result.TenantId);
+
+            var props = auth.Properties ?? new AuthenticationProperties();
+            props.ExpiresUtc = result.ExpiresAtUtc;
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                props);
+
+            return true;
+        }
+
+        private static void ReplaceClaim(ClaimsIdentity identity, string claimType, string newValue)
+        {
+            var existing = identity.FindFirst(claimType);
+            if (existing is not null)
+                identity.RemoveClaim(existing);
+
+            identity.AddClaim(new Claim(claimType, newValue));
         }
 
         [HttpGet]

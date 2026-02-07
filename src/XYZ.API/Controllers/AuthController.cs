@@ -79,6 +79,11 @@ namespace XYZ.API.Controllers
         [ProducesResponseType(401)]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
         {
+            if (!IsOriginAllowed(Request.Headers.Origin.ToString()))
+            {
+                return Forbid();
+            }
+
             try
             {
                 var cmd = new RefreshCommand(
@@ -93,6 +98,40 @@ namespace XYZ.API.Controllers
             {
                 return Unauthorized(new { error = "Invalid refresh token." });
             }
+        }
+
+        private bool IsOriginAllowed(string? origin)
+        {
+            if (string.IsNullOrWhiteSpace(origin))
+                return true;
+
+            // appsettings: Security:AllowedOrigins = "https://app.xyz.com;https://admin.xyz.com"
+            var raw = _config["Security:AllowedOrigins"];
+            if (string.IsNullOrWhiteSpace(raw))
+                return true;
+
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri))
+                return false;
+
+            var allowed = raw
+                .Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+
+            foreach (var a in allowed)
+            {
+                if (!Uri.TryCreate(a, UriKind.Absolute, out var allowedUri))
+                    continue;
+
+                if (string.Equals(originUri.Scheme, allowedUri.Scheme, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(originUri.Host, allowedUri.Host, StringComparison.OrdinalIgnoreCase)
+                    && originUri.Port == allowedUri.Port)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         [HttpPost("logout")]

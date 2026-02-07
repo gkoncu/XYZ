@@ -1,5 +1,7 @@
 ﻿using FluentValidation;
+using System;
 using System.ComponentModel.DataAnnotations;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 {
@@ -9,33 +11,55 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 
         public UpdateAdminCommandValidator()
         {
-            RuleFor(x => x.AdminId)
-                .GreaterThan(0)
-                .WithMessage("AdminId 0'dan büyük olmalıdır.");
+            RuleFor(x => x.AdminId).GreaterThan(0);
 
             RuleFor(x => x.FirstName)
-                .NotEmpty().WithMessage("Ad zorunludur.")
-                .MaximumLength(50).WithMessage("Ad en fazla 50 karakter olmalıdır.");
+                .NotEmpty()
+                .MaximumLength(50);
 
             RuleFor(x => x.LastName)
-                .NotEmpty().WithMessage("Soyad zorunludur.")
-                .MaximumLength(50).WithMessage("Soyad en fazla 50 karakter olmalıdır.");
+                .NotEmpty()
+                .MaximumLength(50);
 
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("E-posta zorunludur.")
-                .MaximumLength(254).WithMessage("E-posta en fazla 254 karakter olmalıdır.")
-                .EmailAddress().WithMessage("Geçerli bir e-posta adresi giriniz.");
+                .NotEmpty()
+                .EmailAddress()
+                .MaximumLength(256);
 
             RuleFor(x => x.PhoneNumber)
-                .MaximumLength(32).WithMessage("Telefon en fazla 32 karakter olmalıdır.")
+                .MaximumLength(20)
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
+
+            RuleFor(x => x.PhoneNumber)
                 .Must(p => PhoneAttribute.IsValid(p))
                 .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber))
-                .WithMessage("Telefon formatı geçersiz.");
+                .WithMessage("PhoneNumber format is invalid.");
+
+            RuleFor(x => x.Gender)
+                .NotEmpty()
+                .Must(v => Enum.TryParse<Gender>(v, true, out _))
+                .WithMessage("Invalid Gender value.");
+
+            RuleFor(x => x.BloodType)
+                .NotEmpty()
+                .Must(v => Enum.TryParse<BloodType>(v, true, out _))
+                .WithMessage("Invalid BloodType value.");
+
+            RuleFor(x => x.BirthDate)
+                .Must(d =>
+                {
+                    var today = DateTime.Today;
+                    var bd = d.Date;
+                    return bd <= today &&
+                           bd <= today.AddYears(-16) &&
+                           bd >= today.AddYears(-100);
+                })
+                .WithMessage("BirthDate must be a valid date (age between 16 and 100, not in the future).");
 
             RuleFor(x => x.IdentityNumber)
                 .Matches(@"^\d{11}$")
                 .When(x => !string.IsNullOrWhiteSpace(x.IdentityNumber))
-                .WithMessage("T.C. Kimlik No 11 haneli ve sadece rakam olmalıdır.");
+                .WithMessage("IdentityNumber must be exactly 11 digits.");
         }
     }
 }

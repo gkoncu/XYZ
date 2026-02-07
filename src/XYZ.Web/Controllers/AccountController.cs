@@ -14,6 +14,8 @@ namespace XYZ.Web.Controllers
 {
     public class AccountController : Controller
     {
+        private const string RefreshTokenCookieName = "xyz_rt";
+
         private readonly IApiClient _apiClient;
 
         public AccountController(IApiClient apiClient)
@@ -118,6 +120,16 @@ namespace XYZ.Web.Controllers
                 principal,
                 authProps);
 
+            var rtOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            };
+
+            Response.Cookies.Append(RefreshTokenCookieName, loginResult.RefreshToken, rtOptions);
+
             var me = await _apiClient.GetMyProfileAsync(ct);
 
             if (!string.IsNullOrWhiteSpace(me?.ProfilePictureUrl))
@@ -168,6 +180,8 @@ namespace XYZ.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions { Path = "/" });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrWhiteSpace(userId))

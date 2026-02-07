@@ -1,12 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XYZ.Application.Common.Models;
-using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
-using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Web.Models.Admins;
 using XYZ.Web.Services;
 
@@ -83,6 +78,10 @@ namespace XYZ.Web.Controllers
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,
 
+                BirthDate = dto.BirthDate,
+                BloodType = dto.BloodType,
+                Gender = dto.Gender,
+
                 TenantName = dto.TenantName,
                 IdentityNumber = dto.IdentityNumber,
                 CanManageUsers = dto.CanManageUsers,
@@ -117,6 +116,11 @@ namespace XYZ.Web.Controllers
                 model.LastName,
                 model.Email,
                 model.PhoneNumber,
+
+                BirthDate = model.BirthDate!.Value,
+                model.BloodType,
+                model.Gender,
+
                 model.IdentityNumber,
                 model.CanManageUsers,
                 model.CanManageFinance,
@@ -144,14 +148,11 @@ namespace XYZ.Web.Controllers
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
                 ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
-
                 return View(model);
             }
 
-
-            TempData["SuccessMessage"] = "Admin yetkileri güncellendi.";
+            TempData["SuccessMessage"] = "Admin güncellendi.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -159,7 +160,6 @@ namespace XYZ.Web.Controllers
         public IActionResult Create()
         {
             var vm = new AdminCreateViewModel();
-
             return View(vm);
         }
 
@@ -180,6 +180,11 @@ namespace XYZ.Web.Controllers
                 model.LastName,
                 model.Email,
                 model.PhoneNumber,
+
+                BirthDate = model.BirthDate!.Value,
+                model.BloodType,
+                model.Gender,
+
                 model.TenantId,
                 model.IdentityNumber,
                 model.CanManageUsers,
@@ -203,12 +208,9 @@ namespace XYZ.Web.Controllers
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
                 ModelState.AddModelError(string.Empty, $"API Hatası: {errorBody}");
-
                 return View(model);
             }
-
 
             var id = await response.Content.ReadFromJsonAsync<int>(cancellationToken: cancellationToken);
 
@@ -245,9 +247,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(
-                int id,
-                CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             var response = await _apiClient.DeleteAsync($"admins/{id}", cancellationToken);
 
@@ -276,6 +276,5 @@ namespace XYZ.Web.Controllers
             TempData["SuccessMessage"] = "Admin silindi.";
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

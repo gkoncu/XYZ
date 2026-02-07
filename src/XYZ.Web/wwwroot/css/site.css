@@ -234,7 +234,7 @@ body.app-shell .app-navbar .dropdown-divider {
 
 .stat-card-sub {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    /*color: var(--text-muted);*/
 }
 
 /* Students list */
@@ -272,7 +272,7 @@ body.app-shell .app-navbar .dropdown-divider {
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        /*color: var(--text-muted);*/
+        color: var(--text-main);
         border-bottom-width: 1px;
     }
 
@@ -283,6 +283,19 @@ body.app-shell .app-navbar .dropdown-divider {
         .table-modern tbody tr:hover {
             background: rgba(15, 23, 42, 0.75);
         }
+
+    .table-modern thead th,
+    .table-modern thead th * {
+        color: var(--text-main) !important;
+    }
+
+    .table-modern tbody td,
+    .table-modern tbody td *,
+    .table-modern tbody th,
+    .table-modern tbody th * {
+        color: var(--text-main) !important;
+    }
+
 
 .badge-soft {
     border-radius: 999px;

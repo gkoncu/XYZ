@@ -1,7 +1,9 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -156,6 +158,31 @@ builder.Services.AddSwaggerGen(c =>
 
 
 var app = builder.Build();
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<IExceptionHandlerFeature>();
+        var ex = feature?.Error;
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Beklenmeyen bir hata oluþtu.",
+            Detail = "Lütfen daha sonra tekrar deneyin."
+        };
+
+        if (app.Environment.IsDevelopment() && ex is not null)
+        {
+            problem.Detail = ex.Message;
+        }
+
+        context.Response.StatusCode = problem.Status ?? 500;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problem);
+    });
+});
 
 if (app.Environment.IsDevelopment())
 {

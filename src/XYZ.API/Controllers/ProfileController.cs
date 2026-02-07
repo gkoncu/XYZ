@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
@@ -20,17 +22,26 @@ namespace XYZ.API.Controllers;
 [Authorize]
 public sealed class ProfileController : ControllerBase
 {
+    private const long MaxProfileImageBytes = 10L * 1024 * 1024;
+
     private readonly IMediator _mediator;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentUserService _currentUser;
     private readonly IWebHostEnvironment _env;
+    private readonly IApplicationDbContext _db;
 
-    public ProfileController(IMediator mediator, UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IWebHostEnvironment env)
+    public ProfileController(
+        IMediator mediator,
+        UserManager<ApplicationUser> userManager,
+        ICurrentUserService currentUser,
+        IWebHostEnvironment env,
+        IApplicationDbContext db)
     {
         _mediator = mediator;
         _userManager = userManager;
         _currentUser = currentUser;
         _env = env;
+        _db = db;
     }
 
     [HttpGet("me")]
@@ -46,17 +57,18 @@ public sealed class ProfileController : ControllerBase
 
     [HttpPost("me/picture")]
     [Consumes("multipart/form-data")]
-    [RequestSizeLimit(2 * 1024 * 1024)]
+    [RequestSizeLimit(MaxProfileImageBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxProfileImageBytes)]
     public async Task<ActionResult<string>> UploadMyProfilePicture(
-    [FromForm] UploadProfilePictureRequest request,
-    CancellationToken ct)
+        [FromForm] UploadProfilePictureRequest request,
+        CancellationToken ct)
     {
         var file = request.File;
         if (file == null || file.Length == 0)
             return BadRequest("Dosya bulunamadı.");
 
-        if (file.Length > 2 * 1024 * 1024)
-            return BadRequest("Dosya boyutu 2 MB'den büyük olamaz.");
+        if (file.Length > MaxProfileImageBytes)
+            return BadRequest($"Dosya boyutu {(MaxProfileImageBytes / (1024 * 1024))} MB'den büyük olamaz.");
 
         var userId = _currentUser.UserId;
         if (string.IsNullOrWhiteSpace(userId))
@@ -74,10 +86,7 @@ public sealed class ProfileController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
         {
-            var oldPath = Path.Combine(
-                _env.WebRootPath,
-                user.ProfilePictureUrl.TrimStart('/'));
-
+            var oldPath = Path.Combine(_env.WebRootPath, user.ProfilePictureUrl.TrimStart('/'));
             if (System.IO.File.Exists(oldPath))
                 System.IO.File.Delete(oldPath);
         }
@@ -155,5 +164,39 @@ public sealed class ProfileController : ControllerBase
                 error = "Change password failed."
             });
         }
+    }
+
+    // ===== SUPERADMIN: Tenant switch =====
+    public sealed class SwitchMyTenantRequest
+    {
+        public int TenantId { get; set; }
+    }
+
+    [HttpPost("me/tenant")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> SwitchMyTenant([FromBody] SwitchMyTenantRequest request, CancellationToken ct)
+    {
+        if (request.TenantId <= 0)
+            return BadRequest("Geçersiz tenantId.");
+
+        var exists = await _db.Tenants.AsNoTracking().AnyAsync(t => t.Id == request.TenantId, ct);
+        if (!exists)
+            return NotFound("Tenant bulunamadı.");
+
+        var userId = _currentUser.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return Unauthorized();
+
+        user.TenantId = request.TenantId;
+
+        var res = await _userManager.UpdateAsync(user);
+        if (!res.Succeeded)
+            return BadRequest("Tenant değiştirilemedi.");
+
+        return NoContent();
     }
 }

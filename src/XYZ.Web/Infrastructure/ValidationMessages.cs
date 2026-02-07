@@ -15,6 +15,10 @@
 
         public const string TcIdentity = "T.C. Kimlik No 11 haneli ve sadece rakam olmalıdır.";
 
+        public const string BirthDateRangeAdmin = "Doğum tarihi geçerli olmalıdır (en az 16, en fazla 100 yaş).";
+        public const string BloodTypeInvalid = "Kan grubu değeri geçersiz.";
+        public const string GenderInvalid = "Cinsiyet değeri geçersiz.";
+
         public const string ExpiryBeforePublish = "Bitiş tarihi yayın tarihinden önce olamaz.";
         public const string PublishDateRequired = "Yayın tarihi alanı zorunludur.";
     }

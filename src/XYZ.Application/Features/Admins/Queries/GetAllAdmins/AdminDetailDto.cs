@@ -14,6 +14,10 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
 
         public string? PhoneNumber { get; set; }
 
+        public string Gender { get; set; } = string.Empty;
+        public string BloodType { get; set; } = string.Empty;
+        public DateTime BirthDate { get; set; }
+
         public int TenantId { get; set; }
 
         public string TenantName { get; set; } = string.Empty;

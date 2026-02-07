@@ -1,4 +1,5 @@
-﻿﻿@using XYZ.Domain.Enums
+﻿@using XYZ.Application.Features.Attendances.Queries.GetAttendanceList
+﻿@using XYZ.Domain.Enums
 @model XYZ.Web.Models.Attendance.AttendanceListViewModel
 
 @{
@@ -21,6 +22,7 @@
 
     string BadgeClass(AttendanceStatus s) => s switch
     {
+        AttendanceStatus.Unknown => "badge badge-soft badge-soft-muted",
         AttendanceStatus.Present => "badge bg-success",
         AttendanceStatus.Absent => "badge bg-danger",
         AttendanceStatus.Excused => "badge bg-secondary",
@@ -29,6 +31,16 @@
     };
 
     string ChipClass(int? v) => statusFilter == v ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary";
+
+    int? historyStudentId = (!isStudent && Model.Filter.StudentId.HasValue) ? Model.Filter.StudentId.Value : null;
+
+    var items = Model.Result?.Items ?? new List<AttendanceListItemDto>();
+
+    var total = items.Count;
+    var present = items.Count(x => x.Status == AttendanceStatus.Present);
+    var absent = items.Count(x => x.Status == AttendanceStatus.Absent);
+    var excused = items.Count(x => x.Status == AttendanceStatus.Excused);
+    var late = items.Count(x => x.Status == AttendanceStatus.Late);
 }
 
 <section class="mb-3">
@@ -38,7 +50,7 @@
             <div class="text-muted small">
                 @if (isHistoryMode)
                 {
-                    <text>Tüm yoklama kayıtlarınızı burada görebilirsiniz. Duruma göre filtreleyebilirsiniz.</text>
+                    <text>Geçmiş tüm yoklama kayıtlarınızı burada görebilirsiniz. Duruma göre filtreleyebilirsiniz.</text>
                 }
                 else
                 {
@@ -47,171 +59,219 @@
             </div>
         </div>
 
-        <div class="d-flex gap-2">
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary d-md-none"
-                    data-bs-toggle="offcanvas"
-                    data-bs-target="#attListFilters"
-                    aria-controls="attListFilters">
-                Filtreler
-            </button>
+        @if (!isHistoryMode)
+        {
+            <div class="d-flex gap-2">
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary d-md-none"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#attListFilters"
+                        aria-controls="attListFilters">
+                    Filtreler
+                </button>
 
-            <a asp-action="List" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex">
-                Sıfırla
-            </a>
-        </div>
+                <a asp-action="List" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex">
+                    Sıfırla
+                </a>
+            </div>
+        }
     </div>
 
-    <!-- Quick chips: History modda sadece Status -->
+    <!-- Quick chips -->
     <div class="d-flex flex-wrap gap-2 mt-2">
         <a class="@ChipClass(null)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="">
             Tümü
         </a>
 
         <a class="@ChipClass((int)AttendanceStatus.Present)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="@((int)AttendanceStatus.Present)">
             Katıldı
         </a>
 
         <a class="@ChipClass((int)AttendanceStatus.Absent)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="@((int)AttendanceStatus.Absent)">
             Katılmadı
         </a>
 
         <a class="@ChipClass((int)AttendanceStatus.Excused)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="@((int)AttendanceStatus.Excused)">
             İzinli
         </a>
 
         <a class="@ChipClass((int)AttendanceStatus.Late)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="@((int)AttendanceStatus.Late)">
             Geç
         </a>
 
         <a class="@ChipClass((int)AttendanceStatus.Unknown)"
            asp-action="List"
-           asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)"
+           asp-route-studentId="@historyStudentId"
            asp-route-status="@((int)AttendanceStatus.Unknown)">
             Bilinmiyor
         </a>
     </div>
 
-    <!-- Desktop filter (History modda sade) -->
-    <form method="get" class="card-surface mt-3 d-none d-md-block">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-6">
-                <label class="form-label mb-1">Durum</label>
-                <select class="form-select" name="status">
-                    <option value="" selected=@(statusFilter is null)>Tümü</option>
-                    <option value="@((int)AttendanceStatus.Present)" selected=@(statusFilter == (int)AttendanceStatus.Present)>Katıldı</option>
-                    <option value="@((int)AttendanceStatus.Absent)" selected=@(statusFilter == (int)AttendanceStatus.Absent)>Katılmadı</option>
-                    <option value="@((int)AttendanceStatus.Excused)" selected=@(statusFilter == (int)AttendanceStatus.Excused)>İzinli</option>
-                    <option value="@((int)AttendanceStatus.Late)" selected=@(statusFilter == (int)AttendanceStatus.Late)>Geç Kaldı</option>
-                    <option value="@((int)AttendanceStatus.Unknown)" selected=@(statusFilter == (int)AttendanceStatus.Unknown)>Bilinmiyor</option>
-                </select>
+    @if (isHistoryMode)
+    {
+        <div class="card-surface mt-3 p-3">
+            <div class="d-flex flex-wrap gap-3 small">
+                <div><strong>Toplam:</strong> @total</div>
+                <div class="text-success"><strong>Katıldı:</strong> @present</div>
+                <div class="text-danger"><strong>Katılmadı:</strong> @absent</div>
+                <div class="text-secondary"><strong>İzinli:</strong> @excused</div>
+                <div class="text-warning"><strong>Geç:</strong> @late</div>
             </div>
 
-            <div class="col-md-6 text-end">
-                <button class="btn btn-primary" type="submit">Uygula</button>
-                <a class="btn btn-outline-secondary" asp-action="List">Sıfırla</a>
-            </div>
+            <form method="get" class="row g-2 align-items-end mt-3">
+                <div class="col-md-6">
+                    <label class="form-label mb-1 small">Durum</label>
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="" selected=@(statusFilter is null)>Tümü</option>
+                        <option value="@((int)AttendanceStatus.Present)" selected=@(statusFilter == (int)AttendanceStatus.Present)>Katıldı</option>
+                        <option value="@((int)AttendanceStatus.Absent)" selected=@(statusFilter == (int)AttendanceStatus.Absent)>Katılmadı</option>
+                        <option value="@((int)AttendanceStatus.Excused)" selected=@(statusFilter == (int)AttendanceStatus.Excused)>İzinli</option>
+                        <option value="@((int)AttendanceStatus.Late)" selected=@(statusFilter == (int)AttendanceStatus.Late)>Geç Kaldı</option>
+                        <option value="@((int)AttendanceStatus.Unknown)" selected=@(statusFilter == (int)AttendanceStatus.Unknown)>Bilinmiyor</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-sm btn-primary" type="submit">Uygula</button>
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-action="List"
+                       asp-route-studentId="@historyStudentId">
+                        Sıfırla
+                    </a>
+                </div>
+
+                @if (historyStudentId.HasValue)
+                {
+                    <input type="hidden" name="studentId" value="@historyStudentId.Value" />
+                }
+            </form>
         </div>
+    }
+    else
+    {
+        <!-- Desktop filter -->
+        <form method="get" class="card-surface mt-3 d-none d-md-block">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label mb-1">Durum</label>
+                    <select class="form-select" name="status">
+                        <option value="" selected=@(statusFilter is null)>Tümü</option>
+                        <option value="@((int)AttendanceStatus.Present)" selected=@(statusFilter == (int)AttendanceStatus.Present)>Katıldı</option>
+                        <option value="@((int)AttendanceStatus.Absent)" selected=@(statusFilter == (int)AttendanceStatus.Absent)>Katılmadı</option>
+                        <option value="@((int)AttendanceStatus.Excused)" selected=@(statusFilter == (int)AttendanceStatus.Excused)>İzinli</option>
+                        <option value="@((int)AttendanceStatus.Late)" selected=@(statusFilter == (int)AttendanceStatus.Late)>Geç Kaldı</option>
+                        <option value="@((int)AttendanceStatus.Unknown)" selected=@(statusFilter == (int)AttendanceStatus.Unknown)>Bilinmiyor</option>
+                    </select>
+                </div>
 
-        @if (!isStudent && Model.Filter.StudentId.HasValue)
-        {
-            <input type="hidden" name="studentId" value="@Model.Filter.StudentId.Value" />
-        }
-    </form>
-</section>
-
-<!-- Mobile filters -->
-<div class="offcanvas offcanvas-bottom" tabindex="-1" id="attListFilters" aria-labelledby="attListFiltersLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="attListFiltersLabel">Filtreler</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
-    </div>
-    <div class="offcanvas-body">
-        <form method="get" class="row g-2">
-            <div class="col-12">
-                <label class="form-label small mb-1">Durum</label>
-                <select class="form-select" name="status">
-                    <option value="" selected="@(statusFilter is null)">Tümü</option>
-                    <option value="@((int)AttendanceStatus.Present)" selected="@(statusFilter == (int)AttendanceStatus.Present)">Katıldı</option>
-                    <option value="@((int)AttendanceStatus.Absent)" selected="@(statusFilter == (int)AttendanceStatus.Absent)">Katılmadı</option>
-                    <option value="@((int)AttendanceStatus.Excused)" selected="@(statusFilter == (int)AttendanceStatus.Excused)">İzinli</option>
-                    <option value="@((int)AttendanceStatus.Late)" selected="@(statusFilter == (int)AttendanceStatus.Late)">Geç Kaldı</option>
-                    <option value="@((int)AttendanceStatus.Unknown)" selected="@(statusFilter == (int)AttendanceStatus.Unknown)">Bilinmiyor</option>
-                </select>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" type="submit">Uygula</button>
+                    <a class="btn btn-outline-secondary" asp-action="List">Sıfırla</a>
+                </div>
             </div>
 
             @if (!isStudent && Model.Filter.StudentId.HasValue)
             {
                 <input type="hidden" name="studentId" value="@Model.Filter.StudentId.Value" />
             }
-
-            <div class="col-12 d-flex gap-2 mt-2">
-                <button class="btn btn-primary flex-fill" type="submit" data-bs-dismiss="offcanvas">Uygula</button>
-                <a class="btn btn-outline-secondary flex-fill" asp-action="List">Sıfırla</a>
-            </div>
         </form>
+    }
+</section>
+
+@if (!isHistoryMode)
+{
+    <div class="offcanvas offcanvas-bottom" tabindex="-1" id="attListFilters" aria-labelledby="attListFiltersLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="attListFiltersLabel">Filtreler</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form method="get" class="row g-2">
+                <div class="col-12">
+                    <label class="form-label small mb-1">Durum</label>
+                    <select class="form-select" name="status">
+                        <option value="" selected=@(statusFilter is null)>Tümü</option>
+                        <option value="@((int)AttendanceStatus.Present)" selected=@(statusFilter == (int)AttendanceStatus.Present)>Katıldı</option>
+                        <option value="@((int)AttendanceStatus.Absent)" selected=@(statusFilter == (int)AttendanceStatus.Absent)>Katılmadı</option>
+                        <option value="@((int)AttendanceStatus.Excused)" selected=@(statusFilter == (int)AttendanceStatus.Excused)>İzinli</option>
+                        <option value="@((int)AttendanceStatus.Late)" selected=@(statusFilter == (int)AttendanceStatus.Late)>Geç Kaldı</option>
+                        <option value="@((int)AttendanceStatus.Unknown)" selected=@(statusFilter == (int)AttendanceStatus.Unknown)>Bilinmiyor</option>
+                    </select>
+                </div>
+
+                @if (!isStudent && Model.Filter.StudentId.HasValue)
+                {
+                    <input type="hidden" name="studentId" value="@Model.Filter.StudentId.Value" />
+                }
+
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button class="btn btn-primary flex-fill" type="submit" data-bs-dismiss="offcanvas">Uygula</button>
+                    <a class="btn btn-outline-secondary flex-fill" asp-action="List">Sıfırla</a>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+}
 
 <section class="card-surface">
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0 table-modern">
-            <thead>
-                <tr class="text-muted small">
-                    <th>Tarih</th>
-                    <th>Sınıf</th>
+            <thead class="table-modern">
+                <tr>
+                    <th class="text-body">Tarih</th>
+                    <th class="text-body">Sınıf</th>
                     @if (!isHistoryMode)
                     {
-                        <th>Öğrenci</th>
+                        <th class="text-body">Öğrenci</th>
                     }
-                    <th>Durum</th>
-                    <th>Puan</th>
+                    <th class="text-body">Durum</th>
+                    <th class="text-body">Puan</th>
                     @if (!isHistoryMode)
                     {
-                        <th class="text-end"></th>
+                        <th class="text-end text-body"></th>
                     }
                 </tr>
             </thead>
 
             <tbody>
-                @if (Model.Result.Items is null || Model.Result.Items.Count == 0)
+                @if (items.Count == 0)
                 {
                     <tr>
-                        <td colspan="@(isHistoryMode ? 4 : 6)" class="text-center text-muted py-4">
+                        <td colspan=@(isHistoryMode ? 4 : 6) class="text-center text-muted py-4">
                             Kayıt bulunamadı.
                         </td>
                     </tr>
                 }
                 else
                 {
-                    foreach (var a in Model.Result.Items)
+                    foreach (var a in items)
                     {
                         <tr>
-                            <td>@a.SessionDate.ToString("dd.MM.yyyy")</td>
-                            <td>@a.ClassName</td>
+                            <td class="text-body">@a.SessionDate.ToString("dd.MM.yyyy")</td>
+                            <td class="text-body">@a.ClassName</td>
 
                             @if (!isHistoryMode)
                             {
-                                <td>@a.StudentFullName</td>
+                                <td class="text-body">@a.StudentFullName</td>
                             }
 
                             <td><span class="@BadgeClass(a.Status)">@StatusText(a.Status)</span></td>
-                            <td>@(a.Score.HasValue? a.Score.Value.ToString() : "-")</td>
+                            <td class="text-body">@(a.Score.HasValue? a.Score.Value.ToString() : "-")</td>
 
                             @if (!isHistoryMode)
                             {
@@ -232,7 +292,7 @@
     </div>
 </section>
 
-@if (Model.Result.TotalPages > 1)
+@if (Model?.Result?.TotalPages > 1)
 {
     <nav class="mt-3" aria-label="Sayfalama">
         <ul class="pagination pagination-modern justify-content-center flex-wrap">
@@ -242,7 +302,7 @@
                    asp-route-pageNumber="@(Model.Result.PageNumber - 1)"
                    asp-route-pageSize="@Model.Result.PageSize"
                    asp-route-status="@Model.Filter.Status"
-                   asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)">
+                   asp-route-studentId="@historyStudentId">
                     Önceki
                 </a>
             </li>
@@ -255,7 +315,7 @@
                        asp-route-pageNumber="@p"
                        asp-route-pageSize="@Model.Result.PageSize"
                        asp-route-status="@Model.Filter.Status"
-                       asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)">
+                       asp-route-studentId="@historyStudentId">
                         @p
                     </a>
                 </li>
@@ -267,7 +327,7 @@
                    asp-route-pageNumber="@(Model.Result.PageNumber + 1)"
                    asp-route-pageSize="@Model.Result.PageSize"
                    asp-route-status="@Model.Filter.Status"
-                   asp-route-studentId="@(isStudent ? null : Model.Filter.StudentId)">
+                   asp-route-studentId="@historyStudentId">
                     Sonraki
                 </a>
             </li>
