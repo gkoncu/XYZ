@@ -28,5 +28,14 @@ namespace XYZ.Web.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult HttpStatus(int code)
+        {
+            Response.StatusCode = code;
+            ViewBag.StatusCode = code;
+            return View("~/Views/Shared/HttpStatus.cshtml");
+        }
     }
 }

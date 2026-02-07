@@ -53,9 +53,10 @@ builder.Services.AddHttpClient("ApiNoAuth", client =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler("/Home/Error");
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
@@ -63,6 +64,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseStatusCodePagesWithReExecute("/Home/HttpStatus", "?code={0}");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "İşlem tamamlanamadı";
+    var code = (int?)(ViewBag.StatusCode) ?? 0;
+
+    string title = code switch
+    {
+        401 => "Oturum süreniz doldu",
+        403 => "Yetkiniz yok",
+        404 => "Sayfa bulunamadı",
+        413 => "Yüklenen dosya çok büyük",
+        _ => "İşlem tamamlanamadı"
+    };
+
+    string desc = code switch
+    {
+        401 => "Lütfen tekrar giriş yapın.",
+        403 => "Bu işlem için yetkiniz bulunmuyor.",
+        404 => "Aradığınız sayfa bulunamadı.",
+        413 => "Dosya boyutu sınırı aşıldı. Lütfen daha küçük bir dosya deneyin.",
+        _ => "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+    };
+}
+
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h3 class="mb-2">@title</h3>
+            <p class="text-muted mb-3">@desc</p>
+
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary" href="/">Ana sayfa</a>
+                <button class="btn btn-outline-secondary" onclick="history.back()">Geri dön</button>
+            </div>
+
+            <div class="mt-3 small text-muted">
+                Kod: <strong>@code</strong>
+            </div>
+        </div>
+    </div>
+</div>
