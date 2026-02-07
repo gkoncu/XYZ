@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -21,6 +22,8 @@ namespace XYZ.API.Controllers;
 [Authorize]
 public sealed class ProfileController : ControllerBase
 {
+    private const long MaxProfileImageBytes = 10L * 1024 * 1024;
+
     private readonly IMediator _mediator;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentUserService _currentUser;
@@ -54,17 +57,18 @@ public sealed class ProfileController : ControllerBase
 
     [HttpPost("me/picture")]
     [Consumes("multipart/form-data")]
-    [RequestSizeLimit(2 * 1024 * 1024)]
+    [RequestSizeLimit(MaxProfileImageBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxProfileImageBytes)]
     public async Task<ActionResult<string>> UploadMyProfilePicture(
-    [FromForm] UploadProfilePictureRequest request,
-    CancellationToken ct)
+        [FromForm] UploadProfilePictureRequest request,
+        CancellationToken ct)
     {
         var file = request.File;
         if (file == null || file.Length == 0)
             return BadRequest("Dosya bulunamadı.");
 
-        if (file.Length > 2 * 1024 * 1024)
-            return BadRequest("Dosya boyutu 2 MB'den büyük olamaz.");
+        if (file.Length > MaxProfileImageBytes)
+            return BadRequest($"Dosya boyutu {(MaxProfileImageBytes / (1024 * 1024))} MB'den büyük olamaz.");
 
         var userId = _currentUser.UserId;
         if (string.IsNullOrWhiteSpace(userId))
@@ -82,10 +86,7 @@ public sealed class ProfileController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
         {
-            var oldPath = Path.Combine(
-                _env.WebRootPath,
-                user.ProfilePictureUrl.TrimStart('/'));
-
+            var oldPath = Path.Combine(_env.WebRootPath, user.ProfilePictureUrl.TrimStart('/'));
             if (System.IO.File.Exists(oldPath))
                 System.IO.File.Delete(oldPath);
         }
