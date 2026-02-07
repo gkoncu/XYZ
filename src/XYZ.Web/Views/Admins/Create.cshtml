@@ -43,13 +43,35 @@
         </div>
 
         <div class="col-md-4">
-            @if (User.IsInRole("SuperAdmin"))
-            {
-                <div class="col-md-6">
-                    <label class="form-label small">Kulüp Id</label>
-                    <input class="form-control form-control-sm" value="@Model.TenantId" disabled />
-                </div>
-            }
+            <label asp-for="BirthDate" class="form-label small"></label>
+            <input asp-for="BirthDate" class="form-control form-control-sm" />
+            <span asp-validation-for="BirthDate" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="BloodType" class="form-label small"></label>
+            <select asp-for="BloodType" class="form-select form-select-sm">
+                <option value="Unknown">Bilinmiyor</option>
+                <option value="A_Positive">A+</option>
+                <option value="A_Negative">A-</option>
+                <option value="B_Positive">B+</option>
+                <option value="B_Negative">B-</option>
+                <option value="AB_Positive">AB+</option>
+                <option value="AB_Negative">AB-</option>
+                <option value="O_Positive">0+</option>
+                <option value="O_Negative">0-</option>
+            </select>
+            <span asp-validation-for="BloodType" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Gender" class="form-label small"></label>
+            <select asp-for="Gender" class="form-select form-select-sm">
+                <option value="Male">Erkek</option>
+                <option value="Female">Kadın</option>
+                <option value="PreferNotToSay">Belirtmek istemiyorum</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger small"></span>
         </div>
 
         <div class="col-md-4">

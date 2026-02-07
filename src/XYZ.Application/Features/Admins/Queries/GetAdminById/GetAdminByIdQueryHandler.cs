@@ -59,13 +59,20 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
                 FullName = admin.User.FullName,
                 Email = admin.User.Email ?? string.Empty,
                 PhoneNumber = admin.User.PhoneNumber,
+
+                Gender = admin.User.Gender.ToString(),
+                BloodType = admin.User.BloodType.ToString(),
+                BirthDate = admin.User.BirthDate,
+
                 TenantId = admin.TenantId,
                 TenantName = admin.Tenant.Name,
                 ProfilePictureUrl = admin.User.ProfilePictureUrl,
+
                 IdentityNumber = admin.IdentityNumber ?? string.Empty,
                 CanManageUsers = admin.CanManageUsers,
                 CanManageFinance = admin.CanManageFinance,
                 CanManageSettings = admin.CanManageSettings,
+
                 IsActive = admin.IsActive && admin.User.IsActive,
                 CreatedAt = admin.CreatedAt,
                 UpdatedAt = admin.UpdatedAt

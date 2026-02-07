@@ -47,8 +47,7 @@ namespace XYZ.Web.Controllers
 
             var vm = new TenantDetailsViewModel
             {
-                Tenant = tenant,
-                CreateAdmin = new CreateTenantAdminViewModel()
+                Tenant = tenant
             };
 
             return View(vm);
@@ -156,57 +155,6 @@ namespace XYZ.Web.Controllers
                 identity.RemoveClaim(existing);
 
             identity.AddClaim(new Claim(claimType, newValue));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAdmin(int id, TenantDetailsViewModel model, CancellationToken cancellationToken)
-        {
-            var tenant = await _apiClient.GetTenantAsync(id, cancellationToken);
-            if (tenant is null) return NotFound();
-
-            ModelState.Clear();
-            TryValidateModel(model.CreateAdmin, nameof(TenantDetailsViewModel.CreateAdmin));
-            if (!ModelState.IsValid)
-            {
-                return View("Details", new TenantDetailsViewModel
-                {
-                    Tenant = tenant,
-                    CreateAdmin = model.CreateAdmin
-                });
-            }
-
-            var payload = new
-            {
-                FirstName = model.CreateAdmin.FirstName.Trim(),
-                LastName = model.CreateAdmin.LastName.Trim(),
-                Email = model.CreateAdmin.Email.Trim(),
-                PhoneNumber = string.IsNullOrWhiteSpace(model.CreateAdmin.PhoneNumber) ? null : model.CreateAdmin.PhoneNumber.Trim(),
-                TenantId = id,
-                IdentityNumber = string.IsNullOrWhiteSpace(model.CreateAdmin.IdentityNumber) ? null : model.CreateAdmin.IdentityNumber.Trim(),
-                CanManageUsers = model.CreateAdmin.CanManageUsers,
-                CanManageFinance = model.CreateAdmin.CanManageFinance,
-                CanManageSettings = model.CreateAdmin.CanManageSettings
-            };
-
-            var response = await _apiClient.PostAsJsonAsync("admins", payload, cancellationToken);
-
-            if (response.StatusCode == HttpStatusCode.Unauthorized) return RedirectToAction("Login", "Account");
-            if (response.StatusCode == HttpStatusCode.Forbidden)
-            {
-                ModelState.AddModelError(string.Empty, "Admin oluşturma yetkiniz yok.");
-                return View("Details", new TenantDetailsViewModel { Tenant = tenant, CreateAdmin = model.CreateAdmin });
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                ModelState.AddModelError(string.Empty, $"API Hatası: {body}");
-                return View("Details", new TenantDetailsViewModel { Tenant = tenant, CreateAdmin = model.CreateAdmin });
-            }
-
-            TempData["SuccessMessage"] = "Admin oluşturuldu. İlk şifre: Admin123!";
-            return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpGet]

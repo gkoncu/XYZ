@@ -20,6 +20,7 @@ using XYZ.Application.Features.Admins.Queries.GetAdminById;
 using XYZ.Application.Features.Admins.Queries.GetAllAdmins;
 using XYZ.Application.Features.Email.Options;
 using XYZ.Domain.Entities;
+using XYZ.Domain.Enums;
 
 namespace XYZ.API.Controllers
 {
@@ -59,6 +60,20 @@ namespace XYZ.API.Controllers
             _linkBuilder = linkBuilder;
         }
 
+        private int? TryGetTenantIdFromClaims()
+        {
+            var keys = new[] { "TenantId", "tenantId", "tenant_id" };
+
+            foreach (var key in keys)
+            {
+                var val = User.FindFirst(key)?.Value;
+                if (!string.IsNullOrWhiteSpace(val) && int.TryParse(val, out var parsed))
+                    return parsed;
+            }
+
+            return null;
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(PaginationResult<AdminListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<AdminListItemDto>>> GetAll(
@@ -81,9 +96,7 @@ namespace XYZ.API.Controllers
                 cancellationToken);
 
             if (result is null)
-            {
                 return NotFound();
-            }
 
             return Ok(result);
         }
@@ -105,6 +118,10 @@ namespace XYZ.API.Controllers
                 LastName = request.LastName,
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber,
+
+                BirthDate = request.BirthDate,
+                BloodType = request.BloodType,
+                Gender = request.Gender,
 
                 IdentityNumber = request.IdentityNumber,
                 CanManageUsers = request.CanManageUsers,
@@ -136,6 +153,9 @@ namespace XYZ.API.Controllers
             string LastName,
             string Email,
             string? PhoneNumber,
+            DateTime BirthDate,
+            string BloodType,
+            string Gender,
             string? IdentityNumber,
             bool CanManageUsers,
             bool CanManageFinance,
@@ -147,29 +167,27 @@ namespace XYZ.API.Controllers
             [FromBody] CreateAdminRequest request,
             CancellationToken cancellationToken)
         {
-            int? currentTenantId = null;
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (!string.IsNullOrWhiteSpace(tenantClaim) && int.TryParse(tenantClaim, out var parsedTenantId))
-            {
-                currentTenantId = parsedTenantId;
-            }
-
+            var currentTenantId = TryGetTenantIdFromClaims();
             var targetTenantId = request.TenantId ?? currentTenantId;
 
             if (targetTenantId is null)
-            {
                 return BadRequest("Tenant bilgisi bulunamadı. Lütfen TenantId gönderin veya geçerli bir tenant ile giriş yapın.");
-            }
 
             var email = request.Email?.Trim();
             if (string.IsNullOrWhiteSpace(email))
-            {
                 return BadRequest("Email zorunludur.");
-            }
 
             var firstName = (request.FirstName ?? string.Empty).Trim();
             var lastName = (request.LastName ?? string.Empty).Trim();
             var phone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+
+            if (!Enum.TryParse<Gender>(request.Gender ?? string.Empty, true, out var gender))
+                return BadRequest("Invalid Gender value.");
+
+            if (!Enum.TryParse<BloodType>(request.BloodType ?? string.Empty, true, out var bloodType))
+                return BadRequest("Invalid BloodType value.");
+
+            var birthDate = request.BirthDate.Date;
 
             await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -187,6 +205,9 @@ namespace XYZ.API.Controllers
                         FirstName = firstName,
                         LastName = lastName,
                         TenantId = targetTenantId.Value,
+                        Gender = gender,
+                        BloodType = bloodType,
+                        BirthDate = birthDate,
                         IsActive = true
                     };
 
@@ -216,6 +237,21 @@ namespace XYZ.API.Controllers
                     {
                         await tx.RollbackAsync(cancellationToken);
                         return BadRequest("Bu e-posta adresi farklı bir tenant'a bağlı. Bu kullanıcı için bu kulüpte admin oluşturulamaz.");
+                    }
+
+                    user.FirstName = firstName;
+                    user.LastName = lastName;
+                    user.PhoneNumber = phone;
+                    user.BirthDate = birthDate;
+                    user.BloodType = bloodType;
+                    user.Gender = gender;
+
+                    var updateExisting = await _userManager.UpdateAsync(user);
+                    if (!updateExisting.Succeeded)
+                    {
+                        var errors = string.Join("; ", updateExisting.Errors.Select(e => e.Description));
+                        await tx.RollbackAsync(cancellationToken);
+                        return BadRequest($"Kullanıcı bilgileri güncellenemedi: {errors}");
                     }
                 }
 
@@ -247,6 +283,11 @@ namespace XYZ.API.Controllers
                 {
                     UserId = user.Id,
                     TenantId = targetTenantId,
+
+                    BirthDate = birthDate,
+                    BloodType = request.BloodType ?? string.Empty,
+                    Gender = request.Gender ?? string.Empty,
+
                     IdentityNumber = request.IdentityNumber,
                     CanManageUsers = request.CanManageUsers,
                     CanManageFinance = request.CanManageFinance,
@@ -284,7 +325,6 @@ namespace XYZ.API.Controllers
                 }
                 catch
                 {
-
                 }
 
                 return CreatedAtAction(nameof(GetById), new { id }, id);
@@ -311,6 +351,9 @@ namespace XYZ.API.Controllers
             string LastName,
             string Email,
             string? PhoneNumber,
+            DateTime BirthDate,
+            string BloodType,
+            string Gender,
             int? TenantId,
             string? IdentityNumber,
             bool CanManageUsers,

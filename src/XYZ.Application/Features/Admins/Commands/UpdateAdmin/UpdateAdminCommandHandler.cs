@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 {
@@ -39,20 +40,20 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
                     if (tenantId > 0)
                         q = q.Where(a => a.TenantId == tenantId);
                     else
-                        throw new UnauthorizedAccessException("Kulüp bilgisi bulunamadı.");
+                        throw new UnauthorizedAccessException("TenantId is missing.");
                     break;
 
                 default:
-                    throw new UnauthorizedAccessException("Bu işlemi yapmaya yetkiniz yok.");
+                    throw new UnauthorizedAccessException("You are not allowed to update admins.");
             }
 
             var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
             if (admin is null)
-                throw new KeyNotFoundException("Admin bulunamadı.");
+                throw new KeyNotFoundException("Admin not found.");
 
             var email = (request.Email ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(email))
-                throw new InvalidOperationException("Email zorunludur.");
+                throw new InvalidOperationException("Email is required.");
 
             var identityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
                 ? null
@@ -67,8 +68,14 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
                     cancellationToken);
 
                 if (dup)
-                    throw new InvalidOperationException("TC Kimlik No bu tenant içinde zaten kullanılıyor.");
+                    throw new InvalidOperationException("IdentityNumber is already used in this tenant.");
             }
+
+            if (!Enum.TryParse<Gender>(request.Gender ?? string.Empty, true, out var gender))
+                throw new InvalidOperationException("Invalid Gender value.");
+
+            if (!Enum.TryParse<BloodType>(request.BloodType ?? string.Empty, true, out var bloodType))
+                throw new InvalidOperationException("Invalid BloodType value.");
 
             admin.User.FirstName = (request.FirstName ?? string.Empty).Trim();
             admin.User.LastName = (request.LastName ?? string.Empty).Trim();
@@ -76,13 +83,19 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
             admin.User.UserName = email;
             admin.User.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
 
+            admin.User.Gender = gender;
+            admin.User.BloodType = bloodType;
+            admin.User.BirthDate = request.BirthDate.Date;
+
             admin.User.NormalizedEmail = email.ToUpperInvariant();
             admin.User.NormalizedUserName = email.ToUpperInvariant();
+            admin.User.UpdatedAt = DateTime.UtcNow;
 
             admin.IdentityNumber = identityNumber;
             admin.CanManageUsers = request.CanManageUsers;
             admin.CanManageFinance = request.CanManageFinance;
             admin.CanManageSettings = request.CanManageSettings;
+            admin.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
 

@@ -1,20 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using XYZ.Domain.Enums;
 using XYZ.Web.Infrastructure;
 
 namespace XYZ.Web.Models.Admins
 {
-    public class AdminEditViewModel
+    public sealed class AdminEditViewModel : IValidatableObject
     {
         [Required(ErrorMessage = ValidationMessages.Required)]
         public int Id { get; set; }
 
         [Display(Name = "Kullanıcı Id")]
         public string UserId { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = ValidationMessages.Required)]
-        [Display(Name = "Ad")]
-        [StringLength(100, ErrorMessage = ValidationMessages.MaxLength)]
-        public string FullName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = ValidationMessages.Required)]
         [Display(Name = "Ad")]
@@ -37,6 +35,19 @@ namespace XYZ.Web.Models.Admins
         [StringLength(20, ErrorMessage = ValidationMessages.MaxLength)]
         public string? PhoneNumber { get; set; }
 
+        [Required(ErrorMessage = ValidationMessages.Required)]
+        [DataType(DataType.Date)]
+        [Display(Name = "Doğum Tarihi")]
+        public DateTime? BirthDate { get; set; }
+
+        [Required(ErrorMessage = ValidationMessages.Required)]
+        [Display(Name = "Kan Grubu")]
+        public string BloodType { get; set; } = "Unknown";
+
+        [Required(ErrorMessage = ValidationMessages.Required)]
+        [Display(Name = "Cinsiyet")]
+        public string Gender { get; set; } = "PreferNotToSay";
+
         [Display(Name = "Kulüp")]
         public string TenantName { get; set; } = string.Empty;
 
@@ -55,5 +66,26 @@ namespace XYZ.Web.Models.Admins
 
         [Display(Name = "Aktif mi?")]
         public bool IsActive { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (BirthDate.HasValue)
+            {
+                var today = DateTime.Today;
+                var bd = BirthDate.Value.Date;
+
+                var min = today.AddYears(-100);
+                var max = today.AddYears(-16);
+
+                if (bd > today || bd < min || bd > max)
+                    yield return new ValidationResult(ValidationMessages.BirthDateRangeAdmin, new[] { nameof(BirthDate) });
+            }
+
+            if (!Enum.TryParse<BloodType>(BloodType, ignoreCase: true, out _))
+                yield return new ValidationResult(ValidationMessages.BloodTypeInvalid, new[] { nameof(BloodType) });
+
+            if (!Enum.TryParse<Gender>(Gender, ignoreCase: true, out _))
+                yield return new ValidationResult(ValidationMessages.GenderInvalid, new[] { nameof(Gender) });
+        }
     }
 }
