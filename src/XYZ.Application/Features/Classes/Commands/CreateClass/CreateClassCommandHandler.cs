@@ -1,10 +1,6 @@
 ﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
@@ -13,27 +9,21 @@ namespace XYZ.Application.Features.Classes.Commands.CreateClass
     public class CreateClassCommandHandler : IRequestHandler<CreateClassCommand, int>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
+        private readonly IDataScopeService _dataScope;
 
         public CreateClassCommandHandler(
             IApplicationDbContext context,
-            ICurrentUserService currentUser)
+            IDataScopeService dataScope)
         {
             _context = context;
-            _currentUser = currentUser;
+            _dataScope = dataScope;
         }
 
         public async Task<int> Handle(CreateClassCommand request, CancellationToken cancellationToken)
         {
-            var tenantId = _currentUser.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
-
-            var branch = await _context.Branches
+            var branch = await _dataScope.Branches()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b =>
-                    b.Id == request.BranchId &&
-                    b.TenantId == tenantId,
-                    cancellationToken);
+                .FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
 
             if (branch is null)
                 throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
@@ -47,7 +37,7 @@ namespace XYZ.Application.Features.Classes.Commands.CreateClass
                 MaxCapacity = request.MaxCapacity,
 
                 BranchId = request.BranchId,
-                TenantId = tenantId,
+                TenantId = branch.TenantId,
 
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow

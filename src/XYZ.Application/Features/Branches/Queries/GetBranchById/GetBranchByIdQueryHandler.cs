@@ -1,10 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 
@@ -13,27 +8,20 @@ namespace XYZ.Application.Features.Branches.Queries.GetBranchById
     public class GetBranchByIdQueryHandler
         : IRequestHandler<GetBranchByIdQuery, BranchDetailDto>
     {
-        private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
+        private readonly IDataScopeService _dataScope;
 
-        public GetBranchByIdQueryHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public GetBranchByIdQueryHandler(IDataScopeService dataScope)
         {
-            _context = context;
-            _currentUser = currentUser;
+            _dataScope = dataScope;
         }
 
         public async Task<BranchDetailDto> Handle(
             GetBranchByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var tenantId = _currentUser.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
-
-            var branch = await _context.Branches
+            var branch = await _dataScope.Branches()
                 .AsNoTracking()
-                .Where(b => b.Id == request.BranchId && b.TenantId == tenantId)
+                .Where(b => b.Id == request.BranchId)
                 .Select(b => new BranchDetailDto
                 {
                     Id = b.Id,

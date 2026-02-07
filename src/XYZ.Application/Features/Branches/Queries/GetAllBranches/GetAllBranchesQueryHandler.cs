@@ -1,10 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Models;
 
@@ -13,27 +8,19 @@ namespace XYZ.Application.Features.Branches.Queries.GetAllBranches
     public class GetAllBranchesQueryHandler
         : IRequestHandler<GetAllBranchesQuery, PaginationResult<BranchListItemDto>>
     {
-        private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currentUser;
+        private readonly IDataScopeService _dataScope;
 
-        public GetAllBranchesQueryHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public GetAllBranchesQueryHandler(IDataScopeService dataScope)
         {
-            _context = context;
-            _currentUser = currentUser;
+            _dataScope = dataScope;
         }
 
         public async Task<PaginationResult<BranchListItemDto>> Handle(
             GetAllBranchesQuery request,
             CancellationToken cancellationToken)
         {
-            var tenantId = _currentUser.TenantId
-                ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
-
-            var query = _context.Branches
-                .AsNoTracking()
-                .Where(b => b.TenantId == tenantId);
+            var query = _dataScope.Branches()
+                .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
