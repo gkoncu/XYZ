@@ -493,3 +493,15 @@ body.app-shell .app-navbar .nav-link.dropdown-toggle {
 .docs-modal .btn-close {
     filter: none !important;
 }
+
+/* Dashboard list items: theme uyumu için list-group default beyaz arka planý kapat */
+.dashboard-list .list-group-item {
+    background-color: transparent !important;
+    color: inherit;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+    .dashboard-list .list-group-item:hover,
+    .dashboard-list .list-group-item:focus {
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
