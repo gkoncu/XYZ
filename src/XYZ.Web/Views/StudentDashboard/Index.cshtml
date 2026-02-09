@@ -2,12 +2,10 @@
 @{
     ViewData["Title"] = "Öğrenci Paneli";
 
-    var total = Model.Stats.TotalSessions;
-    var attended = Model.Stats.AttendedSessions;
-    var missed = Model.Stats.MissedSessions;
-
-    var attendanceRate = total > 0 ? (int)Math.Round((attended * 100.0) / total) : 0;
-    var missedRate = total > 0 ? (int)Math.Round((missed * 100.0) / total) : 0;
+    var overall = Model.Stats.AttendanceOverall;
+    var hasMissingDocs = Model.Stats.MissingDocumentsCount > 0;
+    var hasOverdueFees = Model.Stats.OverdueFeesCount > 0;
+    var hasDueSoonFees = Model.Stats.DueSoonFeesCount > 0;
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -32,151 +30,305 @@
 <div class="row g-3">
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="text-muted small">Toplam Antrenman</div>
-            <div class="fs-4 fw-semibold mt-1">@Model.Stats.TotalSessions</div>
-            <div class="text-muted small">Toplam katılım kaydı</div>
+            <div class="text-muted small">Önümüzdeki 7 gün</div>
+            <div class="fs-4 fw-semibold mt-1">@Model.Stats.UpcomingSessions7DaysCount</div>
+            <div class="text-muted small">Ders</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="text-muted small">Katıldığı</div>
-            <div class="fs-4 fw-semibold mt-1 text-success">@Model.Stats.AttendedSessions</div>
-            <div class="text-muted small">Devam eden antrenmanlar</div>
+            <div class="text-muted small">Katılım</div>
+            <div class="fs-4 fw-semibold mt-1">@overall.AttendancePercent%</div>
+            <div class="text-muted small">Toplam (mazeret hariç)</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="text-muted small">Kaçırdığı</div>
-            <div class="fs-4 fw-semibold mt-1 text-danger">@Model.Stats.MissedSessions</div>
-            <div class="text-muted small">Katılmadığı antrenmanlar</div>
+            <div class="text-muted small">Eksik belge</div>
+            <div class="fs-4 fw-semibold mt-1">@Model.Stats.MissingDocumentsCount</div>
+            <div class="text-muted small">Sadece eksik varsa görünür</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="text-muted small">Yaklaşan Antrenmanlar</div>
-            <div class="fs-4 fw-semibold mt-1">@Model.Stats.UpcomingSessionsCount</div>
-            <div class="text-muted small">Planlı oturum sayısı</div>
+            <div class="text-muted small">Gecikmiş aidat</div>
+            <div class="fs-4 fw-semibold mt-1">@Model.Stats.OverdueFeesCount</div>
+            <div class="text-muted small">Varsa aşağıda listelenir</div>
         </div>
     </div>
 </div>
 
 <div class="row g-3 mt-1">
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-lg-7">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Devam Durumu</div>
-                <span class="badge bg-light text-dark border">@attendanceRate% katılım</span>
-            </div>
+            <div class="text-muted small">Dersler</div>
+            <div class="fw-semibold">Önümüzdeki 7 gün</div>
 
             <div class="mt-3">
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>Katıldı: <strong class="text-success">@attended</strong></span>
-                    <span>Kaçırdı: <strong class="text-danger">@missed</strong></span>
-                    <span>Toplam: <strong>@total</strong></span>
-                </div>
-
-                <div class="progress mt-2" style="height: 10px;">
-                    <div class="progress-bar" role="progressbar"
-                         style="width: @attendanceRate%;"
-                         aria-valuenow="@attendanceRate" aria-valuemin="0" aria-valuemax="100">
-                    </div>
-                </div>
-
-                @if (total > 0)
+                @if (Model.Stats.UpcomingSessions is null || Model.Stats.UpcomingSessions.Count == 0)
                 {
-                    <div class="text-muted small mt-2">
-                        Kaçırma oranı: <span class="fw-semibold">@missedRate%</span>
-                    </div>
+                    <div class="text-muted small">Önümüzdeki 7 gün içinde planlı ders görünmüyor.</div>
                 }
                 else
                 {
-                    <div class="text-muted small mt-2">
-                        Henüz katılım kaydı bulunmuyor.
+                    <div class="list-group list-group-flush dashboard-list">
+                        @foreach (var s in Model.Stats.UpcomingSessions)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="ClassSessions"
+                               asp-action="Details"
+                               asp-route-id="@s.SessionId">
+                                <div>
+                                    <div class="fw-semibold">@s.ClassName</div>
+                                    <div class="text-muted small">
+                                        @s.Date.ToString("dd.MM.yyyy") · @s.StartTime.ToString("HH\\:mm") - @s.EndTime.ToString("HH\\:mm")
+                                        · @s.Title
+                                        @if (!string.IsNullOrWhiteSpace(s.CoachName))
+                                        {
+                                            <span> · @s.CoachName</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(s.Location))
+                                        {
+                                            <span> · @s.Location</span>
+                                        }
+                                    </div>
+                                </div>
+                                <span class="badge-soft badge-soft-primary">Detay</span>
+                            </a>
+                        }
                     </div>
                 }
             </div>
+        </div>
+    </div>
 
-            <div class="mt-3 d-flex flex-wrap gap-2">
-                <a asp-controller="Students" asp-action="Details" class="btn btn-sm btn-outline-secondary">
-                    Bilgilerim
-                </a>
-                <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-primary">
-                    Aidat Geçmişim
-                </a>
+    <div class="col-12 col-lg-5">
+        <div class="card-surface p-3 h-100">
+            <div class="text-muted small">Katılım</div>
+            <div class="fw-semibold">Toplam + Son 12 hafta</div>
+
+            <div class="mt-3">
+                <div class="text-muted small mb-2">
+                    Present(+Geç): <span class="fw-semibold">@overall.PresentLikeCount</span>
+                    · Absent: <span class="fw-semibold">@overall.AbsentCount</span>
+                    · Mazeret: <span class="fw-semibold">@overall.ExcusedCount</span>
+                </div>
+
+                <div class="mb-3">
+                    <canvas id="attendanceDonut" height="180"></canvas>
+                </div>
+
+                <div>
+                    <canvas id="attendanceTrend" height="160"></canvas>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-12 col-lg-6">
-        <div class="card-surface p-3 h-100">
-            <div class="text-muted small">Sıradaki Antrenman</div>
+@if (hasMissingDocs)
+{
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <div class="card-surface p-3">
+                <div class="text-muted small">Eksik belgeler</div>
+                <div class="fw-semibold">Lütfen tamamlayın</div>
 
-            @if (Model.Stats.NextSessionDate.HasValue)
-            {
-                <div class="fw-semibold mt-2">
-                    @Model.Stats.NextSessionClassName
-                </div>
+                <div class="mt-3">
+                    <div class="list-group list-group-flush dashboard-list">
+                        @foreach (var d in Model.Stats.MissingDocuments)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Documents"
+                               asp-action="Student">
+                                <div>
+                                    <div class="fw-semibold">@d.Name</div>
+                                    <div class="text-muted small">Eksik</div>
+                                </div>
+                                <span class="badge-soft badge-soft-warning">Yükle</span>
+                            </a>
+                        }
+                    </div>
 
-                <div class="text-muted small mt-1">
-                    @Model.Stats.NextSessionDate.Value.ToString("dd.MM.yyyy")
-                    @if (Model.Stats.NextSessionStartTime.HasValue)
-                    {
-                        @(" - " + Model.Stats.NextSessionStartTime.Value.ToString("HH:mm"))
-                    }
+                    <div class="text-muted small mt-2">
+                        Toplam eksik: <span class="fw-semibold">@Model.Stats.MissingDocumentsCount</span>
+                    </div>
                 </div>
-
-                <div class="alert alert-light border mt-3 mb-0 small">
-                    Ders saatinize 5-10 dakika önce gelmeniz önerilir.
-                </div>
-            }
-            else
-            {
-                <div class="text-muted small mt-2">
-                    Yakın tarihte planlanmış bir antrenman bulunmuyor.
-                </div>
-
-                <div class="alert alert-light border mt-3 mb-0 small">
-                    Plan bilgisi için koçunuzla iletişime geçebilirsiniz.
-                </div>
-            }
+            </div>
         </div>
     </div>
-</div>
+}
+
+@if (hasOverdueFees || hasDueSoonFees)
+{
+    <div class="row g-3 mt-1">
+        @if (hasOverdueFees)
+        {
+            <div class="col-12 col-lg-6">
+                <div class="card-surface p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Aidat</div>
+                            <div class="fw-semibold">Gecikmiş</div>
+                        </div>
+                        <a class="small" asp-controller="Payments" asp-action="My">Detay</a>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="fw-semibold">@Model.Stats.OverdueFeesCount adet</div>
+                        <div class="text-muted small">Toplam: @Model.Stats.OverdueFeesAmount.ToString("C2")</div>
+                    </div>
+
+                    @if (Model.Stats.OverdueFees.Count > 0)
+                    {
+                        <div class="list-group list-group-flush dashboard-list mt-3">
+                            @foreach (var p in Model.Stats.OverdueFees)
+                            {
+                                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                   asp-controller="Payments"
+                                   asp-action="My">
+                                    <div>
+                                        <div class="fw-semibold">@p.Amount.ToString("C2")</div>
+                                        <div class="text-muted small">Vade: @p.DueDate.ToString("yyyy-MM-dd")</div>
+                                    </div>
+                                    <span class="badge-soft badge-soft-danger">Gecikmiş</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (hasDueSoonFees)
+        {
+            <div class="col-12 col-lg-6">
+                <div class="card-surface p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Aidat</div>
+                            <div class="fw-semibold">3 gün içinde vadesi dolacak</div>
+                        </div>
+                        <a class="small" asp-controller="Payments" asp-action="My">Detay</a>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="fw-semibold">@Model.Stats.DueSoonFeesCount adet</div>
+                        <div class="text-muted small">Toplam: @Model.Stats.DueSoonFeesAmount.ToString("C2")</div>
+                    </div>
+
+                    @if (Model.Stats.DueSoonFees.Count > 0)
+                    {
+                        <div class="list-group list-group-flush dashboard-list mt-3">
+                            @foreach (var p in Model.Stats.DueSoonFees)
+                            {
+                                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                   asp-controller="Payments"
+                                   asp-action="My">
+                                    <div>
+                                        <div class="fw-semibold">@p.Amount.ToString("C2")</div>
+                                        <div class="text-muted small">Vade: @p.DueDate.ToString("yyyy-MM-dd")</div>
+                                    </div>
+                                    <span class="badge-soft badge-soft-warning">Yaklaşıyor</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
 
 <div class="row g-3 mt-1">
     <div class="col-12">
         <div class="card-surface p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Ödeme Durumu</div>
-                <a class="small" asp-controller="Payments" asp-action="My">Detay</a>
-            </div>
+            <div class="text-muted small">Son duyurular</div>
+            <div class="fw-semibold">Top 5</div>
 
-            <div class="d-flex flex-wrap justify-content-between align-items-baseline mt-2 gap-2">
-                <div>
-                    <div class="fw-semibold">@Model.Stats.OutstandingPaymentsCount adet</div>
-                    <div class="text-muted small">Bekleyen aidat</div>
-                </div>
-
-                <div class="fs-5 fw-semibold">
-                    @Model.Stats.OutstandingPaymentsAmount.ToString("C2")
-                </div>
-            </div>
-
-            <div class="mt-3 d-flex flex-wrap gap-2">
-                <a asp-controller="Payments" asp-action="My" class="btn btn-sm btn-outline-primary">
-                    Aidatlarımı Gör
-                </a>
-                <a asp-controller="PaymentPlans" asp-action="My" class="btn btn-sm btn-outline-secondary">
-                    Aidat Planımı Gör
-                </a>
-            </div>
-
-            <div class="text-muted small mt-3">
-                Not: Elden ödeme yaptıysanız, sistem güncellemesi için koçunuz veya yönetimle iletişime geçebilirsiniz.
+            <div class="mt-3">
+                @if (Model.Stats.RecentAnnouncements is null || Model.Stats.RecentAnnouncements.Count == 0)
+                {
+                    <div class="text-muted small">Yayında duyuru yok.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush dashboard-list">
+                        @foreach (var a in Model.Stats.RecentAnnouncements)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Announcements"
+                               asp-action="Details"
+                               asp-route-id="@a.Id">
+                                <div>
+                                    <div class="fw-semibold">@a.Title</div>
+                                    <div class="text-muted small">@a.PublishDate.ToString("yyyy-MM-dd")</div>
+                                </div>
+                                <span class="badge-soft badge-soft-muted">Detay</span>
+                            </a>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function () {
+            const presentLike = @overall.PresentLikeCount;
+            const absent = @overall.AbsentCount;
+
+            const donutEl = document.getElementById('attendanceDonut');
+            if (donutEl) {
+                new Chart(donutEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Katıldı (+Geç)', 'Kaçırdı'],
+                        datasets: [{
+                            data: [presentLike, absent]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true }
+                        }
+                    }
+                });
+            }
+
+            const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stats.AttendanceWeeklyTrend.Select(x => x.Label)));
+            const percents = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Stats.AttendanceWeeklyTrend.Select(x => x.AttendancePercent)));
+
+            const trendEl = document.getElementById('attendanceTrend');
+            if (trendEl) {
+                new Chart(trendEl, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Katılım %',
+                            data: percents,
+                            tension: 0.25
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, max: 100 }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}
