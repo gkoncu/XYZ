@@ -31,8 +31,8 @@ namespace XYZ.Web.Controllers
             _api = api;
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> Index(
             int? classId,
             int? branchId,
@@ -48,8 +48,6 @@ namespace XYZ.Web.Controllers
 
             ViewBag.From = effectiveFrom.ToString("yyyy-MM-dd");
             ViewBag.To = effectiveTo.ToString("yyyy-MM-dd");
-            ViewBag.Classes = await LoadClassesSelectListAsync(selectedClassId: classId, ct: ct);
-            ViewBag.Statuses = LoadSessionStatusSelectList(selected: status);
 
             var emptyModel = new PaginationResult<ClassSessionListItemDto>
             {
@@ -85,7 +83,7 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Seanslar yüklenirken bir hata oluştu.";
+                    TempData["ErrorMessage"] = "Antrenmanlar yüklenirken bir hata oluştu.";
                     return View(emptyModel);
                 }
 
@@ -96,13 +94,74 @@ namespace XYZ.Web.Controllers
             }
             catch
             {
-                TempData["ErrorMessage"] = "Seanslar yüklenirken beklenmeyen bir hata oluştu.";
+                TempData["ErrorMessage"] = "Antrenmanlar yüklenirken beklenmeyen bir hata oluştu.";
                 return View(emptyModel);
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [HttpGet]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> My(
+            DateOnly? from,
+            DateOnly? to,
+            int pageNumber = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            var effectiveFrom = from ?? DateOnly.FromDateTime(DateTime.Today);
+            var effectiveTo = to ?? effectiveFrom.AddDays(7);
+
+            ViewBag.From = effectiveFrom.ToString("yyyy-MM-dd");
+            ViewBag.To = effectiveTo.ToString("yyyy-MM-dd");
+
+            var emptyModel = new PaginationResult<ClassSessionListItemDto>
+            {
+                Items = new List<ClassSessionListItemDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
+
+            try
+            {
+                var query = new Dictionary<string, string?>
+                {
+                    ["From"] = effectiveFrom.ToString("yyyy-MM-dd"),
+                    ["To"] = effectiveTo.ToString("yyyy-MM-dd"),
+                    ["PageNumber"] = pageNumber.ToString(),
+                    ["PageSize"] = pageSize.ToString(),
+                    ["OnlyActive"] = "true",
+                    ["SortBy"] = "Date",
+                    ["SortDir"] = "asc"
+                };
+
+                var url = QueryHelpers.AddQueryString("classsessions/my", query);
+
+                var response = await _api.GetAsync(url, ct);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Account");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] = "Ders programı yüklenirken bir hata oluştu.";
+                    return View("My", emptyModel);
+                }
+
+                var result = await response.Content
+                    .ReadFromJsonAsync<PaginationResult<ClassSessionListItemDto>>(cancellationToken: ct);
+
+                return View("My", result ?? emptyModel);
+            }
+            catch
+            {
+                TempData["ErrorMessage"] = "Ders programı yüklenirken beklenmeyen bir hata oluştu.";
+                return View("My", emptyModel);
+            }
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<IActionResult> Details(int id, CancellationToken ct = default)
         {
             try
@@ -117,8 +176,8 @@ namespace XYZ.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    TempData["ErrorMessage"] = "Seans detayı yüklenirken bir hata oluştu.";
-                    return RedirectToAction(nameof(Index));
+                    TempData["ErrorMessage"] = "Ders detayı yüklenirken bir hata oluştu.";
+                    return RedirectToAction(User.IsInRole("Student") ? nameof(My) : nameof(Index));
                 }
 
                 var dto = await response.Content
@@ -126,16 +185,16 @@ namespace XYZ.Web.Controllers
 
                 if (dto is null)
                 {
-                    TempData["ErrorMessage"] = "Seans detayı çözümlenemedi.";
-                    return RedirectToAction(nameof(Index));
+                    TempData["ErrorMessage"] = "Ders detayı çözümlenemedi.";
+                    return RedirectToAction(User.IsInRole("Student") ? nameof(My) : nameof(Index));
                 }
 
                 return View(dto);
             }
             catch
             {
-                TempData["ErrorMessage"] = "Seans detayı yüklenirken beklenmeyen bir hata oluştu.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Ders detayı yüklenirken beklenmeyen bir hata oluştu.";
+                return RedirectToAction(User.IsInRole("Student") ? nameof(My) : nameof(Index));
             }
         }
 
