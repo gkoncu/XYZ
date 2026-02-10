@@ -123,7 +123,7 @@ namespace XYZ.Web.Controllers
             var rtOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Path = "/"
             };
@@ -140,7 +140,7 @@ namespace XYZ.Web.Controllers
                     new CookieOptions
                     {
                         Path = "/",
-                        Secure = true,
+                        Secure = Request.IsHttps,
                         SameSite = SameSiteMode.Lax
                     });
             }

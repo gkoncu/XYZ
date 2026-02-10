@@ -3,6 +3,16 @@
 @{
     ViewData["Title"] = "Seans Detayı";
     var attendanceUrl = Url.Action("Session", "Attendance", new { id = Model.Id });
+
+    string StatusTr(XYZ.Domain.Enums.SessionStatus s) => s switch
+    {
+        XYZ.Domain.Enums.SessionStatus.Scheduled => "Planlandı",
+        XYZ.Domain.Enums.SessionStatus.Completed => "Tamamlandı",
+        XYZ.Domain.Enums.SessionStatus.Cancelled => "İptal",
+        _ => s.ToString()
+    };
+
+    var isStudent = User.IsInRole("Student");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -13,7 +23,8 @@
             · @Model.ClassName · @Model.BranchName
         </div>
     </div>
-
+    @if (!isStudent)
+    {   
     <div class="d-flex gap-2">
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">Düzenle</a>
         <a href="@attendanceUrl" class="btn btn-primary btn-sm">Yoklamaya Git</a>
@@ -23,6 +34,8 @@
             <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
         </form>
     </div>
+    }
+
 </div>
 
 @if (TempData["ErrorMessage"] is string err && !string.IsNullOrWhiteSpace(err))
@@ -46,7 +59,7 @@
                 <dd class="col-sm-9">@(!string.IsNullOrWhiteSpace(Model.Description) ? Model.Description : "-")</dd>
 
                 <dt class="col-sm-3 text-muted small">Durum</dt>
-                <dd class="col-sm-9">@Model.Status</dd>
+                <dd class="col-sm-9">@StatusTr(Model.Status)</dd>
 
                 <dt class="col-sm-3 text-muted small">Koç Notu</dt>
                 <dd class="col-sm-9">@(!string.IsNullOrWhiteSpace(Model.CoachNote) ? Model.CoachNote : "-")</dd>

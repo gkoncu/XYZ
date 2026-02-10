@@ -237,5 +237,18 @@ namespace XYZ.Web.Controllers
                 _ => RedirectToAction(nameof(Student), new { studentId = ownerId })
             };
         }
+
+        [HttpGet]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> My(CancellationToken ct = default)
+        {
+            var me = await _api.GetMyProfileAsync(ct);
+
+            if (me?.StudentProfileId is null || me.StudentProfileId.Value <= 0)
+                return Forbid();
+
+            return RedirectToAction(nameof(Student), new { studentId = me.StudentProfileId.Value });
+        }
+
     }
 }

@@ -21,7 +21,7 @@ using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize]
     public class ClassSessionsController : Controller
     {
         private readonly IApiClient _api;
@@ -31,6 +31,7 @@ namespace XYZ.Web.Controllers
             _api = api;
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpGet]
         public async Task<IActionResult> Index(
             int? classId,
@@ -100,6 +101,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [HttpGet]
         public async Task<IActionResult> Details(int id, CancellationToken ct = default)
         {
@@ -137,6 +139,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpGet]
         public async Task<IActionResult> Create(int? classId, DateOnly? date, CancellationToken ct = default)
         {
@@ -157,6 +160,7 @@ namespace XYZ.Web.Controllers
             return View(vm);
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateClassSessionVm vm, CancellationToken ct = default)
@@ -205,6 +209,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id, CancellationToken ct = default)
         {
@@ -252,6 +257,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditClassSessionVm vm, CancellationToken ct = default)
@@ -297,6 +303,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
@@ -324,6 +331,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpGet]
         public async Task<IActionResult> BulkCreate(int classId, CancellationToken ct = default)
         {
@@ -349,6 +357,7 @@ namespace XYZ.Web.Controllers
             return View(vm);
         }
 
+        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkCreate(BulkCreateClassSessionsVm vm, CancellationToken ct = default)
