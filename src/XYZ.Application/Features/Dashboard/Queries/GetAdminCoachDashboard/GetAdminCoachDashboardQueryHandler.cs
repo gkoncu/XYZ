@@ -1,11 +1,16 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
 {
-    public class GetAdminCoachDashboardQueryHandler
+    public sealed class GetAdminCoachDashboardQueryHandler
         : IRequestHandler<GetAdminCoachDashboardQuery, AdminCoachDashboardDto>
     {
         private readonly IDataScopeService _dataScope;
@@ -31,6 +36,7 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
                 throw new UnauthorizedAccessException("Bu dashboard sadece Admin, Coach ve SuperAdmin rollerine açıktır.");
 
             var today = DateOnly.FromDateTime(DateTime.Today);
+            var nowUtc = DateTime.UtcNow;
 
             var studentCount = await _dataScope.Students().CountAsync(ct);
             var classCount = await _dataScope.Classes().CountAsync(ct);
@@ -52,52 +58,113 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
                 .Where(cs => cs.Date >= today && cs.Status == SessionStatus.Scheduled)
                 .CountAsync(ct);
 
-            var payments = _dataScope.Payments();
+            var todaySessions = await _context.ClassSessions
+                .AsNoTracking()
+                .Where(cs => cs.IsActive && cs.Date == today && cs.Status == SessionStatus.Scheduled)
+                .Join(scopedClasses,
+                    cs => cs.ClassId,
+                    c => c.Id,
+                    (cs, c) => new TodaySessionListItemDto
+                    {
+                        SessionId = cs.Id,
+                        ClassId = cs.ClassId,
+                        ClassName = c.Name,
+                        Date = cs.Date,
+                        StartTime = cs.StartTime,
+                        EndTime = cs.EndTime,
+                        Title = cs.Title,
+                        Location = cs.Location
+                    })
+                .OrderBy(x => x.StartTime)
+                .ThenBy(x => x.ClassName)
+                .Take(8)
+                .ToListAsync(ct);
 
-            var pendingPaymentsQuery = payments
-                .Where(p => p.Status == PaymentStatus.Pending);
+            var recentAnnouncements = await _dataScope.Announcements()
+                .AsNoTracking()
+                .Where(a => a.PublishDate <= nowUtc && (a.ExpiryDate == null || a.ExpiryDate >= nowUtc))
+                .OrderByDescending(a => a.PublishDate)
+                .Select(a => new RecentAnnouncementListItemDto
+                {
+                    Id = a.Id,
+                    Title = a.Title,
+                    PublishDate = a.PublishDate
+                })
+                .Take(5)
+                .ToListAsync(ct);
 
-            var overduePaymentsQuery = payments
+            var overduePaymentsQuery = _dataScope.Payments()
                 .Where(p => p.Status == PaymentStatus.Overdue);
-
-            var pendingPaymentsCount = await pendingPaymentsQuery.CountAsync(ct);
-            var pendingPaymentsAmount = await pendingPaymentsQuery
-                .SumAsync(p => p.Amount - (p.DiscountAmount ?? 0m), ct);
 
             var overduePaymentsCount = await overduePaymentsQuery.CountAsync(ct);
             var overduePaymentsAmount = await overduePaymentsQuery
                 .SumAsync(p => p.Amount - (p.DiscountAmount ?? 0m), ct);
 
-            var dueStart = DateTime.Today;
-            var dueEnd = DateTime.Today.AddDays(7);
+            var overdueGrouped = await overduePaymentsQuery
+                .AsNoTracking()
+                .GroupBy(p => p.StudentId)
+                .Select(g => new
+                {
+                    StudentId = g.Key,
+                    OverdueCount = g.Count(),
+                    OverdueAmount = g.Sum(x => x.Amount - (x.DiscountAmount ?? 0m)),
+                    OldestDueDate = g.Min(x => (DateTime?)x.DueDate)
+                })
+                .OrderByDescending(x => x.OverdueAmount)
+                .ThenByDescending(x => x.OverdueCount)
+                .Take(5)
+                .ToListAsync(ct);
 
-            var upcomingDuePaymentsCount = await payments
-                .Where(p => p.DueDate >= dueStart && p.DueDate <= dueEnd)
-                .CountAsync(ct);
+            var overdueStudentIds = overdueGrouped.Select(x => x.StudentId).ToList();
 
-            var now = DateTime.UtcNow;
-            var activeAnnouncementsCount = await _dataScope.Announcements()
-                .Where(a => a.PublishDate <= now && (a.ExpiryDate == null || a.ExpiryDate >= now))
-                .CountAsync(ct);
+            var overdueNames = await _dataScope.Students()
+                .AsNoTracking()
+                .Where(s => overdueStudentIds.Contains(s.Id))
+                .Select(s => new
+                {
+                    s.Id,
+                    FullName = (s.User.FirstName + " " + s.User.LastName).Trim()
+                })
+                .ToListAsync(ct);
+
+            var overdueNameMap = overdueNames.ToDictionary(x => x.Id, x => x.FullName);
+
+            var overdueStudents = overdueGrouped
+                .Select(x => new OverdueStudentListItemDto
+                {
+                    StudentId = x.StudentId,
+                    FullName = overdueNameMap.TryGetValue(x.StudentId, out var n) ? n : $"#{x.StudentId}",
+                    OverdueCount = x.OverdueCount,
+                    OverdueAmount = x.OverdueAmount,
+                    OldestDueDate = x.OldestDueDate
+                })
+                .ToList();
 
             var tenantId = _current.TenantId;
-
             var incompleteStudentDocumentsCount = 0;
-            var incompleteCoachDocumentsCount = 0;
+            var incompleteStudents = new List<IncompleteStudentListItemDto>();
 
             if (tenantId.HasValue)
             {
-                incompleteStudentDocumentsCount = await GetIncompleteOwnerCount(
-                    target: DocumentTarget.Student,
-                    tenantId: tenantId.Value,
-                    ct);
+                (incompleteStudentDocumentsCount, incompleteStudents) =
+                    await GetIncompleteStudentsTopList(tenantId.Value, ct);
+            }
 
-                if (role == "Admin" || role == "SuperAdmin")
+            DateTime? subscriptionEnd = null;
+            int? subscriptionDaysRemaining = null;
+
+            if ((role == "Admin" || role == "SuperAdmin") && tenantId.HasValue)
+            {
+                var t = await _context.Tenants
+                    .AsNoTracking()
+                    .Where(x => x.Id == tenantId.Value)
+                    .Select(x => new { x.SubscriptionEndDate })
+                    .FirstOrDefaultAsync(ct);
+
+                if (t is not null)
                 {
-                    incompleteCoachDocumentsCount = await GetIncompleteOwnerCount(
-                        target: DocumentTarget.Coach,
-                        tenantId: tenantId.Value,
-                        ct);
+                    subscriptionEnd = t.SubscriptionEndDate;
+                    subscriptionDaysRemaining = (int)Math.Floor((t.SubscriptionEndDate.Date - DateTime.Today).TotalDays);
                 }
             }
 
@@ -108,78 +175,101 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
                 TodaySessionsCount = todaySessionsCount,
                 UpcomingSessionsCount = upcomingSessionsCount,
 
-                PendingPaymentsCount = pendingPaymentsCount,
-                PendingPaymentsAmount = pendingPaymentsAmount,
+                TodaySessions = todaySessions,
+                RecentAnnouncements = recentAnnouncements,
+
                 OverduePaymentsCount = overduePaymentsCount,
                 OverduePaymentsAmount = overduePaymentsAmount,
-                UpcomingDuePaymentsCount = upcomingDuePaymentsCount,
-
-                ActiveAnnouncementsCount = activeAnnouncementsCount,
+                OverdueStudents = overdueStudents,
 
                 IncompleteStudentDocumentsCount = incompleteStudentDocumentsCount,
-                IncompleteCoachDocumentsCount = incompleteCoachDocumentsCount
+                IncompleteStudents = incompleteStudents,
+
+                SubscriptionEndDate = subscriptionEnd,
+                SubscriptionDaysRemaining = subscriptionDaysRemaining
             };
         }
 
-        private async Task<int> GetIncompleteOwnerCount(
-            DocumentTarget target,
+        private async Task<(int Count, List<IncompleteStudentListItemDto> TopList)> GetIncompleteStudentsTopList(
             int tenantId,
             CancellationToken ct)
         {
             var requiredDefinitionIds = await _context.DocumentDefinitions
+                .AsNoTracking()
                 .Where(d => d.TenantId == tenantId
-                            && d.Target == target
+                            && d.Target == DocumentTarget.Student
                             && d.IsRequired)
                 .Select(d => d.Id)
                 .ToListAsync(ct);
 
             if (requiredDefinitionIds.Count == 0)
-                return 0;
+                return (0, new List<IncompleteStudentListItemDto>());
 
-            if (target == DocumentTarget.Student)
-            {
-                var studentIds = await _dataScope.Students()
-                    .Select(s => s.Id)
-                    .ToListAsync(ct);
-
-                if (studentIds.Count == 0)
-                    return 0;
-
-                var uploadedCounts = await _dataScope.Documents()
-                    .Where(d => d.StudentId != null
-                                && studentIds.Contains(d.StudentId.Value)
-                                && requiredDefinitionIds.Contains(d.DocumentDefinitionId))
-                    .Select(d => new { OwnerId = d.StudentId!.Value, d.DocumentDefinitionId })
-                    .Distinct()
-                    .GroupBy(x => x.OwnerId)
-                    .Select(g => new { OwnerId = g.Key, Count = g.Count() })
-                    .ToListAsync(ct);
-
-                var map = uploadedCounts.ToDictionary(x => x.OwnerId, x => x.Count);
-                var requiredCount = requiredDefinitionIds.Count;
-                return studentIds.Count(id => !map.TryGetValue(id, out var c) || c < requiredCount);
-            }
-
-            var coachIds = await _dataScope.Coaches()
-                .Select(c => c.Id)
+            var studentIds = await _dataScope.Students()
+                .AsNoTracking()
+                .Select(s => s.Id)
                 .ToListAsync(ct);
 
-            if (coachIds.Count == 0)
-                return 0;
+            if (studentIds.Count == 0)
+                return (0, new List<IncompleteStudentListItemDto>());
 
-            var uploadedCountsCoach = await _dataScope.Documents()
-                .Where(d => d.CoachId != null
-                            && coachIds.Contains(d.CoachId.Value)
+            var requiredCount = requiredDefinitionIds.Count;
+
+            var uploaded = await _dataScope.Documents()
+                .AsNoTracking()
+                .Where(d => d.StudentId != null
+                            && studentIds.Contains(d.StudentId.Value)
                             && requiredDefinitionIds.Contains(d.DocumentDefinitionId))
-                .Select(d => new { OwnerId = d.CoachId!.Value, d.DocumentDefinitionId })
+                .Select(d => new { OwnerId = d.StudentId!.Value, d.DocumentDefinitionId })
                 .Distinct()
                 .GroupBy(x => x.OwnerId)
-                .Select(g => new { OwnerId = g.Key, Count = g.Count() })
+                .Select(g => new { OwnerId = g.Key, UploadedCount = g.Count() })
                 .ToListAsync(ct);
 
-            var mapCoach = uploadedCountsCoach.ToDictionary(x => x.OwnerId, x => x.Count);
-            var requiredCountCoach = requiredDefinitionIds.Count;
-            return coachIds.Count(id => !mapCoach.TryGetValue(id, out var c) || c < requiredCountCoach);
+            var uploadedMap = uploaded.ToDictionary(x => x.OwnerId, x => x.UploadedCount);
+
+            var incomplete = studentIds
+                .Select(id =>
+                {
+                    var up = uploadedMap.TryGetValue(id, out var c) ? c : 0;
+                    var missing = Math.Max(0, requiredCount - up);
+                    return new { id, missing };
+                })
+                .Where(x => x.missing > 0)
+                .ToList();
+
+            var count = incomplete.Count;
+            if (count == 0)
+                return (0, new List<IncompleteStudentListItemDto>());
+
+            var top = incomplete
+                .OrderByDescending(x => x.missing)
+                .ThenBy(x => x.id)
+                .Take(5)
+                .ToList();
+
+            var topIds = top.Select(x => x.id).ToList();
+
+            var names = await _dataScope.Students()
+                .AsNoTracking()
+                .Where(s => topIds.Contains(s.Id))
+                .Select(s => new
+                {
+                    s.Id,
+                    FullName = (s.User.FirstName + " " + s.User.LastName).Trim()
+                })
+                .ToListAsync(ct);
+
+            var nameMap = names.ToDictionary(x => x.Id, x => x.FullName);
+
+            var topList = top.Select(x => new IncompleteStudentListItemDto
+            {
+                StudentId = x.id,
+                FullName = nameMap.TryGetValue(x.id, out var n) ? n : $"#{x.id}",
+                MissingCount = x.missing
+            }).ToList();
+
+            return (count, topList);
         }
     }
 }

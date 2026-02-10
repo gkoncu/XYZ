@@ -38,7 +38,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(ClassSessionDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ClassSessionDetailDto>> GetById(

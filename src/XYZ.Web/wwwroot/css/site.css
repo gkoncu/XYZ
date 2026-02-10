@@ -493,3 +493,53 @@ body.app-shell .app-navbar .nav-link.dropdown-toggle {
 .docs-modal .btn-close {
     filter: none !important;
 }
+
+.dashboard-list .list-group-item {
+    background-color: transparent !important;
+    color: inherit;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+    .dashboard-list .list-group-item:hover,
+    .dashboard-list .list-group-item:focus {
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+/* =====================================================
+   Global white-background hardening (AppShell)
+   ===================================================== */
+
+body.app-shell .card {
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 1rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.7);
+}
+
+    body.app-shell .card .card-header,
+    body.app-shell .card .card-body,
+    body.app-shell .card .card-footer {
+        background: transparent !important;
+        color: inherit !important;
+        border-color: var(--border-subtle) !important;
+    }
+
+body.app-shell .list-group-item {
+    background-color: transparent !important;
+    color: inherit !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.app-shell .list-group-item-action:hover,
+body.app-shell .list-group-item-action:focus {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.app-shell .border,
+body.app-shell .border-top,
+body.app-shell .border-bottom,
+body.app-shell .border-start,
+body.app-shell .border-end {
+    border-color: var(--border-subtle) !important;
+}

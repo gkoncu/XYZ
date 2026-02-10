@@ -3,25 +3,15 @@
     ViewData["Title"] = "Koç Paneli";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
-    <div>
-        <h2 class="mb-1">Koç Paneli</h2>
-        <div class="text-muted small">Hoş geldin, @Model.UserDisplayName</div>
-    </div>
-
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-sm btn-primary" asp-controller="Attendance" asp-action="Index">Bugünkü Antrenmanlar</a>
-        <a class="btn btn-sm btn-outline-secondary" asp-controller="Students" asp-action="Index">Öğrencilerim</a>
-    </div>
+<div class="mb-3">
+    <h2 class="mb-1">Koç Paneli</h2>
+    <div class="text-muted small">Hoş geldin, @Model.UserDisplayName</div>
 </div>
 
 <div class="row g-3">
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Öğrenciler</div>
-                <a class="small" asp-controller="Students" asp-action="Index">Liste</a>
-            </div>
+            <div class="text-muted small">Öğrenci</div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.StudentCount</div>
             <div class="text-muted small">Sana bağlı öğrenciler</div>
         </div>
@@ -29,34 +19,23 @@
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Sınıflar</div>
-                <a class="small" asp-controller="Classes" asp-action="Index">Liste</a>
-            </div>
+            <div class="text-muted small">Sınıf</div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.ClassCount</div>
-            <div class="text-muted small">Atanmış sınıflar</div>
+            <div class="text-muted small">Atandığın sınıflar</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Bugünkü Antrenmanlar</div>
-                <a class="small" asp-controller="Attendance" asp-action="Index">Aç</a>
-            </div>
+            <div class="text-muted small">Bugünün dersleri</div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.TodaySessionsCount</div>
-            <div class="text-muted small">Yoklama almayı unutma</div>
         </div>
     </div>
 
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Yaklaşan Antrenmanlar</div>
-                <a class="small" asp-controller="Attendance" asp-action="Index">Aç</a>
-            </div>
+            <div class="text-muted small">Yaklaşan dersler</div>
             <div class="fs-4 fw-semibold mt-1">@Model.Stats.UpcomingSessionsCount</div>
-            <div class="text-muted small">Planlanmış oturumlar</div>
         </div>
     </div>
 </div>
@@ -64,88 +43,140 @@
 <div class="row g-3 mt-1">
     <div class="col-12 col-lg-6">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Aidatlar</div>
-                <a class="small" asp-controller="Payments" asp-action="Index">Tümü</a>
-            </div>
+            <div class="text-muted small">Bugünün dersleri</div>
+            <div class="fw-semibold">Yoklama almak için derse tıkla</div>
 
             <div class="mt-3">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <div>
-                        <div class="fw-semibold">Gecikmiş Aidatlar</div>
-                        <div class="text-muted small">Hatırlatma yapman gerekenler</div>
+                @if (Model.Stats.TodaySessions is null || Model.Stats.TodaySessions.Count == 0)
+                {
+                    <div class="text-muted small">Bugün planlı ders yok.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var s in Model.Stats.TodaySessions)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Attendance"
+                               asp-action="Session"
+                               asp-route-id="@s.SessionId">
+                                <div>
+                                    <div class="fw-semibold">@s.ClassName</div>
+                                    <div class="text-muted small">
+                                        @s.StartTime.ToString("HH\\:mm") - @s.EndTime.ToString("HH\\:mm")
+                                        · @s.Title
+                                        @if (!string.IsNullOrWhiteSpace(s.Location))
+                                        {
+                                            <span> · @s.Location</span>
+                                        }
+                                    </div>
+                                </div>
+                                <span class="badge-soft badge-soft-primary">Yoklama</span>
+                            </a>
+                        }
                     </div>
-                    <div class="text-end">
-                        <div class="fw-semibold">@Model.Stats.OverduePaymentsCount</div>
-                        <div class="text-muted small">@Model.Stats.OverduePaymentsAmount.ToString("C2")</div>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <a class="btn btn-sm btn-outline-danger w-100"
-                       asp-controller="Payments"
-                       asp-action="Index"
-                       asp-route-status="Overdue">
-                        Gecikmişleri Aç
-                    </a>
-                </div>
-            </div>
-
-            <hr class="my-3" />
-
-            <div class="d-flex justify-content-between align-items-baseline">
-                <div>
-                    <div class="fw-semibold">Bekleyen Aidatlar</div>
-                    <div class="text-muted small">Henüz vadesi geçmemiş</div>
-                </div>
-                <div class="text-end">
-                    <div class="fw-semibold">@Model.Stats.PendingPaymentsCount</div>
-                    <div class="text-muted small">@Model.Stats.PendingPaymentsAmount.ToString("C2")</div>
-                </div>
-            </div>
-
-            <div class="mt-2">
-                <a class="btn btn-sm btn-outline-secondary w-100"
-                   asp-controller="Payments"
-                   asp-action="Index"
-                   asp-route-status="Pending">
-                    Bekleyenleri Aç
-                </a>
-            </div>
-
-            <div class="text-muted small mt-3">
-                Yaklaşan vadeler (7 gün): <span class="fw-semibold">@Model.Stats.UpcomingDuePaymentsCount</span>
+                }
             </div>
         </div>
     </div>
 
     <div class="col-12 col-lg-6">
         <div class="card-surface p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">Eksik Belgeler (Öğrenciler)</div>
-                <a class="small" asp-controller="Documents" asp-action="Students" asp-route-onlyIncomplete="true">Liste</a>
-            </div>
+            <div class="text-muted small">Eksik belgeli öğrenciler</div>
+            <div class="fw-semibold">Son 5</div>
 
             <div class="mt-3">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <div>
-                        <div class="fw-semibold">Eksik belgesi olan öğrenci</div>
-                        <div class="text-muted small">Kulüp uyum süreci</div>
+                @if (Model.Stats.IncompleteStudents is null || Model.Stats.IncompleteStudents.Count == 0)
+                {
+                    <div class="text-muted small">Eksik belgesi olan öğrenci yok.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush dashboard-list">
+                        @foreach (var st in Model.Stats.IncompleteStudents)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Documents"
+                               asp-action="Student"
+                               asp-route-studentId="@st.StudentId">
+                                <div>
+                                    <div class="fw-semibold">@st.FullName</div>
+                                    <div class="text-muted small">Eksik: @st.MissingCount</div>
+                                </div>
+                                <span class="badge-soft badge-soft-warning">Aç</span>
+                            </a>
+                        }
                     </div>
-                    <div class="fs-4 fw-semibold">@Model.Stats.IncompleteStudentDocumentsCount</div>
-                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
 
-                <div class="mt-2">
-                    <a class="btn btn-sm btn-outline-primary w-100"
-                       asp-controller="Documents"
-                       asp-action="Students"
-                       asp-route-onlyIncomplete="true">
-                        Eksikleri Aç
-                    </a>
-                </div>
+<div class="row g-3 mt-1">
+    <div class="col-12 col-lg-6">
+        <div class="card-surface p-3 h-100">
+            <div class="text-muted small">Gecikmiş aidatı olan öğrenciler</div>
+            <div class="fw-semibold">Son 5</div>
 
-                <div class="text-muted small mt-3">
-                    Not: Belgeleri öğrenci adına sen de yükleyebilirsin.
-                </div>
+            <div class="mt-3">
+                @if (Model.Stats.OverdueStudents is null || Model.Stats.OverdueStudents.Count == 0)
+                {
+                    <div class="text-muted small">Gecikmiş aidat yok.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var st in Model.Stats.OverdueStudents)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Payments"
+                               asp-action="Index"
+                               asp-route-studentId="@st.StudentId"
+                               asp-route-status="Overdue">
+                                <div>
+                                    <div class="fw-semibold">@st.FullName</div>
+                                    <div class="text-muted small">
+                                        Adet: @st.OverdueCount · Tutar: @st.OverdueAmount.ToString("C2")
+                                    </div>
+                                </div>
+                                <span class="badge-soft badge-soft-danger">Aç</span>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card-surface p-3 h-100">
+            <div class="text-muted small">Son duyurular</div>
+            <div class="fw-semibold">Son 5</div>
+
+            <div class="mt-3">
+                @if (Model.Stats.RecentAnnouncements is null || Model.Stats.RecentAnnouncements.Count == 0)
+                {
+                    <div class="text-muted small">Yayında duyuru yok.</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var a in Model.Stats.RecentAnnouncements)
+                        {
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                               asp-controller="Announcements"
+                               asp-action="Details"
+                               asp-route-id="@a.Id">
+                                <div>
+                                    <div class="fw-semibold">@a.Title</div>
+                                    <div class="text-muted small">@a.PublishDate.ToString("yyyy-MM-dd")</div>
+                                </div>
+                                <span class="badge-soft badge-soft-muted">Detay</span>
+                            </a>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
