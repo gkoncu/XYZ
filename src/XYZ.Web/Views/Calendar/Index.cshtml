@@ -1,0 +1,221 @@
+﻿@{
+    ViewData["Title"] = "Takvim";
+}
+
+<div class="d-flex justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">Takvim</h2>
+        <div class="text-muted small">Ders programı ve duyurular burada görünür.</div>
+    </div>
+</div>
+
+<div class="card-surface p-3">
+    <div id="calendar"></div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/tr.global.min.js"></script>
+
+    <style>
+        /* =====================================================
+                   FullCalendar Dark Theme Hardening + UI polish
+           ===================================================== */
+        #calendar .fc {
+            --fc-page-bg-color: transparent;
+            --fc-border-color: rgba(148, 163, 184, 0.18);
+            --fc-neutral-bg-color: rgba(255,255,255,0.04);
+            --fc-neutral-text-color: rgba(226,232,240,0.9);
+            --fc-today-bg-color: rgba(59, 130, 246, 0.12);
+            --fc-event-border-color: transparent;
+            --fc-event-text-color: rgba(226,232,240,0.95);
+            --fc-button-text-color: rgba(226,232,240,0.95);
+            --fc-button-bg-color: rgba(255, 255, 255, 0.05);
+            --fc-button-border-color: rgba(148, 163, 184, 0.22);
+            --fc-button-hover-bg-color: rgba(255, 255, 255, 0.10);
+            --fc-button-hover-border-color: rgba(148, 163, 184, 0.30);
+            --fc-button-active-bg-color: rgba(59, 130, 246, 0.22);
+            --fc-button-active-border-color: rgba(59, 130, 246, 0.35);
+        }
+
+            #calendar .fc .fc-toolbar-title {
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+
+            #calendar .fc .fc-button {
+                border-radius: .85rem;
+                box-shadow: none;
+                text-transform: none;
+                font-weight: 600;
+            }
+
+            #calendar .fc .fc-scrollgrid,
+            #calendar .fc .fc-scrollgrid-section > td,
+            #calendar .fc .fc-col-header,
+            #calendar .fc .fc-col-header-cell,
+            #calendar .fc .fc-daygrid-body,
+            #calendar .fc .fc-timegrid-body,
+            #calendar .fc .fc-timegrid-axis,
+            #calendar .fc .fc-timegrid-slot,
+            #calendar .fc .fc-timegrid-slots,
+            #calendar .fc .fc-daygrid-day,
+            #calendar .fc .fc-daygrid-day-frame {
+                background: transparent !important;
+            }
+
+            #calendar .fc .fc-col-header-cell {
+                background: rgba(255,255,255,0.03) !important;
+            }
+
+            #calendar .fc .fc-col-header-cell-cushion {
+                color: rgba(226,232,240,0.95) !important;
+                text-decoration: none;
+                padding: .55rem .35rem;
+                font-weight: 700;
+            }
+
+            #calendar .fc .fc-daygrid-day-number {
+                color: rgba(226,232,240,0.9) !important;
+                text-decoration: none;
+                padding: .35rem .45rem;
+                border-radius: .55rem;
+            }
+
+            #calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+                background: rgba(59,130,246,0.18);
+            }
+
+            #calendar .fc .fc-timegrid-axis-cushion,
+            #calendar .fc .fc-timegrid-slot-label-cushion {
+                color: rgba(226,232,240,0.75) !important;
+            }
+
+            #calendar .fc .fc-day-sat,
+            #calendar .fc .fc-day-sun {
+                background: rgba(255, 255, 255, 0.02) !important;
+            }
+
+            /* =====================================================
+                   Events styling
+               ===================================================== */
+            #calendar .fc .fc-evt {
+                border-radius: .65rem !important;
+                padding: 2px 8px !important;
+                border: 1px solid rgba(148,163,184,0.18) !important;
+                backdrop-filter: blur(2px);
+            }
+            #calendar .fc .fc-evt-lesson {
+                background: rgba(59,130,246,0.18) !important;
+                border-color: rgba(59,130,246,0.25) !important;
+            }
+
+                #calendar .fc .fc-evt-lesson .fc-event-title::before {
+                    content: "🏋️ ";
+                }
+            #calendar .fc .fc-evt-announcement-ghost {
+                background: rgba(245,158,11,0.12) !important;
+                border-color: rgba(245,158,11,0.22) !important;
+            }
+
+                #calendar .fc .fc-evt-announcement-ghost .fc-event-title::before {
+                    content: "📣 ";
+                }
+            #calendar .fc .fc-evt-announcement-bg {
+                background: rgba(245, 158, 11, 0.12) !important;
+            }
+            #calendar .fc .fc-bg-event {
+                opacity: 1 !important;
+            }
+            #calendar .fc .fc-daygrid-bg-harness .fc-bg-event {
+                border-radius: .55rem !important;
+            }
+            #calendar .fc .fc-daygrid-event .fc-event-title {
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #calendar .fc .fc-daygrid-more-link {
+                color: rgba(226,232,240,0.85) !important;
+            }
+
+            #calendar .fc .fc-popover {
+                background: rgba(15,23,42,0.95) !important;
+                border: 1px solid rgba(148,163,184,0.22) !important;
+                border-radius: 1rem !important;
+                color: rgba(226,232,240,0.95) !important;
+            }
+
+            #calendar .fc .fc-popover-header {
+                background: rgba(255,255,255,0.04) !important;
+                border-bottom: 1px solid rgba(148,163,184,0.18) !important;
+            }
+    </style>
+
+    <script>
+        (function () {
+            const el = document.getElementById('calendar');
+            if (!el) return;
+
+            const calendar = new FullCalendar.Calendar(el, {
+                locale: 'tr',
+                timeZone: 'local',
+                firstDay: 1,
+                nowIndicator: true,
+                navLinks: true,
+
+                initialView: 'timeGridWeek',
+                height: 'auto',
+                expandRows: true,
+                stickyHeaderDates: true,
+                dayMaxEvents: true,
+
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+
+                buttonText: {
+                    today: 'Bugün',
+                    month: 'Ay',
+                    week: 'Hafta',
+                    day: 'Gün',
+                    list: 'Liste'
+                },
+
+                titleFormat: { year: 'numeric', month: 'long' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+
+                slotMinTime: '07:00:00',
+                slotMaxTime: '23:00:00',
+
+                events: {
+                    url: '@Url.Action("Events", "Calendar")',
+                    method: 'GET'
+                },
+
+                eventDidMount: function(info) {
+                    const t = info.event.title || '';
+                    if (t) info.el.setAttribute('title', t);
+
+                    const kind = info.event.extendedProps && info.event.extendedProps.kind;
+
+                },
+
+                eventClick: function (info) {
+                    if (info.event.url) {
+                        info.jsEvent.preventDefault();
+                        window.location.href = info.event.url;
+                    }
+                }
+            });
+
+            calendar.render();
+        })();
+    </script>
+}

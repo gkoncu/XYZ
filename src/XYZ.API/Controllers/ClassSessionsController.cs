@@ -11,6 +11,7 @@ using XYZ.Application.Features.ClassSessions.Commands.DeleteClassSession;
 using XYZ.Application.Features.ClassSessions.Commands.UpdateClassSession;
 using XYZ.Application.Features.ClassSessions.Queries.GetClassSessionById;
 using XYZ.Application.Features.ClassSessions.Queries.GetClassSessions;
+using XYZ.Application.Features.ClassSessions.Queries.GetMyClassSessions;
 
 namespace XYZ.API.Controllers
 {
@@ -31,6 +32,17 @@ namespace XYZ.API.Controllers
         [ProducesResponseType(typeof(PaginationResult<ClassSessionListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<ClassSessionListItemDto>>> GetAll(
             [FromQuery] GetClassSessionsQuery query,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("my")]
+        [Authorize(Roles = "Student")]
+        [ProducesResponseType(typeof(PaginationResult<ClassSessionListItemDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginationResult<ClassSessionListItemDto>>> GetMy(
+            [FromQuery] GetMyClassSessionsQuery query,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(query, cancellationToken);

@@ -188,15 +188,11 @@
         </div>
 
         <!-- Koç atama -->
-        <div class="card-surface">
-            <div class="fw-semibold mb-2">Koç İşlemleri</div>
+        @if (canCoachAssign)
+        {
+            <div class="card-surface">
+                <div class="fw-semibold mb-2">Koç İşlemleri</div>
 
-            @if (!canCoachAssign)
-            {
-                <div class="text-muted small">Koç atama işlemi sadece Admin/SuperAdmin içindir.</div>
-            }
-            else
-            {
                 <form asp-action="AssignCoach" asp-route-id="@c.Id" method="post" class="row g-2 align-items-end">
                     @Html.AntiForgeryToken()
 
@@ -210,8 +206,8 @@
                         <button type="submit" class="btn btn-sm btn-primary">Ata</button>
                     </div>
                 </form>
-            }
-        </div>
+            </div>
+        }
     </div>
 
     <!-- RIGHT: Quick actions + yönlendirme -->
@@ -259,12 +255,14 @@
                 }
             </div>
         </div>
-
         <div class="card-surface">
             <h2 class="h6 mb-2">İpucu</h2>
+        @if (canEdit)
+        {
             <p class="small text-muted mb-0">
                 Yalnızca sınıfla aynı şubeye sahip koçları atayabilirsiniz.
-            </p>
+            </p>            
+        }
             <br />
             <p class="small text-muted mb-0">
                 Öğrenciyle ilgili tüm işlemler için aşağıdaki listeden <strong>Detay</strong> ekranına gidin.

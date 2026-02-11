@@ -91,6 +91,41 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var (ok, errorCode) = await _api.ChangeMyPasswordAsync(
+                model.CurrentPassword,
+                model.NewPassword,
+                ct);
+
+            if (ok)
+            {
+                TempData["SuccessMessage"] = "Şifreniz güncellendi.";
+                return RedirectToAction("Index", "Settings");
+            }
+
+            var msg = errorCode switch
+            {
+                "invalid_current_password" => "Mevcut şifre hatalı.",
+                "password_policy_failed" => "Yeni şifre kurallara uymuyor. Daha güçlü bir şifre deneyin.",
+                _ => "Şifre değiştirilemedi. Lütfen tekrar deneyin."
+            };
+
+            ModelState.AddModelError("", msg);
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadPicture(IFormFile file, CancellationToken ct)
