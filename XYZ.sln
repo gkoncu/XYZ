@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11430.68 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XYZ.Domain", "src\XYZ.Domain\XYZ.Domain.csproj", "{A43E0FC1-1C4F-488F-9877-17488A821CAA}"
 EndProject
@@ -18,6 +18,18 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XYZ.Application.Tests", "tests\XYZ.Application.Tests\XYZ.Application.Tests.csproj", "{94492E68-CD02-4A4B-8EE0-29B6FFE8B7C6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{C6982CBF-D9D7-489E-9B43-235BEDD6920A}"
+	ProjectSection(SolutionItems) = preProject
+		SSOT-AUTHZ-SCOPE-AUDIT.md = SSOT-AUTHZ-SCOPE-AUDIT.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{ADE9628D-0FD5-420C-94E3-8050868C5660}"
+	ProjectSection(SolutionItems) = preProject
+		0001-permission-scope-model.md = 0001-permission-scope-model.md
+		0002-audit-interceptor.md = 0002-audit-interceptor.md
+		0003-tenant-global-filter.md = 0003-tenant-global-filter.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -112,6 +124,8 @@ Global
 		{7FEB723B-2FC5-49D4-805D-31FF51F436DC} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{DC16558A-9CA7-4207-9636-69C187353B00} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{94492E68-CD02-4A4B-8EE0-29B6FFE8B7C6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C6982CBF-D9D7-489E-9B43-235BEDD6920A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{ADE9628D-0FD5-420C-94E3-8050868C5660} = {C6982CBF-D9D7-489E-9B43-235BEDD6920A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B2BC9DFA-9040-4ECB-92CB-3010A9D07ACA}
