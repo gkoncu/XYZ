@@ -50,6 +50,20 @@ namespace XYZ.Web.Controllers
 
                 if (aEndExclusive < start.Date || aStart > end.Date) continue;
 
+                var url = Url.Action("Details", "Announcements", new { id = a.Id });
+
+                events.Add(new
+                {
+                    id = $"announcement-bg:{a.Id}",
+                    title = a.Title,
+                    start = aStart.ToString("yyyy-MM-dd"),
+                    end = aEndExclusive.ToString("yyyy-MM-dd"),
+                    allDay = true,
+                    display = "background",
+                    classNames = new[] { "fc-evt", "fc-evt-announcement-bg" },
+                    extendedProps = new { kind = "announcement_bg" }
+                });
+
                 events.Add(new
                 {
                     id = $"announcement:{a.Id}",
@@ -57,7 +71,9 @@ namespace XYZ.Web.Controllers
                     start = aStart.ToString("yyyy-MM-dd"),
                     end = aEndExclusive.ToString("yyyy-MM-dd"),
                     allDay = true,
-                    url = Url.Action("Details", "Announcements", new { id = a.Id })
+                    url = url,
+                    classNames = new[] { "fc-evt", "fc-evt-announcement-ghost" },
+                    extendedProps = new { kind = "announcement" }
                 });
             }
 
@@ -74,7 +90,9 @@ namespace XYZ.Web.Controllers
                     start = startDt.ToString("yyyy-MM-ddTHH:mm:ss"),
                     end = endDt.ToString("yyyy-MM-ddTHH:mm:ss"),
                     allDay = false,
-                    url = Url.Action("Details", "ClassSessions", new { id = s.Id })
+                    url = Url.Action("Details", "ClassSessions", new { id = s.Id }),
+                    classNames = new[] { "fc-evt", "fc-evt-lesson" },
+                    extendedProps = new { kind = "lesson" }
                 });
             }
 
