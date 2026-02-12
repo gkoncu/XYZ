@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11430.68 d18.0
+VisualStudioVersion = 18.2.11430.68
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XYZ.Domain", "src\XYZ.Domain\XYZ.Domain.csproj", "{A43E0FC1-1C4F-488F-9877-17488A821CAA}"
 EndProject
@@ -20,15 +20,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{C6982CBF-D9D7-489E-9B43-235BEDD6920A}"
-	ProjectSection(SolutionItems) = preProject
-		SSOT-AUTHZ-SCOPE-AUDIT.md = SSOT-AUTHZ-SCOPE-AUDIT.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{ADE9628D-0FD5-420C-94E3-8050868C5660}"
 	ProjectSection(SolutionItems) = preProject
-		0001-permission-scope-model.md = 0001-permission-scope-model.md
-		0002-audit-interceptor.md = 0002-audit-interceptor.md
-		0003-tenant-global-filter.md = 0003-tenant-global-filter.md
+		docs\adr\0001-permission-scope-model.md = docs\adr\0001-permission-scope-model.md
+		docs\adr\0002-audit-interceptor.md = docs\adr\0002-audit-interceptor.md
+		docs\adr\0003-tenant-global-filter.md = docs\adr\0003-tenant-global-filter.md
+		docs\SSOT-AUTHZ-SCOPE-AUDIT.md = docs\SSOT-AUTHZ-SCOPE-AUDIT.md
 	EndProjectSection
 EndProject
 Global
