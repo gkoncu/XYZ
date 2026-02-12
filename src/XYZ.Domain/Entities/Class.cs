@@ -7,7 +7,7 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class Class : BaseEntity
+    public class Class : TenantScopedEntity
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -15,7 +15,6 @@ namespace XYZ.Domain.Entities
         public int? AgeGroupMax { get; set; }
         public int MaxCapacity { get; set; }
 
-        public int TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
 
         public int BranchId { get; set; }
@@ -24,5 +23,4 @@ namespace XYZ.Domain.Entities
         public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
         public ICollection<Student> Students { get; set; } = new List<Student>();
     }
-
 }

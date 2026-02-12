@@ -8,10 +8,9 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class Coach : BaseEntity
+    public class Coach : TenantScopedEntity
     {
         public string UserId { get; set; } = null!;
-        public int TenantId { get; set; }
         public string? IdentityNumber { get; set; }
         public string? LicenseNumber { get; set; }
 

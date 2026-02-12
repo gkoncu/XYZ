@@ -3,7 +3,7 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class ProgressRecord : BaseEntity
+    public class ProgressRecord : TenantScopedEntity
     {
         public int StudentId { get; set; }
         public int BranchId { get; set; }

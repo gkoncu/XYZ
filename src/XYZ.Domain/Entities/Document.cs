@@ -9,7 +9,7 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
-    public class Document : BaseEntity
+    public class Document : TenantScopedEntity
     {
         public string Name { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;

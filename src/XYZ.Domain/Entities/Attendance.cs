@@ -8,7 +8,7 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
-    public class Attendance : BaseEntity
+    public class Attendance : TenantScopedEntity
     {
         public int ClassSessionId { get; set; }
         public int ClassId { get; set; }

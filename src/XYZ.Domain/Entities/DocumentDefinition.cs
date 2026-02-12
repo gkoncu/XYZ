@@ -8,9 +8,8 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class DocumentDefinition : BaseEntity
+    public class DocumentDefinition : TenantScopedEntity
     {
-        public int TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
 
         public DocumentTarget Target { get; set; }

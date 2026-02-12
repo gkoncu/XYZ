@@ -7,7 +7,7 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class ClassEnrollment : BaseEntity
+    public class ClassEnrollment : TenantScopedEntity
     {
         public int StudentId { get; set; }
         public int ClassId { get; set; }

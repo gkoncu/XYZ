@@ -7,10 +7,9 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class Admin : BaseEntity
+    public class Admin : TenantScopedEntity
     {
         public string UserId { get; set; } = null!;
-        public int TenantId { get; set; }
         public string? IdentityNumber { get; set; }
         public bool CanManageUsers { get; set; } = true;
         public bool CanManageFinance { get; set; } = true;

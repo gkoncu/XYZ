@@ -2,7 +2,7 @@
 
 namespace XYZ.Domain.Entities
 {
-    public class ProgressRecordValue : BaseEntity
+    public class ProgressRecordValue : TenantScopedEntity
     {
         public int ProgressRecordId { get; set; }
         public int ProgressMetricDefinitionId { get; set; }
