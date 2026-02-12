@@ -1,17 +1,18 @@
 # ADR-0003: Tenant Isolation via TenantScopedEntity + Global Query Filter
 
-**Durum:** Proposed | Accepted | Superseded  
-**Tarih:** YYYY-MM-DD
+**Durum:** Accepted  
+**Tarih:** 2026-02-12
 
 ## Context
-- Tenant veri sızıntısını engelleme
-- Kod tekrarını azaltma
+- Tenant veri sÄ±zÄ±ntÄ±sÄ±nÄ± engellemek kritik.
+- Kod tekrarÄ±nÄ± ve handlerâ€™larda tenant check yazma ihtiyacÄ±nÄ± azaltmak istiyoruz.
 
 ## Decision
-- TenantScopedEntity tüm tenant-owned entity’lerde
-- EF Core Global Query Filter: TenantId == CurrentTenantId
-- SuperAdmin tenant switch ile CurrentTenantId set eder
+- Tenant-owned tÃ¼m entityâ€™ler `TenantScopedEntity` olacak (TenantId zorunlu).
+- EF Core Global Query Filter: `TenantId == CurrentTenantId`
+- Tenant verisi iÃ§eren modÃ¼ller tenant context (CurrentTenantId) olmadan Ã§alÄ±ÅŸmaz.
+- Host-level ekranlarda (Ã¶rn. audit.read.all) gerekiyorsa `IgnoreQueryFilters()` kullanÄ±labilir.
 
 ## Consequences
-- TenantId migration’ları gerekli
-- Tenant context olmayan endpoint’ler istisna olarak ele alınmalı (login/switch)
+- TenantId migrationâ€™larÄ± gerekli.
+- Tenant context enforcement (API middleware/MVC filter) gereklidir; login/switch ve host-level ekranlar exempt tanÄ±mlanmalÄ±dÄ±r.

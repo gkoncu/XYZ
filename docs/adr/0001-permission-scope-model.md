@@ -1,24 +1,26 @@
 # ADR-0001: Permission + Scope (Tenant Role Template + User Override)
 
-**Durum:** Proposed | Accepted | Superseded  
-**Tarih:** YYYY-MM-DD
+**Durum:** Accepted  
+**Tarih:** 2026-02-12
 
 ## Context
-- SaaS modelinde tenant bazl� farkl� ihtiya�lar
-- Ayn� rolde kullan�c� bazl� farkl� yetki/scope ihtiyac�
-- Handler�larda rol string kontrol�n� azaltma hedefi
+- SaaS modelinde tenant bazlı farklı ihtiyaçlar var.
+- Aynı rolde kullanıcı bazlı farklı yetki/scope ihtiyacı var.
+- Handler’larda rol string kontrolünü azaltmak ve yetkilendirmeyi merkezi hale getirmek istiyoruz.
 
 ## Decision
-- Identity Role = default �ablon
-- TenantRolePermission + TenantUserPermissionOverride tablolar�
-- EffectivePermissionSet ��z�mleme + cache/versioning
-- Scope seviyeleri: Self/OwnClasses/Branch/Tenant/AllTenants
+- Identity Role = varsayılan “şablon”.
+- Tenant bazlı rol şablonları: `TenantRolePermission`
+- Tenant bazlı kullanıcı override: `TenantUserPermissionOverride`
+- Çözümleme sonucu: `EffectivePermissionSet` (cache + versioning ile).
+- Scope seviyeleri: Self / OwnClasses / Branch / Tenant / AllTenants
+- “Deny wins” yaklaşımı kullanılmayacak; governance (permissions.manage + protected admin + superadmin) ile korunacak.
 
 ## Consequences
-- Daha esnek yetki y�netimi
-- UI�da rol �ablonu + kullan�c� override ekranlar� gerekir
-- Cache invalidation versioning gerektirir
+- Tenant’a göre rol davranışı ve aynı rolde kullanıcı bazlı farklı yetkiler mümkün olur.
+- UI’da rol şablonu + kullanıcı override yönetimi gerekir.
+- EffectivePermissionSet cache invalidation için versioning gerekir.
 
 ## Alternatives considered
-- Sadece Identity RoleClaims (tenant bazl� varyasyon yok)
-- Rol patlamas� (HeadCoach vb.)
+- Sadece Identity RoleClaims (tenant bazlı varyasyon yok, esneklik düşük)
+- Rol patlaması (HeadCoach vb. için yeni rol üretme; yönetim maliyeti yüksek)
