@@ -190,6 +190,7 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             var student = RoleNames.Student;
 
             Add(student, PermissionNames.Announcements.ReadPublic, PermissionScope.Self);
+            Add(student, PermissionNames.Announcements.Read, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.ReadSelf, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.UpdateSelf, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.ChangePasswordSelf, PermissionScope.Self);
