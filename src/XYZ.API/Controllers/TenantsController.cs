@@ -10,6 +10,7 @@ using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
 using XYZ.Application.Features.Tenants.Queries.GetAllTenants;
 using XYZ.Application.Features.Tenants.Queries.GetCurrentTenantTheme;
 using XYZ.Application.Features.Tenants.Queries.GetTenantsById;
+using XYZ.Domain.Constants;
 
 namespace XYZ.API.Controllers
 {
@@ -83,7 +84,7 @@ namespace XYZ.API.Controllers
         public async Task<ActionResult<TenantThemeDto>> GetCurrentTheme(CancellationToken ct)
         => Ok(await _mediator.Send(new GetCurrentTenantThemeQuery(), ct));
 
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.SuperAdmin)]
         [HttpPut("current-theme")]
         public async Task<IActionResult> UpdateCurrentTheme([FromBody] UpdateCurrentTenantThemeCommand command, CancellationToken ct)
         {
