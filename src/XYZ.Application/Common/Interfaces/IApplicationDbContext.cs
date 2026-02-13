@@ -11,6 +11,8 @@ namespace XYZ.Application.Common.Interfaces
     public interface IApplicationDbContext
     {
         DbSet<Tenant> Tenants { get; }
+        DbSet<TenantRolePermission> TenantRolePermissions { get; }
+        DbSet<TenantUserPermissionOverride> TenantUserPermissionOverrides { get; }
         DbSet<ApplicationUser> Users { get; }
         DbSet<Student> Students { get; }
         DbSet<Coach> Coaches { get; }

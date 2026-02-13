@@ -23,6 +23,8 @@ namespace XYZ.Application.Data
         }
 
         public DbSet<Tenant> Tenants => Set<Tenant>();
+        public DbSet<TenantRolePermission> TenantRolePermissions => Set<TenantRolePermission>();
+        public DbSet<TenantUserPermissionOverride> TenantUserPermissionOverrides => Set<TenantUserPermissionOverride>();
         public DbSet<Student> Students => Set<Student>();
         public DbSet<Coach> Coaches => Set<Coach>();
         public DbSet<Class> Classes => Set<Class>();
@@ -59,6 +61,7 @@ namespace XYZ.Application.Data
             ConfigureDecimalPrecisions(builder);
             ConfigureOptionalRelationships(builder);
             ConfigureProgressModels(builder);
+            ConfigurePermissionModels(builder);
         }
 
         private void ConfigureProgressModels(ModelBuilder builder)
@@ -361,6 +364,28 @@ namespace XYZ.Application.Data
                       .HasForeignKey(p => p.PaymentPlanId)
                       .OnDelete(DeleteBehavior.Restrict)
                       .IsRequired(false);
+            });
+        }
+        private void ConfigurePermissionModels(ModelBuilder builder)
+        {
+            builder.Entity<TenantRolePermission>(entity =>
+            {
+                entity.Property(x => x.RoleName).HasMaxLength(32).IsRequired();
+                entity.Property(x => x.PermissionKey).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Scope).HasConversion<byte>();
+
+                entity.HasIndex(x => new { x.TenantId, x.RoleName, x.PermissionKey })
+                      .IsUnique();
+            });
+
+            builder.Entity<TenantUserPermissionOverride>(entity =>
+            {
+                entity.Property(x => x.UserId).HasMaxLength(64).IsRequired();
+                entity.Property(x => x.PermissionKey).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Scope).HasConversion<byte>();
+
+                entity.HasIndex(x => new { x.TenantId, x.UserId, x.PermissionKey })
+                      .IsUnique();
             });
         }
     }
