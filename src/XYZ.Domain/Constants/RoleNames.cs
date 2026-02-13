@@ -8,6 +8,10 @@ public static class RoleNames
     public const string Finance = "Finance";
     public const string Student = "Student";
 
+    public const string AdminOrSuperAdmin = Admin + "," + SuperAdmin;
+    public const string AdminCoachOrSuperAdmin = Admin + "," + Coach + "," + SuperAdmin;
+    public const string AdminCoachStudentOrSuperAdmin = Admin + "," + Coach + "," + Student + "," + SuperAdmin;
+
     public static readonly string[] All =
     [
         SuperAdmin,

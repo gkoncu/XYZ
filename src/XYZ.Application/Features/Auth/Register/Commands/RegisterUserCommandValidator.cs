@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using XYZ.Domain.Constants;
 
 namespace XYZ.Application.Features.Auth.Register.Commands
 {
@@ -6,10 +7,10 @@ namespace XYZ.Application.Features.Auth.Register.Commands
     {
         private static readonly string[] AllowedRoles =
         {
-            "Student",
-            "Coach",
-            "Admin",
-            "SuperAdmin"
+            RoleNames.Student,
+            RoleNames.Coach,
+            RoleNames.Admin,
+            RoleNames.SuperAdmin
         };
 
         public RegisterUserCommandValidator()

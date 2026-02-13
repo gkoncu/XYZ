@@ -54,8 +54,7 @@ namespace XYZ.Application.Data
             builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
             builder.Entity<Tenant>().HasQueryFilter(t => t.IsActive);
 
-            builder.Entity<TenantScopedEntity>()
-                .HasQueryFilter(e => e.IsActive && CurrentTenantId != null && e.TenantId == CurrentTenantId.Value);
+            ApplyTenantScopedQueryFilters(builder);
 
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);
@@ -388,5 +387,33 @@ namespace XYZ.Application.Data
                       .IsUnique();
             });
         }
+        private void ApplyTenantScopedQueryFilters(ModelBuilder builder)
+        {
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                var clrType = entityType.ClrType;
+                if (clrType == null) continue;
+
+                if (typeof(TenantScopedEntity).IsAssignableFrom(clrType))
+                {
+                    var method = typeof(ApplicationDbContext)
+                        .GetMethod(nameof(SetTenantFilter), BindingFlags.Instance | BindingFlags.NonPublic)!
+                        .MakeGenericMethod(clrType);
+
+                    method.Invoke(this, new object[] { builder });
+                }
+            }
+        }
+
+        private void SetTenantFilter<TEntity>(ModelBuilder builder)
+            where TEntity : TenantScopedEntity
+        {
+            builder.Entity<TEntity>()
+                .HasQueryFilter(e =>
+                    e.IsActive
+                    && CurrentTenantId != null
+                    && e.TenantId == CurrentTenantId);
+        }
+
     }
 }
