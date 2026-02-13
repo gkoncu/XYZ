@@ -8,9 +8,8 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
-    public class Announcement : BaseEntity
+    public class Announcement : TenantScopedEntity
     {
-        public int TenantId { get; set; }
         public int? ClassId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;

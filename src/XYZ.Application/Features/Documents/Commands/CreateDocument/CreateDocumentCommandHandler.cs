@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -26,7 +27,7 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
         public async Task<int> Handle(CreateDocumentCommand request, CancellationToken ct)
         {
             var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin" && role != "Student"))
+            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin or RoleNames.Student))
                 throw new UnauthorizedAccessException("Doküman yükleme yetkiniz yok.");
 
             var definition = await _context.DocumentDefinitions
@@ -41,14 +42,14 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
                 if (studentId <= 0)
                     throw new InvalidOperationException("Student belgeleri için StudentId zorunludur.");
 
-                if (role == "Student" && _current.StudentId.HasValue && _current.StudentId.Value != studentId)
+                if (role == RoleNames.Student && _current.StudentId.HasValue && _current.StudentId.Value != studentId)
                     throw new UnauthorizedAccessException("Sadece kendi belgelerinizi yükleyebilirsiniz.");
 
                 var student = await _dataScope.Students()
                     .FirstOrDefaultAsync(s => s.Id == studentId, ct);
 
                 if (student is null)
-                    throw new NotFoundException("Student", studentId);
+                    throw new NotFoundException(RoleNames.Student, studentId);
 
                 if (definition.TenantId != student.TenantId)
                     throw new UnauthorizedAccessException("Belge tipi bu öğrenciyle aynı kulübe ait değil.");
@@ -57,6 +58,7 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
 
                 var entity = new Document
                 {
+                    TenantId = student.TenantId,
                     StudentId = student.Id,
                     DocumentDefinitionId = definition.Id,
                     Name = request.Name.Trim(),
@@ -78,7 +80,7 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
                 if (coachId <= 0)
                     throw new InvalidOperationException("Coach belgeleri için CoachId zorunludur.");
 
-                if (role == "Coach" && _current.CoachId.HasValue && _current.CoachId.Value != coachId)
+                if (role == RoleNames.Coach && _current.CoachId.HasValue && _current.CoachId.Value != coachId)
                     throw new UnauthorizedAccessException("Sadece kendi belgelerinizi yükleyebilirsiniz.");
 
                 var coach = await _dataScope.Coaches()
@@ -94,6 +96,7 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
 
                 var entity = new Document
                 {
+                    TenantId = coach.TenantId,
                     CoachId = coach.Id,
                     DocumentDefinitionId = definition.Id,
                     Name = request.Name.Trim(),

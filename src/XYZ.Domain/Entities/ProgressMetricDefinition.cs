@@ -3,9 +3,8 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
-    public class ProgressMetricDefinition : BaseEntity
+    public class ProgressMetricDefinition : TenantScopedEntity
     {
-        public int TenantId { get; set; }
         public int BranchId { get; set; }
 
         public string Name { get; set; } = string.Empty;

@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Text;
 using XYZ.API.Dev;
 using XYZ.API.HostedServices;
+using XYZ.API.Middleware;
 using XYZ.API.Services.Auth;
 using XYZ.API.Services.Email;
 using XYZ.Application.Common.Interfaces;
@@ -202,6 +203,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseAuthentication();
+app.UseMiddleware<TenantContextRequiredMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 
 namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
 {
@@ -30,7 +31,7 @@ namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
         public async Task<int> Handle(UnassignStudentFromClassCommand request, CancellationToken ct)
         {
             var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
+            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin))
                 throw new UnauthorizedAccessException("Sınıftan öğrenci çıkarma yetkiniz yok.");
 
             var student = await _dataScope.Students()

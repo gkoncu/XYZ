@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Services;
@@ -78,25 +79,22 @@ public class DataScopeService : IDataScopeService
     private IQueryable<Student> ApplyStudentScope(IQueryable<Student> q)
     {
         var role = _current.Role;
-        var tenantId = _current.TenantId;
         var coachId = _current.CoachId;
         var studentId = _current.StudentId;
 
+        if (string.IsNullOrWhiteSpace(role))
+            return q.Where(_ => false);
+
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
+            RoleNames.Admin => q,
 
-            "Admin" => tenantId.HasValue
-                ? q.Where(s => s.TenantId == tenantId.Value)
+            RoleNames.Coach => coachId.HasValue
+                ? q.Where(s => s.Class != null && s.Class.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
-                ? q.Where(s => s.TenantId == tenantId.Value
-                               && s.Class != null
-                               && s.Class.Coaches.Any(co => co.Id == coachId.Value))
-                : q.Where(_ => false),
-
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(s => s.Id == studentId.Value)
                 : q.Where(_ => false),
 
@@ -113,17 +111,17 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(c => c.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(c => c.TenantId == tenantId.Value && c.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(c => c.Students.Any(s => s.Id == studentId.Value))
                 : q.Where(_ => false),
 
@@ -139,13 +137,13 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(c => c.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(c => c.TenantId == tenantId.Value && c.Id == coachId.Value)
                 : q.Where(_ => false),
 
@@ -161,17 +159,17 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(b => b.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(b => b.TenantId == tenantId.Value && b.Coaches.Any(c => c.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => tenantId.HasValue
+            RoleNames.Student => tenantId.HasValue
                 ? q.Where(b => b.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
@@ -188,15 +186,15 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(d =>
                     (d.StudentId != null && d.Student != null && d.Student.TenantId == tenantId.Value)
                     || (d.CoachId != null && d.Coach != null && d.Coach.TenantId == tenantId.Value))
                 : q.Where(_ => false),
 
-            "Coach" => (!tenantId.HasValue || !coachId.HasValue)
+            RoleNames.Coach => (!tenantId.HasValue || !coachId.HasValue)
                 ? q.Where(_ => false)
                 : q.Where(d =>
                     (d.CoachId != null && d.CoachId == coachId.Value)
@@ -206,7 +204,7 @@ public class DataScopeService : IDataScopeService
                         && d.Student.Class != null
                         && d.Student.Class.Coaches.Any(co => co.Id == coachId.Value))),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(d => d.StudentId != null && d.StudentId == studentId.Value)
                 : q.Where(_ => false),
 
@@ -223,19 +221,19 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(a => a.Student.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(a => a.Student.TenantId == tenantId.Value
                                && a.Student.Class != null
                                && a.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(a => a.StudentId == studentId.Value)
                 : q.Where(_ => false),
 
@@ -252,19 +250,19 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(p => p.Student.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(p => p.Student.TenantId == tenantId.Value
                                && p.Student.Class != null
                                && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(p => p.StudentId == studentId.Value)
                 : q.Where(_ => false),
 
@@ -281,19 +279,19 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(p => p.Student.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(p => p.Student.TenantId == tenantId.Value
                                && p.Student.Class != null
                                && p.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(p => p.StudentId == studentId.Value)
                 : q.Where(_ => false),
 
@@ -310,18 +308,18 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(a => a.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(a => a.TenantId == tenantId.Value
                                && (a.ClassId == null || a.Class.Coaches.Any(co => co.Id == coachId.Value)))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(a => a.ClassId == null || a.Class.Students.Any(s => s.Id == studentId.Value))
                 : q.Where(_ => false),
 
@@ -338,19 +336,19 @@ public class DataScopeService : IDataScopeService
 
         return role switch
         {
-            "SuperAdmin" => q,
+            RoleNames.SuperAdmin => q,
 
-            "Admin" => tenantId.HasValue
+            RoleNames.Admin => tenantId.HasValue
                 ? q.Where(pp => pp.Student.TenantId == tenantId.Value)
                 : q.Where(_ => false),
 
-            "Coach" => (tenantId.HasValue && coachId.HasValue)
+            RoleNames.Coach => (tenantId.HasValue && coachId.HasValue)
                 ? q.Where(pp => pp.Student.TenantId == tenantId.Value
                                 && pp.Student.Class != null
                                 && pp.Student.Class.Coaches.Any(co => co.Id == coachId.Value))
                 : q.Where(_ => false),
 
-            "Student" => studentId.HasValue
+            RoleNames.Student => studentId.HasValue
                 ? q.Where(pp => pp.StudentId == studentId.Value)
                 : q.Where(_ => false),
 

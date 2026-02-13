@@ -4,10 +4,9 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Domain.Entities
 {
-    public class Payment : BaseEntity
+    public class Payment : TenantScopedEntity
     {
         public int StudentId { get; set; }
-        public int TenantId { get; set; }
 
         public decimal Amount { get; set; }
         public DateTime DueDate { get; set; }

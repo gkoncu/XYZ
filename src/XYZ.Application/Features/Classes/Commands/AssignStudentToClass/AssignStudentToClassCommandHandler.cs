@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -31,7 +32,7 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
         public async Task<int> Handle(AssignStudentToClassCommand request, CancellationToken ct)
         {
             var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
+            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin))
                 throw new UnauthorizedAccessException("Sınıfa öğrenci atama yetkiniz yok.");
 
             var student = await _dataScope.Students()
@@ -63,6 +64,7 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
                 var enrollment = new ClassEnrollment
                 {
                     StudentId = student.Id,
+                    TenantId = cls.TenantId,
                     ClassId = cls.Id,
                     StartDate = today,
                     EndDate = null
@@ -112,6 +114,7 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
                     var attendance = new Attendance
                     {
                         ClassSessionId = session.Id,
+                        TenantId = cls.TenantId,
                         ClassId = cls.Id,
                         StudentId = student.Id,
                         Status = AttendanceStatus.Unknown

@@ -2,13 +2,25 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Common;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
     {
+        private readonly ICurrentUserService? _currentUser;
+
+        public int? CurrentTenantId => _currentUser?.TenantId;
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options,
+            ICurrentUserService currentUser) : base(options)
+        {
+            _currentUser = currentUser;
+        }
 
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Student> Students => Set<Student>();
@@ -39,22 +51,9 @@ namespace XYZ.Application.Data
 
             builder.Entity<ApplicationUser>().HasQueryFilter(u => u.IsActive);
             builder.Entity<Tenant>().HasQueryFilter(t => t.IsActive);
-            builder.Entity<Student>().HasQueryFilter(s => s.IsActive);
-            builder.Entity<Coach>().HasQueryFilter(c => c.IsActive);
-            builder.Entity<Admin>().HasQueryFilter(a => a.IsActive);
-            builder.Entity<Class>().HasQueryFilter(c => c.IsActive);
-            builder.Entity<ClassSession>().HasQueryFilter(cs => cs.IsActive);
-            builder.Entity<ClassEnrollment>().HasQueryFilter(ce => ce.IsActive);
-            builder.Entity<Attendance>().HasQueryFilter(a => a.IsActive);
-            builder.Entity<Document>().HasQueryFilter(d => d.IsActive);
-            builder.Entity<DocumentDefinition>().HasQueryFilter(dd => dd.IsActive);
-            builder.Entity<ProgressRecord>().HasQueryFilter(pr => pr.IsActive);
-            builder.Entity<ProgressMetricDefinition>().HasQueryFilter(md => md.IsActive);
-            builder.Entity<ProgressRecordValue>().HasQueryFilter(v => v.IsActive);
-            builder.Entity<Payment>().HasQueryFilter(p => p.IsActive);
-            builder.Entity<Announcement>().HasQueryFilter(a => a.IsActive);
-            builder.Entity<Branch>().HasQueryFilter(b => b.IsActive);
-            builder.Entity<PaymentPlan>().HasQueryFilter(pp => pp.IsActive);
+
+            builder.Entity<TenantScopedEntity>()
+                .HasQueryFilter(e => e.IsActive && CurrentTenantId != null && e.TenantId == CurrentTenantId.Value);
 
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);

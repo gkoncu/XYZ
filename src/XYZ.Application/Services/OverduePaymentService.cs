@@ -17,7 +17,7 @@ public sealed class OverduePaymentService(IApplicationDbContext context) : IOver
 
         var nowUtc = DateTime.UtcNow;
 
-        var affected = await _context.Payments
+        var affected = await _context.Payments.IgnoreQueryFilters().Where(p => p.IsActive == true)
             .Where(p => p.Status == PaymentStatus.Pending && p.DueDate < todayLocal)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(p => p.Status, PaymentStatus.Overdue)

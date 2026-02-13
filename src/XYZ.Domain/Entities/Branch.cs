@@ -7,10 +7,9 @@ using XYZ.Domain.Common;
 
 namespace XYZ.Domain.Entities
 {
-    public class Branch : BaseEntity
+    public class Branch : TenantScopedEntity
     {
         public string Name { get; set; } = string.Empty;
-        public int TenantId { get; set; }
 
         public Tenant Tenant { get; set; } = null!;
         public ICollection<Class> Classes { get; set; } = new List<Class>();
