@@ -1,10 +1,16 @@
 ﻿using MediatR;
 using System;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
 {
-    public sealed class UpdateAdminCommand : IRequest<int>
+    public sealed class UpdateAdminCommand : IRequest<int>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Users.Update;
+        public PermissionScope? MinimumScope => PermissionScope.Tenant;
+
         public int AdminId { get; set; }
 
         public string FirstName { get; set; } = string.Empty;
