@@ -111,6 +111,28 @@ public static class PermissionNames
     }
 
     // -------------------------
+    // Progress Metrics (Gelişim metrik tanımları)
+    // -------------------------
+    public static class ProgressMetrics
+    {
+        public const string Read = "progress.metrics.read";
+        public const string Create = "progress.metrics.create";
+        public const string Update = "progress.metrics.update";
+        public const string Delete = "progress.metrics.delete";
+    }
+
+    // -------------------------
+    // Progress Records (Gelişim kayıtları)
+    // -------------------------
+    public static class ProgressRecords
+    {
+        public const string Read = "progress.records.read";
+        public const string Create = "progress.records.create";
+        public const string Update = "progress.records.update";
+        public const string Delete = "progress.records.delete";
+    }
+
+    // -------------------------
     // Profiles (Kendi hesabı)
     // -------------------------
     public static class Profiles
@@ -149,8 +171,8 @@ public static class PermissionNames
         public const string Archive = "students.archive";
         public const string Delete = "students.delete";
 
-        public const string AssignClass = "students.assignClass"; // “öğrenciyi sınıfa ata” aksiyonu (bulk/tekil ayrımı belirlenebilir)
-        public const string ChangeClass = "students.changeClass"; // “öğrenciyi aç -> sınıf değiştir” (tekil)
+        public const string AssignClass = "students.assignClass";
+        public const string ChangeClass = "students.changeClass";
 
         public const string AttendanceRead = "students.attendance.read";
         public const string PaymentsRead = "students.payments.read";
@@ -165,8 +187,8 @@ public static class PermissionNames
     public static class Tenants
     {
         public const string Manage = "tenants.manage";   // only SuperAdmin
-        public const string Switch = "tenants.switch";   // only SuperAdmin (tenant context değişimi)
-        public const string Read = "tenants.read";       // only SuperAdmin veya host ekranları
+        public const string Switch = "tenants.switch";   // only SuperAdmin
+        public const string Read = "tenants.read";       // only SuperAdmin
     }
 
     // -------------------------
@@ -180,7 +202,7 @@ public static class PermissionNames
         public const string Disable = "users.disable";
         public const string Delete = "users.delete";
 
-        public const string ProtectAdmin = "users.protectAdmin"; // only SuperAdmin (Protected admin işaretleme)
+        public const string ProtectAdmin = "users.protectAdmin"; // only SuperAdmin
     }
 
     // -------------------------
@@ -189,7 +211,7 @@ public static class PermissionNames
     public static class Permissions
     {
         public const string Manage = "permissions.manage"; // only SuperAdmin can grant/revoke
-        public const string Explain = "permissions.explain"; // “neden yetkili?” ekranı
+        public const string Explain = "permissions.explain";
     }
 
     // -------------------------

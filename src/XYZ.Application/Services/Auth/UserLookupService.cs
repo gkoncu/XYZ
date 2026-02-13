@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
 using XYZ.Domain.Entities;
@@ -14,7 +9,7 @@ namespace XYZ.Application.Services.Auth
     public sealed class UserLookupService : IUserLookup
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private IApplicationDbContext _context;
+        private readonly IApplicationDbContext _context;
 
         public UserLookupService(UserManager<ApplicationUser> userManager, IApplicationDbContext context)
         {
@@ -30,69 +25,45 @@ namespace XYZ.Application.Services.Auth
 
         public async Task<UserIdentity?> FindByPhoneAsync(string phone, CancellationToken ct = default)
         {
-            var user = _userManager.Users.FirstOrDefault(u => u.PhoneNumber == phone);
+            if (string.IsNullOrWhiteSpace(phone))
+                return null;
+
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phone, ct);
+
             return await ToIdentityOrNullAsync(user, ct);
         }
 
         public async Task<UserIdentity?> FindByIdentifierAsync(string identifier, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(identifier))
+                return null;
+
             var user = await _context.Users
-            .Include(u => u.StudentProfile)
-            .Include(u => u.CoachProfile)
-            .Include(u => u.AdminProfile)
-            .FirstOrDefaultAsync(x => x.Email == identifier || x.UserName == identifier, ct);
+                .FirstOrDefaultAsync(x => x.Email == identifier || x.UserName == identifier, ct);
 
-
-            if (user is null) return null;
-
-
-            var roles = await _userManager.GetRolesAsync(user);
-
-
-            return new UserIdentity(
-                user.Id,
-                user.Email,
-                user.PhoneNumber,
-                roles.ToArray(),
-                user.TenantId.ToString(),
-                user.StudentId,
-                user.CoachId,
-                user.AdminId
-            );
-        }
-
-        private async Task<UserIdentity?> ToIdentityOrNullAsync(ApplicationUser? user, CancellationToken ct)
-        {
-            if (user is null) return null;
-
-            var roles = await _userManager.GetRolesAsync(user);
-            string? tenantId = user.TenantId.ToString();
-
-            return new UserIdentity(
-                user.Id,
-                user.Email,
-                user.PhoneNumber,
-                roles.ToArray(),
-                user.TenantId.ToString(),
-                user.StudentId,
-                user.CoachId,
-                user.AdminId
-            );
+            return await ToIdentityOrNullAsync(user, ct);
         }
 
         public async Task<UserIdentity?> FindByUserIdAsync(string userId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(userId)) return null;
+            if (string.IsNullOrWhiteSpace(userId))
+                return null;
 
             var user = await _context.Users
-                .Include(u => u.StudentProfile)
-                .Include(u => u.CoachProfile)
-                .Include(u => u.AdminProfile)
                 .FirstOrDefaultAsync(x => x.Id == userId, ct);
 
-            if (user is null) return null;
+            return await ToIdentityOrNullAsync(user, ct);
+        }
+
+        private async Task<UserIdentity?> ToIdentityOrNullAsync(ApplicationUser? user, CancellationToken ct)
+        {
+            if (user is null)
+                return null;
 
             var roles = await _userManager.GetRolesAsync(user);
+
+            var (studentId, coachId, adminId) = await FindProfileIdsAsync(user, ct);
 
             return new UserIdentity(
                 user.Id,
@@ -100,10 +71,40 @@ namespace XYZ.Application.Services.Auth
                 user.PhoneNumber,
                 roles.ToArray(),
                 user.TenantId.ToString(),
-                user.StudentId,
-                user.CoachId,
-                user.AdminId
+                studentId,
+                coachId,
+                adminId
             );
+        }
+
+        private async Task<(string? StudentId, string? CoachId, string? AdminId)> FindProfileIdsAsync(
+            ApplicationUser user,
+            CancellationToken ct)
+        {
+            var tenantId = user.TenantId;
+
+            var studentId = await _context.Students
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(s => s.IsActive && s.TenantId == tenantId && s.UserId == user.Id)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefaultAsync(ct);
+
+            var coachId = await _context.Coaches
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => c.IsActive && c.TenantId == tenantId && c.UserId == user.Id)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync(ct);
+
+            var adminId = await _context.Admins
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(a => a.IsActive && a.TenantId == tenantId && a.UserId == user.Id)
+                .Select(a => (int?)a.Id)
+                .FirstOrDefaultAsync(ct);
+
+            return (studentId?.ToString(), coachId?.ToString(), adminId?.ToString());
         }
     }
 }

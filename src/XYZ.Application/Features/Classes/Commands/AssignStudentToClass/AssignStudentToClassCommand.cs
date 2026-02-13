@@ -15,7 +15,7 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
         public int StudentId { get; set; }
         public int ClassId { get; set; }
 
-        public string PermissionKey => PermissionNames.Classes.EnrollStudents;
-        public PermissionScope? MinimumScope => PermissionScope.Tenant;
+        public string PermissionKey => PermissionNames.Students.AssignClass;
+        public PermissionScope? MinimumScope => PermissionScope.OwnClasses;
     }
 }

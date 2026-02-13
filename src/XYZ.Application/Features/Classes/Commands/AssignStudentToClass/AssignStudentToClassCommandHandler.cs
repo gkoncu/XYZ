@@ -1,10 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Constants;
@@ -17,21 +12,20 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
     {
         private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
+        private readonly IPermissionService _permissions;
 
         public AssignStudentToClassCommandHandler(
             IDataScopeService dataScope,
             IApplicationDbContext context,
-            ICurrentUserService currentUser)
+            IPermissionService permissions)
         {
             _dataScope = dataScope;
             _context = context;
-            _current = currentUser;
+            _permissions = permissions;
         }
 
         public async Task<int> Handle(AssignStudentToClassCommand request, CancellationToken ct)
         {
-
             var student = await _dataScope.Students()
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
 
@@ -43,9 +37,6 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
 
             if (cls is null)
                 throw new NotFoundException("Class", request.ClassId);
-
-            if (cls.TenantId != student.TenantId)
-                throw new UnauthorizedAccessException("Öğrenci ve sınıf farklı tenant'a ait.");
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -83,41 +74,50 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
                 student.UpdatedAt = DateTime.UtcNow;
             }
 
-            var futureSessions = await _context.ClassSessions
-                .Where(cs =>
-                    cs.ClassId == cls.Id &&
-                    cs.Date >= today &&
-                    cs.Status != SessionStatus.Cancelled &&
-                    cs.IsActive)
-                .ToListAsync(ct);
+            var canEnrollToFutureSessions =
+                await _permissions.HasPermissionAsync(
+                    PermissionNames.Classes.EnrollStudents,
+                    PermissionScope.OwnClasses,
+                    ct);
 
-            if (futureSessions.Count > 0)
+            if (canEnrollToFutureSessions)
             {
-                var futureSessionIds = futureSessions.Select(cs => cs.Id).ToList();
-
-                var existingAttendanceSessionIds = await _dataScope.Attendances()
-                    .Where(a =>
-                        a.StudentId == student.Id &&
-                        a.ClassId == cls.Id &&
-                        futureSessionIds.Contains(a.ClassSessionId))
-                    .Select(a => a.ClassSessionId)
+                var futureSessions = await _context.ClassSessions
+                    .Where(cs =>
+                        cs.ClassId == cls.Id &&
+                        cs.Date >= today &&
+                        cs.Status != SessionStatus.Cancelled &&
+                        cs.IsActive)
                     .ToListAsync(ct);
 
-                foreach (var session in futureSessions)
+                if (futureSessions.Count > 0)
                 {
-                    if (existingAttendanceSessionIds.Contains(session.Id))
-                        continue;
+                    var futureSessionIds = futureSessions.Select(cs => cs.Id).ToList();
 
-                    var attendance = new Attendance
+                    var existingAttendanceSessionIds = await _dataScope.Attendances()
+                        .Where(a =>
+                            a.StudentId == student.Id &&
+                            a.ClassId == cls.Id &&
+                            futureSessionIds.Contains(a.ClassSessionId))
+                        .Select(a => a.ClassSessionId)
+                        .ToListAsync(ct);
+
+                    foreach (var session in futureSessions)
                     {
-                        ClassSessionId = session.Id,
-                        TenantId = cls.TenantId,
-                        ClassId = cls.Id,
-                        StudentId = student.Id,
-                        Status = AttendanceStatus.Unknown
-                    };
+                        if (existingAttendanceSessionIds.Contains(session.Id))
+                            continue;
 
-                    await _context.Attendances.AddAsync(attendance, ct);
+                        var attendance = new Attendance
+                        {
+                            ClassSessionId = session.Id,
+                            TenantId = cls.TenantId,
+                            ClassId = cls.Id,
+                            StudentId = student.Id,
+                            Status = AttendanceStatus.Unknown
+                        };
+
+                        await _context.Attendances.AddAsync(attendance, ct);
+                    }
                 }
             }
 
@@ -125,5 +125,4 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
             return student.Id;
         }
     }
-
 }
