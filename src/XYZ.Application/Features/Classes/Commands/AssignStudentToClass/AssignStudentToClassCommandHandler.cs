@@ -31,9 +31,6 @@ namespace XYZ.Application.Features.Classes.Commands.AssignStudentToClass
 
         public async Task<int> Handle(AssignStudentToClassCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin))
-                throw new UnauthorizedAccessException("Sınıfa öğrenci atama yetkiniz yok.");
 
             var student = await _dataScope.Students()
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
