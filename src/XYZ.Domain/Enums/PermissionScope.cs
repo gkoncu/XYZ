@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace XYZ.Domain.Enums;
 
-namespace XYZ.Domain.Enums
+public enum PermissionScope : byte
 {
-    internal class PermissionScope
-    {
-    }
+    Self = 10,        // sadece kendi kaydı
+    OwnClasses = 20,  // koç -> kendi sınıfları
+    Branch = 30,      // branş bazlı
+    Tenant = 40,      // tenant geneli
+    AllTenants = 50   // host / tüm tenantlar
 }
