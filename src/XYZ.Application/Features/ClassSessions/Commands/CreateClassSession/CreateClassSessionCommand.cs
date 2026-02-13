@@ -41,6 +41,7 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
 
             var session = new ClassSession
             {
+                TenantId = @class.TenantId,
                 ClassId = request.ClassId,
                 Date = request.Date,
                 StartTime = request.StartTime,
@@ -63,6 +64,7 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
                 {
                     var attendance = new Attendance
                     {
+                        TenantId = @class.TenantId,
                         ClassSession = session,
                         ClassId = request.ClassId,
                         StudentId = enrollment.StudentId,

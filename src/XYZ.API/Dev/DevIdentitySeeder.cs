@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Data;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 
 namespace XYZ.API.Dev;
 
 internal static class DevIdentitySeeder
 {
-    private const string SuperAdminRoleName = "SuperAdmin";
     private const string SuperAdminEmail = "superadmin@xyz.local";
     private const string SuperAdminPassword = "Superadmin#123";
 
@@ -48,9 +48,9 @@ internal static class DevIdentitySeeder
         }
 
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        if (!await roleManager.RoleExistsAsync(SuperAdminRoleName))
+        if (!await roleManager.RoleExistsAsync(RoleNames.SuperAdmin))
         {
-            var roleCreate = await roleManager.CreateAsync(new IdentityRole(SuperAdminRoleName));
+            var roleCreate = await roleManager.CreateAsync(new IdentityRole(RoleNames.SuperAdmin));
             if (!roleCreate.Succeeded)
             {
                 var msg = string.Join(" | ", roleCreate.Errors.Select(e => e.Description));
@@ -133,9 +133,9 @@ internal static class DevIdentitySeeder
             }
         }
 
-        if (!await userManager.IsInRoleAsync(user, SuperAdminRoleName))
+        if (!await userManager.IsInRoleAsync(user, RoleNames.SuperAdmin))
         {
-            var addRole = await userManager.AddToRoleAsync(user, SuperAdminRoleName);
+            var addRole = await userManager.AddToRoleAsync(user, RoleNames.SuperAdmin);
             if (!addRole.Succeeded)
             {
                 var msg = string.Join(" | ", addRole.Errors.Select(e => e.Description));
