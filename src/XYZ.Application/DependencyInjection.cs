@@ -42,6 +42,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddValidatorsFromAssembly(authAssembly);
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(authAssembly));
 
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(XYZ.Application.Common.Behaviors.AuthorizationBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(XYZ.Application.Common.Behaviors.ValidationBehavior<,>));
 
 
@@ -57,6 +58,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<ITenantService, TenantService>();
             services.AddScoped<IExcelExporter, ExcelExporter>();
             services.AddScoped<IOverduePaymentService, OverduePaymentService>();
+            services.AddScoped<IPermissionService, PermissionService>();
 
             return services;
         }
