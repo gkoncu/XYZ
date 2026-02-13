@@ -1,41 +1,47 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Announcements.Commands.CreateAnnouncement
 {
-    public class CreateAnnouncementCommandHandler
+    public sealed class CreateAnnouncementCommandHandler
         : IRequestHandler<CreateAnnouncementCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
         private readonly ICurrentUserService _current;
+        private readonly IPermissionService _permissions;
 
         public CreateAnnouncementCommandHandler(
             IApplicationDbContext context,
             IDataScopeService dataScope,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IPermissionService permissions)
         {
             _context = context;
             _dataScope = dataScope;
             _current = currentUser;
+            _permissions = permissions;
         }
 
         public async Task<int> Handle(CreateAnnouncementCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Duyuru oluşturma yetkiniz yok.");
-
             var tenantId = _current.TenantId
                 ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
+
+            if (request.Type == AnnouncementType.System)
+                throw new InvalidOperationException("Sistem duyurusu için 'Sistem Duyurusu / Broadcast' akışını kullanın.");
+
+            var scope = await _permissions.GetScopeAsync(PermissionNames.Announcements.Create, ct);
+            if (!scope.HasValue)
+                throw new UnauthorizedAccessException("Duyuru oluşturma yetkiniz yok.");
+
+            if (!request.ClassId.HasValue && scope.Value < PermissionScope.Tenant)
+                throw new UnauthorizedAccessException("Genel duyuru oluşturmak için tenant düzeyi yetki gerekir.");
 
             if (request.ClassId.HasValue)
             {
@@ -60,7 +66,8 @@ namespace XYZ.Application.Features.Announcements.Commands.CreateAnnouncement
                 ExpiryDate = request.ExpiryDate,
                 Type = request.Type,
                 IsActive = true,
-                CreatedAt = now
+                CreatedAt = now,
+                UpdatedAt = null
             };
 
             await _context.Announcements.AddAsync(entity, ct);
