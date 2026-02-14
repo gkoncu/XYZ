@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using XYZ.Application.Features.Branches.Commands.CreateBranch;
 using XYZ.Application.Features.Branches.Commands.UpdateBranch;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Branches;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
     public class BranchesController : Controller
     {
         private readonly IApiClient _apiClient;
@@ -35,7 +36,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public IActionResult Create()
         {
             return View(new BranchCreateViewModel());
@@ -43,7 +44,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(BranchCreateViewModel model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return View(model);
@@ -66,7 +67,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
             var dto = await _apiClient.GetBranchAsync(id, cancellationToken);
@@ -81,7 +82,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, BranchEditViewModel model, CancellationToken cancellationToken)
         {
             if (id != model.Id) return BadRequest();
@@ -107,7 +108,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             try

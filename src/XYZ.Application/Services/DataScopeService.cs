@@ -193,7 +193,12 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Branch> ApplyBranchScope(IQueryable<Branch> q)
     {
-        var scope = ResolveAny(PermissionNames.Branches.Read);
+        var scope = ResolveAny(
+            PermissionNames.Branches.Read, 
+            PermissionNames.Branches.Update, 
+            PermissionNames.Branches.Delete, 
+            PermissionNames.Branches.Archive);
+
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch
