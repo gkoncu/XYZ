@@ -174,6 +174,8 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             // ---- Coach (default: ownClasses / branch) ----
             var coach = RoleNames.Coach;
 
+            Add(coach, PermissionNames.Coaches.Read, PermissionScope.Self);
+
             Add(coach, PermissionNames.Classes.Read, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Attendance.Read, PermissionScope.OwnClasses);
@@ -184,6 +186,7 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
 
             Add(coach, PermissionNames.Documents.Read, PermissionScope.OwnClasses);
             Add(coach, PermissionNames.Documents.Upload, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.Documents.Delete, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Announcements.Read, PermissionScope.OwnClasses);
 
@@ -215,6 +218,9 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             Add(student, PermissionNames.Attendance.Read, PermissionScope.Self);
             Add(student, PermissionNames.Students.PaymentsRead, PermissionScope.Self);
             Add(student, PermissionNames.Students.DocumentsRead, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Read, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Upload, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Delete, PermissionScope.Self);
 
             Add(student, PermissionNames.ProgressRecords.Read, PermissionScope.Self);
 

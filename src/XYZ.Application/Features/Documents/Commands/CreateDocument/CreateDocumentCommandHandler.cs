@@ -8,7 +8,8 @@ using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Documents.Commands.CreateDocument
 {
-    public class CreateDocumentCommandHandler : IRequestHandler<CreateDocumentCommand, int>
+    public class CreateDocumentCommandHandler
+        : IRequestHandler<CreateDocumentCommand, int>
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
@@ -26,92 +27,71 @@ namespace XYZ.Application.Features.Documents.Commands.CreateDocument
 
         public async Task<int> Handle(CreateDocumentCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin or RoleNames.Student))
-                throw new UnauthorizedAccessException("Doküman yükleme yetkiniz yok.");
-
             var definition = await _context.DocumentDefinitions
                 .FirstOrDefaultAsync(dd => dd.Id == request.DocumentDefinitionId, ct);
 
             if (definition is null)
                 throw new NotFoundException("DocumentDefinition", request.DocumentDefinitionId);
 
+            int? studentId = null;
+            int? coachId = null;
+
             if (definition.Target == DocumentTarget.Student)
             {
-                var studentId = request.StudentId ?? 0;
-                if (studentId <= 0)
+                var sid = request.StudentId ?? 0;
+                if (sid <= 0)
                     throw new InvalidOperationException("Student belgeleri için StudentId zorunludur.");
 
-                if (role == RoleNames.Student && _current.StudentId.HasValue && _current.StudentId.Value != studentId)
-                    throw new UnauthorizedAccessException("Sadece kendi belgelerinizi yükleyebilirsiniz.");
-
                 var student = await _dataScope.Students()
-                    .FirstOrDefaultAsync(s => s.Id == studentId, ct);
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.Id == sid, ct);
 
                 if (student is null)
-                    throw new NotFoundException(RoleNames.Student, studentId);
+                    throw new NotFoundException(RoleNames.Student, sid);
 
                 if (definition.TenantId != student.TenantId)
-                    throw new UnauthorizedAccessException("Belge tipi bu öğrenciyle aynı kulübe ait değil.");
+                    throw new InvalidOperationException("Belge tanımı farklı bir tenant'a ait.");
 
-                var now = DateTime.UtcNow;
-
-                var entity = new Document
-                {
-                    TenantId = student.TenantId,
-                    StudentId = student.Id,
-                    DocumentDefinitionId = definition.Id,
-                    Name = request.Name.Trim(),
-                    FilePath = request.FilePath.Trim(),
-                    Description = request.Description,
-                    UploadDate = now,
-                    UploadedBy = _current.UserId ?? string.Empty,
-                    IsActive = true,
-                    CreatedAt = now
-                };
-
-                await _context.Documents.AddAsync(entity, ct);
-                await _context.SaveChangesAsync(ct);
-                return entity.Id;
+                studentId = sid;
             }
-
+            else
             {
-                var coachId = request.CoachId ?? 0;
-                if (coachId <= 0)
+                var cid = request.CoachId ?? 0;
+                if (cid <= 0)
                     throw new InvalidOperationException("Coach belgeleri için CoachId zorunludur.");
 
-                if (role == RoleNames.Coach && _current.CoachId.HasValue && _current.CoachId.Value != coachId)
-                    throw new UnauthorizedAccessException("Sadece kendi belgelerinizi yükleyebilirsiniz.");
-
                 var coach = await _dataScope.Coaches()
-                    .FirstOrDefaultAsync(c => c.Id == coachId, ct);
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.Id == cid, ct);
 
                 if (coach is null)
-                    throw new NotFoundException("Coach", coachId);
+                    throw new NotFoundException(RoleNames.Coach, cid);
 
                 if (definition.TenantId != coach.TenantId)
-                    throw new UnauthorizedAccessException("Belge tipi bu koçla aynı kulübe ait değil.");
+                    throw new InvalidOperationException("Belge tanımı farklı bir tenant'a ait.");
 
-                var now = DateTime.UtcNow;
-
-                var entity = new Document
-                {
-                    TenantId = coach.TenantId,
-                    CoachId = coach.Id,
-                    DocumentDefinitionId = definition.Id,
-                    Name = request.Name.Trim(),
-                    FilePath = request.FilePath.Trim(),
-                    Description = request.Description,
-                    UploadDate = now,
-                    UploadedBy = _current.UserId ?? string.Empty,
-                    IsActive = true,
-                    CreatedAt = now
-                };
-
-                await _context.Documents.AddAsync(entity, ct);
-                await _context.SaveChangesAsync(ct);
-                return entity.Id;
+                coachId = cid;
             }
+
+            var entity = new Document
+            {
+                TenantId = definition.TenantId,
+                DocumentDefinitionId = definition.Id,
+                StudentId = studentId,
+                CoachId = coachId,
+                Name = string.IsNullOrWhiteSpace(request.Name) ? definition.Name : request.Name!.Trim(),
+                Description = request.Description?.Trim(),
+                FilePath = request.FilePath.Trim(),
+                UploadDate = DateTime.UtcNow,
+                UploadedBy = _current.UserId ?? string.Empty,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Documents.Add(entity);
+            await _context.SaveChangesAsync(ct);
+
+            return entity.Id;
         }
     }
 }

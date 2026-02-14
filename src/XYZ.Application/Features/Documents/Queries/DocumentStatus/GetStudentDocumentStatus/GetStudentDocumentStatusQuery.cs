@@ -1,9 +1,15 @@
 ﻿using MediatR;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Documents.Queries.DocumentStatus.GetStudentDocumentStatus
 {
-    public class GetStudentDocumentStatusQuery : IRequest<UserDocumentStatusDto>
+    public class GetStudentDocumentStatusQuery : IRequest<UserDocumentStatusDto>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Documents.Read;
+        public PermissionScope? MinimumScope => PermissionScope.Self;
+
         public int StudentId { get; set; }
     }
 }
