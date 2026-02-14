@@ -13,7 +13,7 @@ namespace XYZ.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize]
     public class DocumentDefinitionsController : ControllerBase
     {
         private readonly IMediator _mediator;

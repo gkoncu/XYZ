@@ -4,30 +4,30 @@ using XYZ.Application.Common.Interfaces;
 
 namespace XYZ.Application.Features.DocumentDefinitions.Queries.GetDocumentDefinitions
 {
-    public class GetDocumentDefinitionsQueryHandler
+    public sealed class GetDocumentDefinitionsQueryHandler
         : IRequestHandler<GetDocumentDefinitionsQuery, IList<DocumentDefinitionListItemDto>>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _current;
 
-        public GetDocumentDefinitionsQueryHandler(IApplicationDbContext context, ICurrentUserService current)
+        public GetDocumentDefinitionsQueryHandler(
+            IApplicationDbContext context,
+            ICurrentUserService current)
         {
             _context = context;
             _current = current;
         }
 
-        public async Task<IList<DocumentDefinitionListItemDto>> Handle(GetDocumentDefinitionsQuery request, CancellationToken ct)
+        public async Task<IList<DocumentDefinitionListItemDto>> Handle(
+            GetDocumentDefinitionsQuery request,
+            CancellationToken ct)
         {
-            var role = _current.Role;
-            var tenantId = _current.TenantId;
+            var tenantId = _current.TenantId ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
-            IQueryable<Domain.Entities.DocumentDefinition> q = _context.DocumentDefinitions;
-
-            if (role != "SuperAdmin")
-            {
-                if (!tenantId.HasValue) return new List<DocumentDefinitionListItemDto>();
-                q = q.Where(x => x.TenantId == tenantId.Value);
-            }
+            var q = _context.DocumentDefinitions
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(x => x.TenantId == tenantId);
 
             if (!request.IncludeInactive)
                 q = q.Where(x => x.IsActive);

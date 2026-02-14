@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.DocumentDefinitions.Commands.CreateDocumentDefinition;
 using XYZ.Application.Features.DocumentDefinitions.Commands.UpdateDocumentDefinition;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.DocumentDefinitions;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     public class DocumentDefinitionsController : Controller
     {
         private readonly IApiClient _api;
