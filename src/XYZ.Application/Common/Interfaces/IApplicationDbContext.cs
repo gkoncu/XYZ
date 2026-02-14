@@ -26,6 +26,7 @@ namespace XYZ.Application.Common.Interfaces
         DbSet<ProgressMetricDefinition> ProgressMetricDefinitions { get; }
         DbSet<ProgressRecordValue> ProgressRecordValues { get; }
         DbSet<Announcement> Announcements { get; }
+        DbSet<AuditEvent> AuditEvents { get; }
         DbSet<Admin> Admins { get; }
         DbSet<Branch> Branches { get; }
         DbSet<ClassSession> ClassSessions { get; }

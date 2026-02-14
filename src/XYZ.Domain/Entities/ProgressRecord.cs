@@ -12,7 +12,6 @@ namespace XYZ.Domain.Entities
 
         public int Sequence { get; set; } = 1;
 
-        public string? CreatedByUserId { get; set; }
         public string? CreatedByDisplayName { get; set; }
 
         public string? CoachNotes { get; set; }

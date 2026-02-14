@@ -11,5 +11,7 @@ namespace XYZ.Domain.Common
     public abstract class TenantScopedEntity : BaseEntity
     {
         public int TenantId { get; set; }
+        public string? CreatedByUserId { get; set; }
+        public string? UpdatedByUserId { get; set; }
     }
 }
