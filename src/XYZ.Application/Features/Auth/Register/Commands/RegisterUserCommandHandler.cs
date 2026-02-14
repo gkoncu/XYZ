@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Auth.Register.Commands
@@ -17,23 +18,33 @@ namespace XYZ.Application.Features.Auth.Register.Commands
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly ILogger<RegisterUserCommandHandler> _logger;
+        private readonly ICurrentUserService _current;
 
         public RegisterUserCommandHandler(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            ILogger<RegisterUserCommandHandler> logger)
+            ILogger<RegisterUserCommandHandler> logger,
+            ICurrentUserService current)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _logger = logger;
+            _current = current;
         }
 
         public async Task<RegisterUserResultDto> Handle(
             RegisterUserCommand request,
             CancellationToken cancellationToken)
         {
+            var currentTenantId = _current.TenantId;
+            if (!currentTenantId.HasValue || currentTenantId.Value <= 0)
+                throw new UnauthorizedAccessException("Tenant context required.");
+
+            if (request.TenantId != currentTenantId.Value)
+                throw new UnauthorizedAccessException("Farklı tenant altında kullanıcı oluşturamazsınız. Önce tenant switch yapın.");
+
             var normalizedEmail = _userManager.NormalizeEmail(request.Email);
 
             var emailExistsInTenant = await _userManager.Users
@@ -48,8 +59,6 @@ namespace XYZ.Application.Features.Auth.Register.Commands
 
             var tempPassword = _configuration["Auth:DefaultTempPassword"]
                                ?? "SportifyTemp#123";
-
-            var fullName = $"{request.FirstName} {request.LastName}".Trim();
 
             var user = new ApplicationUser
             {
@@ -103,7 +112,7 @@ namespace XYZ.Application.Features.Auth.Register.Commands
 
             return new RegisterUserResultDto
             {
-                UserId = user.Id.ToString()!,
+                UserId = user.Id,
                 Email = user.Email ?? request.Email,
                 FullName = user.FullName,
                 Role = request.Role,
