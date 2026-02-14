@@ -30,7 +30,7 @@ namespace XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard
 
         public async Task<StudentDashboardDto> Handle(GetStudentDashboardQuery request, CancellationToken ct)
         {
-            if (_current.Role != "Student" || !_current.StudentId.HasValue)
+            if (!_current.StudentId.HasValue)
                 throw new UnauthorizedAccessException("Bu dashboard sadece öğrenci için kullanılabilir.");
 
             var studentId = _current.StudentId.Value;

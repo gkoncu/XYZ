@@ -1,13 +1,12 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard
+namespace XYZ.Application.Features.Dashboard.Queries.GetStudentDashboard;
+
+public sealed class GetStudentDashboardQuery : IRequest<StudentDashboardDto>, IRequirePermission
 {
-    public class GetStudentDashboardQuery : IRequest<StudentDashboardDto>
-    {
-    }
+    public string PermissionKey => PermissionNames.Students.Read;
+    public PermissionScope? MinimumScope => PermissionScope.Self;
 }

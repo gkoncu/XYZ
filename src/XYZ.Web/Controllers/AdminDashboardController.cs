@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
+using XYZ.Domain.Constants;
 using XYZ.Web.Infrastructure;
 using XYZ.Web.Models.Dashboard;
 using XYZ.Web.Models.Theming;
@@ -10,7 +11,7 @@ using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
     public class AdminDashboardController : Controller
     {
         private readonly IApiClient _apiClient;
