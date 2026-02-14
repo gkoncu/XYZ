@@ -1,10 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Enums;
 
@@ -15,30 +10,19 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _current;
 
         public GetMyTodaySessionsQueryHandler(
             IApplicationDbContext context,
-            IDataScopeService dataScope,
-            ICurrentUserService currentUser)
+            IDataScopeService dataScope)
         {
             _context = context;
             _dataScope = dataScope;
-            _current = currentUser;
         }
 
         public async Task<IList<MyTodaySessionListItemDto>> Handle(
             GetMyTodaySessionsQuery request,
             CancellationToken ct)
         {
-            var role = _current.Role;
-
-            if (role is null ||
-                (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-            {
-                return new List<MyTodaySessionListItemDto>();
-            }
-
             var targetDate = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
             var classIds = await _dataScope.Classes()
@@ -75,8 +59,7 @@ namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
                     Status = cs.Status,
                     HasAttendance = cs.Attendances.Any(),
                     TotalStudents = cs.Attendances.Count,
-                    PresentCount = cs.Attendances.Count(a =>
-                        a.Status == AttendanceStatus.Present),
+                    PresentCount = cs.Attendances.Count(a => a.Status == AttendanceStatus.Present),
                     AbsentCount = cs.Attendances.Count(a =>
                         a.Status == AttendanceStatus.Absent ||
                         a.Status == AttendanceStatus.Excused)

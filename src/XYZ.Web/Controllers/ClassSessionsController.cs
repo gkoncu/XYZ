@@ -15,6 +15,7 @@ using XYZ.Application.Features.ClassSessions.Commands.CreateClassSession;
 using XYZ.Application.Features.ClassSessions.Commands.UpdateClassSession;
 using XYZ.Application.Features.ClassSessions.Queries.GetClassSessionById;
 using XYZ.Application.Features.ClassSessions.Queries.GetClassSessions;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.ClassSessions;
 using XYZ.Web.Services;
@@ -32,7 +33,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Index(
             int? classId,
             int? branchId,
@@ -100,7 +101,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Student")]
+        [Authorize(Roles = RoleNames.Student)]
         public async Task<IActionResult> My(
             DateOnly? from,
             DateOnly? to,
@@ -161,7 +162,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Details(int id, CancellationToken ct = default)
         {
             try
@@ -198,7 +199,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpGet]
         public async Task<IActionResult> Create(int? classId, DateOnly? date, CancellationToken ct = default)
         {
@@ -219,7 +220,7 @@ namespace XYZ.Web.Controllers
             return View(vm);
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateClassSessionVm vm, CancellationToken ct = default)
@@ -268,7 +269,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpGet]
         public async Task<IActionResult> Edit(int id, CancellationToken ct = default)
         {
@@ -316,7 +317,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditClassSessionVm vm, CancellationToken ct = default)
@@ -362,7 +363,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
@@ -390,7 +391,7 @@ namespace XYZ.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpGet]
         public async Task<IActionResult> BulkCreate(int classId, CancellationToken ct = default)
         {
@@ -416,7 +417,7 @@ namespace XYZ.Web.Controllers
             return View(vm);
         }
 
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkCreate(BulkCreateClassSessionsVm vm, CancellationToken ct = default)

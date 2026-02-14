@@ -27,7 +27,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("today-sessions")]
-        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<ActionResult<IList<MyTodaySessionListItemDto>>> GetTodaySessions(
             [FromQuery] DateOnly? date,
             CancellationToken cancellationToken)

@@ -68,6 +68,18 @@ public static class PermissionNames
     }
 
     // -------------------------
+    // ClassSessions (Antrenmanlar)
+    // -------------------------
+    public static class ClassSessions
+    {
+        public const string Read = "classSessions.read";
+        public const string Create = "classSessions.create";
+        public const string Update = "classSessions.update";
+        public const string ChangeStatus = "classSessions.changeStatus";
+        public const string Delete = "classSessions.delete";
+    }
+
+    // -------------------------
     // Coaches (Koçlar / Çalışanlar)
     // -------------------------
     public static class Coaches

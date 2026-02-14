@@ -123,7 +123,8 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Class> ApplyClassScope(IQueryable<Class> q)
     {
-        var scope = ResolveAny(PermissionNames.Classes.Read);
+        var scope = ResolveAny(PermissionNames.Classes.Read, PermissionNames.ClassSessions.Read, PermissionNames.ClassSessions.Create, PermissionNames.ClassSessions.Update, PermissionNames.ClassSessions.ChangeStatus, PermissionNames.ClassSessions.Delete);
+
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch
