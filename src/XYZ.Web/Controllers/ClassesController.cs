@@ -1,18 +1,20 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Net;
 using XYZ.Application.Features.Classes.Commands.AssignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.AssignStudentToClass;
 using XYZ.Application.Features.Classes.Commands.CreateClass;
 using XYZ.Application.Features.Classes.Commands.UnassignCoachToClass;
 using XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass;
 using XYZ.Application.Features.Classes.Commands.UpdateClass;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Classes;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
     public class ClassesController : Controller
     {
         private readonly IApiClient _api;
@@ -62,6 +64,7 @@ namespace XYZ.Web.Controllers
             {
                 Class = dto,
                 AvailableStudents = students.Items
+                    .Where(s => s.ClassId == null)
                     .Where(s => !assignedStudentIds.Contains(s.Id))
                     .Select(s => new SelectListItem($"{s.FullName}", s.Id.ToString()))
                     .ToList(),
@@ -77,7 +80,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(CancellationToken ct = default)
         {
             await FillBranchesSelectList(ct);
@@ -86,7 +89,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(ClassCreateViewModel model, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -110,7 +113,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken ct = default)
         {
             var dto = await _api.GetClassAsync(id, ct);
@@ -135,7 +138,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, ClassEditViewModel model, CancellationToken ct = default)
         {
             if (id != model.Id) return BadRequest();
@@ -168,10 +171,9 @@ namespace XYZ.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
         {
             await _api.DeleteClassAsync(id, ct);
@@ -181,37 +183,55 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> AssignStudent(int id, int studentId, CancellationToken ct = default)
         {
-            await _api.AssignStudentToClassAsync(id, new AssignStudentToClassCommand
+            try
             {
-                ClassId = id,
-                StudentId = studentId
-            }, ct);
+                await _api.AssignStudentToClassAsync(id, new AssignStudentToClassCommand
+                {
+                    ClassId = id,
+                    StudentId = studentId
+                }, ct);
 
-            TempData["SuccessMessage"] = "Öğrenci sınıfa atandı.";
+                TempData["SuccessMessage"] = "Öğrenci sınıfa atandı.";
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["ErrorMessage"] = ex.StatusCode == HttpStatusCode.Forbidden
+                    ? "Bu işlem için yetkiniz yok."
+                    : "Öğrenci sınıfa atanamadı.";
+            }
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<IActionResult> UnassignStudent(int id, int studentId, CancellationToken ct = default)
         {
-            await _api.UnassignStudentFromClassAsync(id, new UnassignStudentFromClassCommand
+            try
             {
-                ClassId = id,
-                StudentId = studentId
-            }, ct);
+                await _api.UnassignStudentFromClassAsync(id, new UnassignStudentFromClassCommand
+                {
+                    ClassId = id,
+                    StudentId = studentId
+                }, ct);
 
-            TempData["SuccessMessage"] = "Öğrenci sınıftan çıkarıldı.";
+                TempData["SuccessMessage"] = "Öğrenci sınıftan çıkarıldı.";
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["ErrorMessage"] = ex.StatusCode == HttpStatusCode.Forbidden
+                    ? "Bu işlem için yetkiniz yok."
+                    : "Öğrenci sınıftan çıkarılamadı.";
+            }
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> AssignCoach(int id, int coachId, CancellationToken ct = default)
         {
             try
@@ -221,27 +241,41 @@ namespace XYZ.Web.Controllers
                     ClassId = id,
                     CoachId = coachId
                 }, ct);
+
                 TempData["SuccessMessage"] = "Koç sınıfa atandı.";
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                TempData["ErrorMessage"] = "Koç atanamadı. Seçtiğiniz koç bu branşa ait değil";
+                TempData["ErrorMessage"] = ex.StatusCode == HttpStatusCode.Forbidden
+                    ? "Bu işlem için yetkiniz yok."
+                    : "Koç atanamadı. Seçtiğiniz koç bu branşa ait değil.";
             }
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> UnassignCoach(int id, int coachId, CancellationToken ct = default)
         {
-            await _api.UnassignCoachFromClassAsync(id, new UnassignCoachFromClassCommand
+            try
             {
-                ClassId = id,
-                CoachId = coachId
-            }, ct);
+                await _api.UnassignCoachFromClassAsync(id, new UnassignCoachFromClassCommand
+                {
+                    ClassId = id,
+                    CoachId = coachId
+                }, ct);
 
-            TempData["SuccessMessage"] = "Koç sınıftan çıkarıldı.";
+                TempData["SuccessMessage"] = "Koç sınıftan çıkarıldı.";
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["ErrorMessage"] = ex.StatusCode == HttpStatusCode.Forbidden
+                    ? "Bu işlem için yetkiniz yok."
+                    : "Koç sınıftan çıkarılamadı.";
+            }
+
             return RedirectToAction(nameof(Details), new { id });
         }
 

@@ -1,10 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 
@@ -33,11 +28,9 @@ namespace XYZ.Application.Features.Classes.Commands.UpdateClass
 
             if (@class.BranchId != request.BranchId)
             {
-                var branchOk = await _context.Branches
-                    .AnyAsync(b =>
-                        b.Id == request.BranchId &&
-                        b.TenantId == @class.TenantId,
-                        cancellationToken);
+                var branchOk = await _dataScope.Branches()
+                    .AsNoTracking()
+                    .AnyAsync(b => b.Id == request.BranchId, cancellationToken);
 
                 if (!branchOk)
                     throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
