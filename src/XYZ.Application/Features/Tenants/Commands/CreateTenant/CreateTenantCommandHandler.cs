@@ -197,6 +197,7 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
 
             Add(student, PermissionNames.Students.Read, PermissionScope.Self);
             Add(student, PermissionNames.Students.AttendanceRead, PermissionScope.Self);
+            Add(student, PermissionNames.Attendance.Read, PermissionScope.Self);
             Add(student, PermissionNames.Students.PaymentsRead, PermissionScope.Self);
             Add(student, PermissionNames.Students.DocumentsRead, PermissionScope.Self);
 
