@@ -1,87 +1,63 @@
 ﻿using MediatR;
+using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 
-namespace XYZ.Application.Features.Coaches.Commands.DeleteCoach
+namespace XYZ.Application.Features.Coaches.Commands.DeleteCoach;
+
+public sealed class DeleteCoachCommandHandler(
+    IDataScopeService dataScope,
+    IApplicationDbContext context,
+    UserManager<ApplicationUser> userManager) : IRequestHandler<DeleteCoachCommand, int>
 {
-    public class DeleteCoachCommandHandler : IRequestHandler<DeleteCoachCommand, int>
+    public async Task<int> Handle(DeleteCoachCommand request, CancellationToken ct)
     {
-        private readonly IDataScopeService _dataScope;
-        private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
-        private readonly UserManager<ApplicationUser> _userManager;
+        var coach = await dataScope.Coaches()
+            .FirstOrDefaultAsync(c => c.Id == request.CoachId, ct);
 
-        public DeleteCoachCommandHandler(
-            IDataScopeService dataScope,
-            IApplicationDbContext context,
-            ICurrentUserService currentUser,
-            UserManager<ApplicationUser> userManager)
+        if (coach is null)
+            throw new NotFoundException("Coach", request.CoachId);
+
+        var userId = coach.UserId;
+
+        context.Coaches.Remove(coach);
+        await context.SaveChangesAsync(ct);
+
+        if (!string.IsNullOrWhiteSpace(userId))
         {
-            _dataScope = dataScope;
-            _context = context;
-            _current = currentUser;
-            _userManager = userManager;
-        }
-
-        public async Task<int> Handle(DeleteCoachCommand request, CancellationToken ct)
-        {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Koç silme yetkiniz yok.");
-
-            var coach = await _dataScope.Coaches()
-                .FirstOrDefaultAsync(c => c.Id == request.CoachId, ct);
-
-            if (coach is null)
-                throw new NotFoundException("Coach", request.CoachId);
-
-            var userId = coach.UserId;
-
-            _context.Coaches.Remove(coach);
-            await _context.SaveChangesAsync(ct);
-
-            if (!string.IsNullOrWhiteSpace(userId))
+            var user = await userManager.FindByIdAsync(userId);
+            if (user is not null)
             {
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user is not null)
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Contains(RoleNames.Coach))
                 {
-                    var roles = await _userManager.GetRolesAsync(user);
-                    if (roles.Contains("Coach"))
+                    var rmRole = await userManager.RemoveFromRoleAsync(user, RoleNames.Coach);
+                    if (!rmRole.Succeeded)
                     {
-                        var rmRole = await _userManager.RemoveFromRoleAsync(user, "Coach");
-                        if (!rmRole.Succeeded)
-                        {
-                            var msg = string.Join("; ", rmRole.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                            throw new InvalidOperationException($"Kullanıcı rolü kaldırılamadı (Coach): {msg}");
-                        }
+                        var msg = string.Join("; ", rmRole.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                        throw new InvalidOperationException($"Kullanıcı rolü kaldırılamadı ({RoleNames.Coach}): {msg}");
                     }
+                }
 
-                    var hasStudentProfile = await _context.Students.AnyAsync(s => s.UserId == user.Id, ct);
-                    var hasAdminProfile = await _context.Admins.AnyAsync(a => a.UserId == user.Id, ct);
+                var hasStudentProfile = await context.Students.AnyAsync(s => s.UserId == user.Id, ct);
+                var hasAdminProfile = await context.Admins.AnyAsync(a => a.UserId == user.Id, ct);
 
-                    if (!hasStudentProfile && !hasAdminProfile)
+                if (!hasStudentProfile && !hasAdminProfile)
+                {
+                    var del = await userManager.DeleteAsync(user);
+                    if (!del.Succeeded)
                     {
-                        var del = await _userManager.DeleteAsync(user);
-                        if (!del.Succeeded)
-                        {
-                            var msg = string.Join("; ", del.Errors.Select(e => $"{e.Code}:{e.Description}"));
-                            throw new InvalidOperationException($"Kullanıcı silinemedi: {msg}");
-                        }
-                    }
-                    else
-                    {
+                        var msg = string.Join("; ", del.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                        throw new InvalidOperationException($"Kullanıcı silinemedi: {msg}");
                     }
                 }
             }
-
-            return request.CoachId;
         }
+
+        return request.CoachId;
     }
 }

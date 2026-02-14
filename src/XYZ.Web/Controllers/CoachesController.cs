@@ -9,6 +9,7 @@ using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Web.Models.Coaches;
 using XYZ.Web.Services;
@@ -26,7 +27,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Index(string searchTerm, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             var coaches = await _apiClient.GetCoachesAsync(searchTerm, pageNumber, pageSize, cancellationToken);
@@ -35,7 +36,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
             var coach = await _apiClient.GetCoachAsync(id, cancellationToken);
@@ -48,7 +49,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             var branches = await _apiClient.GetBranchesAsync(1, 50, cancellationToken);
@@ -66,7 +67,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CoachCreateViewModel model, CancellationToken cancellationToken)
         {
@@ -151,7 +152,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
             var dto = await _apiClient.GetCoachAsync(id, cancellationToken);
@@ -191,7 +192,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CoachEditViewModel model, CancellationToken cancellationToken)
         {
@@ -249,7 +250,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
