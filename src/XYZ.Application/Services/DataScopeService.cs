@@ -85,7 +85,7 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Student> ApplyStudentScope(IQueryable<Student> q)
     {
-        var scope = ResolveAny(PermissionNames.Students.Read);
+        var scope = ResolveAny(PermissionNames.Students.Read, PermissionNames.Students.Create, PermissionNames.Students.Update, PermissionNames.Students.Archive, PermissionNames.Students.Delete, PermissionNames.Students.AssignClass, PermissionNames.Students.ChangeClass);
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch

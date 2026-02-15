@@ -26,7 +26,6 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
 
         public async Task<int> Handle(UpdateStudentCommand request, CancellationToken ct)
         {
-            // 1) Scope + yetki kontrolü: sadece scope içindeki öğrenciyi görebilelim
             var student = await _dataScope.Students()
                 .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
@@ -34,19 +33,16 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
             if (student is null)
                 throw new NotFoundException("Student", request.StudentId);
 
-            // Sınıf değişiyorsa, o sınıfa erişim yetkisi var mı kontrol et
             if (request.ClassId.HasValue && request.ClassId != student.ClassId)
                 await _dataScope.EnsureClassAccessAsync(request.ClassId.Value, ct);
 
             var user = student.User ?? throw new InvalidOperationException("Öğrencinin bağlı kullanıcısı bulunamadı.");
 
-            // 2) E-posta değişmişse, UserName ve normalized alanları ile birlikte güncelle
             if (!string.IsNullOrWhiteSpace(request.Email) &&
                 !string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
             {
                 var normalized = request.Email.ToUpperInvariant();
 
-                // Aynı tenant içinde e-posta çakışmasını engelle
                 var emailInTenant = await _context.Users
                     .AnyAsync(u => u.TenantId == user.TenantId &&
                                    u.Id != user.Id &&
@@ -61,20 +57,17 @@ namespace XYZ.Application.Features.Students.Commands.UpdateStudent
                 user.NormalizedUserName = normalized;
             }
 
-            // 3) Telefon değişmişse güncelle
             if (!string.Equals(user.PhoneNumber, request.PhoneNumber, StringComparison.Ordinal))
             {
                 user.PhoneNumber = request.PhoneNumber;
             }
 
-            // 4) User alanları (IdentityUser’daki ekstra alanlar)
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.BirthDate = request.BirthDate;
             user.Gender = Enum.Parse<Gender>(request.Gender, true);
             user.BloodType = Enum.Parse<BloodType>(request.BloodType, true);
 
-            // 5) Student alanları
             student.ClassId = request.ClassId;
             student.IdentityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber)
                 ? null

@@ -11,6 +11,7 @@ using XYZ.Application.Features.Students.Commands.CreateStudent;
 using XYZ.Application.Features.Students.Commands.UpdateStudent;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Web.Models.Students;
 using XYZ.Web.Services;
@@ -28,6 +29,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Index(
             string? searchTerm,
             int pageNumber = 1,
@@ -46,6 +48,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
         {
             var student = await _apiClient.GetStudentAsync(id, cancellationToken);
@@ -58,7 +61,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
             var vm = new StudentCreateViewModel
@@ -74,7 +77,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
             StudentCreateViewModel model,
@@ -172,7 +175,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
             var dto = await _apiClient.GetStudentAsync(id, cancellationToken);
@@ -224,7 +227,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             int id,
@@ -294,7 +297,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
