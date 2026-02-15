@@ -12,7 +12,7 @@ namespace XYZ.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize]
     public class ProgressMetricDefinitionsController : ControllerBase
     {
         private readonly IMediator _mediator;
