@@ -38,6 +38,11 @@ public sealed class PermissionService : IPermissionService
         if (string.IsNullOrWhiteSpace(role))
             return null;
 
+        if (permissionKey.StartsWith("tenants.", StringComparison.Ordinal)
+            || permissionKey == PermissionNames.Permissions.Manage
+            || permissionKey == PermissionNames.Audit.ReadAll)
+            return role == RoleNames.SuperAdmin ? PermissionScope.AllTenants : null;
+
         if (role == RoleNames.SuperAdmin)
             return PermissionScope.AllTenants;
 

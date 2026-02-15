@@ -1,4 +1,7 @@
 ﻿using MediatR;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
 {
-    public class CreateTenantCommand : IRequest<int>
+    public class CreateTenantCommand : IRequest<int>, IRequirePermission
     {
         public string Name { get; set; } = string.Empty;
         public string Subdomain { get; set; } = string.Empty;
@@ -23,5 +26,8 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
         public string? SubscriptionPlan { get; set; }
         public DateTime? SubscriptionStartDate { get; set; }
         public DateTime? SubscriptionEndDate { get; set; }
+
+        public string PermissionKey => PermissionNames.Tenants.Manage;
+        public PermissionScope? MinimumScope => PermissionScope.AllTenants;
     }
 }

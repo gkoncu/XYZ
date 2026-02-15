@@ -228,22 +228,6 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             // ---- ClassSessions (Student self) ----
             Add(student, PermissionNames.ClassSessions.Read, PermissionScope.Self);
 
-            // ---- Finance (tenant financial) ----
-            var finance = RoleNames.Finance;
-
-            Add(finance, PermissionNames.Payments.Read, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.CreatePlan, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.UpdatePlan, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.RecordPayment, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.Adjust, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.ReportsRead, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.Export, PermissionScope.Tenant);
-
-            Add(finance, PermissionNames.Students.Read, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Students.PaymentsRead, PermissionScope.Tenant);
-
-            Add(finance, PermissionNames.Reports.Read, PermissionScope.Tenant);
-
             _context.TenantRolePermissions.AddRange(list);
             await _context.SaveChangesAsync(ct);
         }
