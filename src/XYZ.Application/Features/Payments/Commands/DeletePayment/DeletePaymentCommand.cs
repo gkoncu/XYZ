@@ -1,14 +1,14 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Payments.Commands.DeletePayment
+namespace XYZ.Application.Features.Payments.Commands.DeletePayment;
+
+public sealed class DeletePaymentCommand : IRequest<int>, IRequirePermission
 {
-    public class DeletePaymentCommand : IRequest<int>
-    {
-        public int Id { get; set; }
-    }
+    public string PermissionKey => PermissionNames.Payments.Adjust;
+    public PermissionScope? MinimumScope => PermissionScope.Tenant;
+
+    public int Id { get; set; }
 }

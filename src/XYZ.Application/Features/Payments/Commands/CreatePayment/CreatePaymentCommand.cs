@@ -1,12 +1,18 @@
-﻿using DocumentFormat.OpenXml.ExtendedProperties;
-using MediatR;
+﻿using MediatR;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 
-public class CreatePaymentCommand : IRequest<int>, IValidatableObject
+namespace XYZ.Application.Features.Payments.Commands.CreatePayment;
+
+public sealed class CreatePaymentCommand : IRequest<int>, IRequirePermission, IValidatableObject
 {
+    public string PermissionKey => PermissionNames.Payments.Adjust;
+    public PermissionScope? MinimumScope => PermissionScope.Tenant;
+
     [Range(1, int.MaxValue, ErrorMessage = "Öğrenci seçimi geçersiz.")]
     public int StudentId { get; set; }
 
@@ -46,5 +52,8 @@ public class CreatePaymentCommand : IRequest<int>, IValidatableObject
         var today = DateTime.UtcNow.Date;
         if (DueDate.Date < today.AddDays(-365) || DueDate.Date > today.AddDays(365))
             yield return new ValidationResult("Vade tarihi 1 yıl geçmişe/ileriye gidemez.", new[] { nameof(DueDate) });
+
+        if (!Enum.IsDefined(typeof(PaymentStatus), Status))
+            yield return new ValidationResult("Durum değeri geçersiz.", new[] { nameof(Status) });
     }
 }
