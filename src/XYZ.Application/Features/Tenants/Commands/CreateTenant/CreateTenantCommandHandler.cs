@@ -183,6 +183,7 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
 
             Add(coach, PermissionNames.Students.Read, PermissionScope.OwnClasses);
             Add(coach, PermissionNames.Students.AttendanceRead, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.Students.PaymentsRead, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Documents.Read, PermissionScope.OwnClasses);
             Add(coach, PermissionNames.Documents.Upload, PermissionScope.OwnClasses);

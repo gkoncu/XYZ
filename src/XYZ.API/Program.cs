@@ -90,6 +90,9 @@ var appAssembly = typeof(XYZ.Application.Features.Auth.Login.Commands.LoginComma
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(appAssembly));
 
+builder.Services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(XYZ.Application.Common.Behaviors.AuthorizationBehavior<,>));
+builder.Services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(XYZ.Application.Common.Behaviors.ValidationBehavior<,>));
+
 ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("tr-TR");
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(appAssembly);
@@ -103,6 +106,7 @@ builder.Services.AddHttpContextAccessor();
 // --- Application Services (Auth) ---
 builder.Services.AddScoped<IDataScopeService, DataScopeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IUserLookup, UserLookupService>();
 builder.Services.AddScoped<IPasswordSignIn, PasswordSignInService>();
 builder.Services.AddScoped<IJwtFactory, JwtFactory>();
