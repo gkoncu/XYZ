@@ -8,21 +8,15 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.DeleteProgressRecord
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _current;
 
-        public DeleteProgressRecordCommandHandler(IApplicationDbContext context, IDataScopeService dataScope, ICurrentUserService current)
+        public DeleteProgressRecordCommandHandler(IApplicationDbContext context, IDataScopeService dataScope)
         {
             _context = context;
             _dataScope = dataScope;
-            _current = current;
         }
 
         public async Task<int> Handle(DeleteProgressRecordCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Gelişim kaydı silme yetkiniz yok.");
-
             var record = await _dataScope.ProgressRecords()
                 .FirstOrDefaultAsync(r => r.Id == request.Id, ct);
 

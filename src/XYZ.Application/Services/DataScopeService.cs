@@ -434,7 +434,7 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<ProgressRecord> ApplyProgressScope(IQueryable<ProgressRecord> q)
     {
-        var scope = ResolveAny(PermissionNames.ProgressRecords.Read);
+        var scope = ResolveAny(PermissionNames.ProgressRecords.Read, PermissionNames.ProgressRecords.Create, PermissionNames.ProgressRecords.Update, PermissionNames.ProgressRecords.Delete);
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch

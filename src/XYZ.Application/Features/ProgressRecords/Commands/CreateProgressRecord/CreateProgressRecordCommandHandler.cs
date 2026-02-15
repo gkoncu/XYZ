@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
-using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -22,10 +21,6 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord
 
         public async Task<int> Handle(CreateProgressRecordCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin))
-                    throw new UnauthorizedAccessException("Gelişim kaydı oluşturma yetkiniz yok.");
-
             var student = await _dataScope.Students()
                 .Include(s => s.Tenant)
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);

@@ -4,6 +4,7 @@ using System.Net;
 using XYZ.Application.Features.ProgressRecords.Commands.CreateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord;
 using XYZ.Application.Features.ProgressRecords.Queries.GetStudentProgressRecords;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.ProgressRecords;
 using XYZ.Web.Services;
@@ -21,7 +22,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Index(
             string? searchTerm,
             int pageNumber = 1,
@@ -41,7 +42,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Student(
             int studentId,
             int? branchId,
@@ -75,6 +76,8 @@ namespace XYZ.Web.Controllers
                 items = new List<ProgressRecordListItemDto>();
             }
 
+            var canWrite = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Coach) || User.IsInRole(RoleNames.SuperAdmin);
+
             var vm = new StudentProgressRecordsViewModel
             {
                 StudentId = studentId,
@@ -88,26 +91,26 @@ namespace XYZ.Web.Controllers
                     .OrderByDescending(x => x.RecordDate)
                     .ThenByDescending(x => x.Sequence)
                     .ToList(),
-                CanWrite = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin")
+                CanWrite = canWrite
             };
 
             return View(vm);
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Details(int id, CancellationToken cancellationToken = default)
         {
             var dto = await _apiClient.GetProgressRecordAsync(id, cancellationToken);
             if (dto is null)
                 return NotFound();
 
-            ViewBag.CanWrite = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin");
+            ViewBag.CanWrite = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Coach) || User.IsInRole(RoleNames.SuperAdmin);
             return View(dto);
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Create(int studentId, int? branchId, CancellationToken cancellationToken = default)
         {
             var student = await _apiClient.GetStudentAsync(studentId, cancellationToken);
@@ -132,7 +135,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
             int studentId,
@@ -197,7 +200,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken = default)
         {
             var dto = await _apiClient.GetProgressRecordAsync(id, cancellationToken);
@@ -248,7 +251,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             ProgressRecordEditViewModel model,
