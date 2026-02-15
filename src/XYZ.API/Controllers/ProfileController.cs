@@ -1,48 +1,24 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
-using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Features.Profile.Commands.ChangeMyPassword;
 using XYZ.Application.Features.Profile.Commands.DeleteMyProfilePicture;
+using XYZ.Application.Features.Profile.Commands.SwitchMyTenant;
 using XYZ.Application.Features.Profile.Commands.UpdateMyProfile;
 using XYZ.Application.Features.Profile.Commands.UploadMyProfilePicture;
 using XYZ.Application.Features.Profile.Queries.GetMyProfile;
-using XYZ.Domain.Entities;
 
 namespace XYZ.API.Controllers;
 
 [ApiController]
 [Route("api/profile")]
 [Authorize]
-public sealed class ProfileController : ControllerBase
+public sealed class ProfileController(IMediator mediator) : ControllerBase
 {
     private const long MaxProfileImageBytes = 10L * 1024 * 1024;
 
-    private readonly IMediator _mediator;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ICurrentUserService _currentUser;
-    private readonly IWebHostEnvironment _env;
-    private readonly IApplicationDbContext _db;
-
-    public ProfileController(
-        IMediator mediator,
-        UserManager<ApplicationUser> userManager,
-        ICurrentUserService currentUser,
-        IWebHostEnvironment env,
-        IApplicationDbContext db)
-    {
-        _mediator = mediator;
-        _userManager = userManager;
-        _currentUser = currentUser;
-        _env = env;
-        _db = db;
-    }
+    private readonly IMediator _mediator = mediator;
 
     [HttpGet("me")]
     public async Task<ActionResult<MyProfileDto>> GetMyProfile(CancellationToken ct)
@@ -70,57 +46,32 @@ public sealed class ProfileController : ControllerBase
         if (file.Length > MaxProfileImageBytes)
             return BadRequest($"Dosya boyutu {(MaxProfileImageBytes / (1024 * 1024))} MB'den büyük olamaz.");
 
-        var userId = _currentUser.UserId;
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
-
-        var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadsRoot);
-
-        var fileName = $"profile_{Guid.NewGuid():N}_{DateTime.UtcNow.Ticks}.webp";
-        var filePath = Path.Combine(uploadsRoot, fileName);
-
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Unauthorized();
-
-        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
-        {
-            var oldPath = Path.Combine(_env.WebRootPath, user.ProfilePictureUrl.TrimStart('/'));
-            if (System.IO.File.Exists(oldPath))
-                System.IO.File.Delete(oldPath);
-        }
-
         try
         {
-            await using var inputStream = file.OpenReadStream();
-            using var image = await Image.LoadAsync(inputStream, ct);
+            await using var ms = new MemoryStream();
+            await file.CopyToAsync(ms, ct);
 
-            image.Mutate(x =>
-                x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(512, 512)
-                }));
-
-            var encoder = new WebpEncoder
+            var url = await _mediator.Send(new UploadMyProfilePictureCommand
             {
-                Quality = 80
-            };
+                Content = ms.ToArray(),
+                FileName = file.FileName
+            }, ct);
 
-            await using var output = System.IO.File.Create(filePath);
-            await image.SaveAsync(output, encoder, ct);
+            return Ok(ToAbsoluteUrl(url));
         }
-        catch
+        catch (InvalidOperationException ex) when (
+            string.Equals(ex.Message, "EMPTY_FILE", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(ex.Message, "FILE_TOO_LARGE", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(ex.Message, "INVALID_FILE_TYPE", StringComparison.OrdinalIgnoreCase))
         {
-            return BadRequest("Geçersiz resim dosyası. Lütfen farklı bir görsel deneyin.");
+            return ex.Message.ToUpperInvariant() switch
+            {
+                "EMPTY_FILE" => BadRequest("Dosya bulunamadı."),
+                "FILE_TOO_LARGE" => BadRequest($"Dosya boyutu {(MaxProfileImageBytes / (1024 * 1024))} MB'den büyük olamaz."),
+                "INVALID_FILE_TYPE" => BadRequest("Geçersiz resim dosyası. Lütfen JPG/PNG/WEBP yükleyin."),
+                _ => BadRequest("Dosya yüklenemedi.")
+            };
         }
-
-        user.ProfilePictureUrl = $"/uploads/{fileName}";
-        await _userManager.UpdateAsync(user);
-
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        return Ok($"{baseUrl}{user.ProfilePictureUrl}");
     }
 
     [HttpDelete("me/picture")]
@@ -167,36 +118,40 @@ public sealed class ProfileController : ControllerBase
     }
 
     // ===== SUPERADMIN: Tenant switch =====
-    public sealed class SwitchMyTenantRequest
-    {
-        public int TenantId { get; set; }
-    }
 
     [HttpPost("me/tenant")]
-    [Authorize(Roles = "SuperAdmin")]
-    public async Task<IActionResult> SwitchMyTenant([FromBody] SwitchMyTenantRequest request, CancellationToken ct)
+    public async Task<IActionResult> SwitchMyTenant([FromBody] SwitchMyTenantCommand command, CancellationToken ct)
     {
-        if (request.TenantId <= 0)
-            return BadRequest("Geçersiz tenantId.");
+        try
+        {
+            await _mediator.Send(command, ct);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ex.Message.ToUpperInvariant() switch
+            {
+                "INVALID_TENANT_ID" => BadRequest("Geçersiz tenantId."),
+                "TENANT_NOT_FOUND" => NotFound("Tenant bulunamadı."),
+                "TENANT_SWITCH_FAILED" => BadRequest("Tenant değiştirilemedi."),
+                _ => BadRequest("Tenant değiştirilemedi.")
+            };
+        }
+    }
 
-        var exists = await _db.Tenants.AsNoTracking().AnyAsync(t => t.Id == request.TenantId, ct);
-        if (!exists)
-            return NotFound("Tenant bulunamadı.");
+    private string ToAbsoluteUrl(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return raw;
 
-        var userId = _currentUser.UserId;
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
+        if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return raw;
 
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user is null)
-            return Unauthorized();
+        if (!raw.StartsWith("/"))
+            raw = "/" + raw;
 
-        user.TenantId = request.TenantId;
-
-        var res = await _userManager.UpdateAsync(user);
-        if (!res.Succeeded)
-            return BadRequest("Tenant değiştirilemedi.");
-
-        return NoContent();
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        return $"{baseUrl}{raw}";
     }
 }

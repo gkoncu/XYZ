@@ -22,7 +22,7 @@ public sealed class UploadMyProfilePictureCommandHandler(
         if (request.Content is null || request.Content.Length == 0)
             throw new InvalidOperationException("EMPTY_FILE");
 
-        const int maxBytes = 2 * 1024 * 1024;
+        const int maxBytes = 10 * 1024 * 1024;
         if (request.Content.Length > maxBytes)
             throw new InvalidOperationException("FILE_TOO_LARGE");
 

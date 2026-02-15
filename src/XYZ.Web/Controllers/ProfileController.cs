@@ -161,7 +161,7 @@ namespace XYZ.Web.Controllers
                 new CookieOptions
                 {
                     Path = "/",
-                    Secure = true,
+                    Secure = Request.IsHttps,
                     SameSite = SameSiteMode.Lax
                 });
 

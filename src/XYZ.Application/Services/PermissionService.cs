@@ -41,6 +41,9 @@ public sealed class PermissionService : IPermissionService
         if (role == RoleNames.SuperAdmin)
             return PermissionScope.AllTenants;
 
+        if (permissionKey.StartsWith("profile.", StringComparison.Ordinal))
+            return PermissionScope.Self;
+
         var map = await GetMapAsync(ct);
 
         return map.TryGetValue(permissionKey, out var scope)
