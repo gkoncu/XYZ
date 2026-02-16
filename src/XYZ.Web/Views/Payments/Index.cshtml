@@ -16,7 +16,7 @@
 
     string actionName = isMyPayments ? "My" : "Index";
 
-    var isAdmin = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin) || User.IsInRole(RoleNames.Finance);
+    var isAdmin = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin);
     var isCoach = User.IsInRole(RoleNames.Coach);
     var isStudent = User.IsInRole(RoleNames.Student);
 

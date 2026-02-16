@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Aidat Detayı";
 
-    var isAdmin = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin) || User.IsInRole(RoleNames.Finance);
+    var isAdmin = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin);
     var isStudent = User.IsInRole(RoleNames.Student);
 
     var backAction = isStudent ? "My" : "Index";

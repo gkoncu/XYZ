@@ -1,11 +1,19 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using XYZ.Application.Data;
 
 namespace XYZ.API.Middleware
 {
     /// <summary>
     /// Tenant-scoped endpoint'lerde (çoğu API çağrısı) authenticated user için TenantId claim zorunlu.
-    /// Exempt: /api/auth/*, /swagger*, host-level /api/tenants (ama /api/tenants/current-theme hariç).
+    /// Ayrıca Tenant aktif değilse tenant-scoped endpoint'ler bloklanır.
+    ///
+    /// Exempt:
+    /// - /api/auth/*
+    /// - /swagger*
+    /// - host-level /api/tenants (ama /api/tenants/current-theme hariç)
+    /// - SuperAdmin tenant switch: /api/profile/me/tenant  (tenant inactive olsa bile çıkış yolu)
     /// </summary>
     public sealed class TenantContextRequiredMiddleware
     {
@@ -16,7 +24,7 @@ namespace XYZ.API.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, ApplicationDbContext db)
         {
             if (context.User?.Identity?.IsAuthenticated != true)
             {
@@ -45,6 +53,25 @@ namespace XYZ.API.Middleware
                 return;
             }
 
+            var isActive = await db.Tenants
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(t => t.Id == tenantId)
+                .Select(t => t.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (!isActive)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Tenant is inactive.",
+                    detail = "Bu kulüp pasif olduğu için uygulama kullanılamaz."
+                });
+                return;
+            }
+
             await _next(context);
         }
 
@@ -57,6 +84,9 @@ namespace XYZ.API.Middleware
                 return true;
 
             if (path.StartsWith("/api/tenants") && !path.StartsWith("/api/tenants/current-theme"))
+                return true;
+
+            if (path.StartsWith("/api/profile/me/tenant"))
                 return true;
 
             return false;

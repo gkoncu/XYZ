@@ -5,7 +5,6 @@ public static class RoleNames
     public const string SuperAdmin = "SuperAdmin";
     public const string Admin = "Admin";
     public const string Coach = "Coach";
-    public const string Finance = "Finance";
     public const string Student = "Student";
 
     public const string AdminOrSuperAdmin = Admin + "," + SuperAdmin;
@@ -17,7 +16,6 @@ public static class RoleNames
         SuperAdmin,
         Admin,
         Coach,
-        Finance,
         Student
     ];
 }
