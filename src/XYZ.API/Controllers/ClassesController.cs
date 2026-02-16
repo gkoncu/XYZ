@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Classes.Commands.AssignCoachToClass;
@@ -28,7 +27,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<PaginationResult<ClassListItemDto>>> GetAll(
             [FromQuery] GetAllClassesQuery query,
             CancellationToken cancellationToken)
@@ -38,7 +36,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<ActionResult<ClassDetailDto>> GetById(
             int id,
             CancellationToken cancellationToken)
@@ -51,18 +48,15 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Create(
             [FromBody] CreateClassCommand command,
             CancellationToken cancellationToken)
         {
             var id = await _mediator.Send(command, cancellationToken);
-
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Update(
             int id,
             [FromBody] UpdateClassCommand command,
@@ -75,7 +69,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Delete(
             int id,
             CancellationToken cancellationToken)
@@ -88,7 +81,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("{id:int}/assign-student")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<int>> AssignStudent(
             int id,
             [FromBody] AssignStudentToClassCommand command,
@@ -101,7 +93,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("{id:int}/unassign-student")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<int>> UnassignStudent(
             int id,
             [FromBody] UnassignStudentFromClassCommand command,
@@ -114,7 +105,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("{id:int}/assign-coach")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> AssignCoach(
             int id,
             [FromBody] AssignCoachToClassCommand command,
@@ -134,7 +124,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("{id:int}/unassign-coach")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> UnassignCoach(
             int id,
             [FromBody] UnassignCoachFromClassCommand command,

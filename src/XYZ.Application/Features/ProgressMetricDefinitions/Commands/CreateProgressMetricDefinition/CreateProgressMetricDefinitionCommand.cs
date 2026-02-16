@@ -1,14 +1,11 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.ProgressMetricDefinitions.Commands.CreateProgressMetricDefinition
 {
-    public class CreateProgressMetricDefinitionCommand : IRequest<int>
+    public class CreateProgressMetricDefinitionCommand : IRequest<int>, IRequirePermission
     {
         public int BranchId { get; set; }
 
@@ -23,5 +20,8 @@ namespace XYZ.Application.Features.ProgressMetricDefinitions.Commands.CreateProg
         public decimal? MaxValue { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public string PermissionKey => PermissionNames.ProgressMetrics.Create;
+        public PermissionScope? MinimumScope => PermissionScope.Tenant;
     }
 }

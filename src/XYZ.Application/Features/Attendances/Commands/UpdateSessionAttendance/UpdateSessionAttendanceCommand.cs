@@ -1,11 +1,16 @@
 ﻿using MediatR;
 using System.Collections.Generic;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Attendances.Commands.UpdateSessionAttendance
 {
-    public sealed class UpdateSessionAttendanceCommand : IRequest<int>
+    public sealed class UpdateSessionAttendanceCommand : IRequest<int>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Attendance.Take;
+        public PermissionScope? MinimumScope => PermissionScope.OwnClasses;
+
         public int SessionId { get; set; }
 
         public IList<UpdateSessionAttendanceItem> Items { get; set; }

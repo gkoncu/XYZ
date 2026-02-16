@@ -28,7 +28,7 @@
 ## 1) Terimler ve Sözlük
 
 - **Tenant:** Kulüp (izolasyon birimi).
-- **Role:** Identity rolü (Admin/Coach/Finance/Student/SuperAdmin). Varsayılan yetki şablonu olarak kullanılır.
+- **Role:** Identity rolü (Admin/Coach/Student/SuperAdmin). Varsayılan yetki şablonu olarak kullanılır.
 - **Permission (Action-level):** “Ne yapabilir?” (örn. `students.assignClass`)
 - **Scope (Row-level):** “Hangi veri üzerinde?” (Self/OwnClasses/Branch/Tenant/AllTenants)
 - **EffectivePermissionSet:** Tenant role template + user override çözümlemesi sonucu ortaya çıkan efektif yetki kümesi.

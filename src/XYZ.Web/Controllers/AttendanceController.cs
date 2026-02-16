@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Attendances.Queries.GetAttendanceList;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Attendance;
 using XYZ.Web.Services;
 
@@ -31,7 +32,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [Obsolete("Use ClassSession Detail Screen for Navigate to Attendance")]
         public async Task<IActionResult> Index(string? date, CancellationToken ct)
         {
@@ -48,7 +49,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> List(
             int? studentId,
             int? status,
@@ -69,7 +70,7 @@ namespace XYZ.Web.Controllers
 
             try
             {
-                if (User.IsInRole("Student"))
+                if (User.IsInRole(RoleNames.Student))
                 {
                     vm.Filter.ClassId = null;
                     vm.Filter.From = null;
@@ -144,10 +145,8 @@ namespace XYZ.Web.Controllers
             return QueryHelpers.AddQueryString(path, q);
         }
 
-
-
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Session(int id, CancellationToken ct)
         {
             try
@@ -217,7 +216,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Session(SessionAttendanceViewModel model, CancellationToken ct)
         {

@@ -20,6 +20,7 @@ using XYZ.Application.Features.Students.Commands.DeleteStudent;
 using XYZ.Application.Features.Students.Commands.UpdateStudent;
 using XYZ.Application.Features.Students.Queries.GetAllStudents;
 using XYZ.Application.Features.Students.Queries.GetStudentById;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -34,6 +35,7 @@ public sealed class StudentsController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _db;
+    private readonly IPermissionService _permissions;
 
     private readonly IEmailSender _emailSender;
     private readonly IOptions<EmailOptions> _emailOptions;
@@ -45,6 +47,7 @@ public sealed class StudentsController : ControllerBase
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ApplicationDbContext db,
+        IPermissionService permissions,
         IEmailSender emailSender,
         IOptions<EmailOptions> emailOptions,
         IWebHostEnvironment env,
@@ -54,6 +57,7 @@ public sealed class StudentsController : ControllerBase
         _userManager = userManager;
         _roleManager = roleManager;
         _db = db;
+        _permissions = permissions;
 
         _emailSender = emailSender;
         _emailOptions = emailOptions;
@@ -62,7 +66,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<ActionResult<PaginationResult<StudentListItemDto>>> GetAll(
         [FromQuery] GetAllStudentsQuery query,
         CancellationToken cancellationToken)
@@ -72,7 +75,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
     public async Task<ActionResult<StudentDetailDto>> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetStudentByIdQuery { StudentId = id }, cancellationToken);
@@ -80,10 +82,13 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     public async Task<ActionResult<int>> Create([FromBody] CreateStudentRequestDTO request, CancellationToken ct)
     {
+        var canCreate = await _permissions.HasPermissionAsync(PermissionNames.Students.Create, PermissionScope.OwnClasses, ct);
+        if (!canCreate)
+            return Forbid();
+
         int? tenantId = null;
         var tenantClaim = User.FindFirst("TenantId")?.Value;
         if (!string.IsNullOrWhiteSpace(tenantClaim) && int.TryParse(tenantClaim, out var parsedTenantId))
@@ -154,7 +159,7 @@ public sealed class StudentsController : ControllerBase
                 }
             }
 
-            const string studentRole = "Student";
+            var studentRole = RoleNames.Student;
 
             if (!await _roleManager.RoleExistsAsync(studentRole))
             {
@@ -247,7 +252,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<ActionResult<int>> Update(int id, [FromBody] UpdateStudentCommand command, CancellationToken cancellationToken)
     {
         command.StudentId = id;
@@ -256,7 +260,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<ActionResult<int>> Delete(int id, CancellationToken cancellationToken)
     {
         var deletedId = await _mediator.Send(new DeleteStudentCommand { StudentId = id }, cancellationToken);
@@ -264,7 +267,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpPost("{id:int}/activate")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<ActionResult<int>> Activate(int id, CancellationToken cancellationToken)
     {
         var resultId = await _mediator.Send(new ActivateStudentCommand { StudentId = id }, cancellationToken);
@@ -272,7 +274,6 @@ public sealed class StudentsController : ControllerBase
     }
 
     [HttpPost("{id:int}/deactivate")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<ActionResult<int>> Deactivate(int id, CancellationToken cancellationToken)
     {
         var resultId = await _mediator.Send(new DeactivateStudentCommand { StudentId = id }, cancellationToken);

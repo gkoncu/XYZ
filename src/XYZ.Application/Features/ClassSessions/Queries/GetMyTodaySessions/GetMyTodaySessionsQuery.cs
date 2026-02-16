@@ -1,15 +1,16 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.ClassSessions.Queries.GetMyTodaySessions
 {
     public sealed class GetMyTodaySessionsQuery
-        : IRequest<IList<MyTodaySessionListItemDto>>
+        : IRequest<IList<MyTodaySessionListItemDto>>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.ClassSessions.Read;
+        public PermissionScope? MinimumScope => PermissionScope.OwnClasses;
+
         public DateOnly? Date { get; set; }
     }
 }

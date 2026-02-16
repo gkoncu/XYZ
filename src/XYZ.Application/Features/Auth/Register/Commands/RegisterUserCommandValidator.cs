@@ -10,7 +10,6 @@ namespace XYZ.Application.Features.Auth.Register.Commands
             RoleNames.Student,
             RoleNames.Coach,
             RoleNames.Admin,
-            RoleNames.SuperAdmin
         };
 
         public RegisterUserCommandValidator()

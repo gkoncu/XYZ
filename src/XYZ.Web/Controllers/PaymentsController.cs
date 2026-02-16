@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Payments.Commands.CreatePayment;
 using XYZ.Application.Features.Payments.Commands.UpdatePayment;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Extensions;
 using XYZ.Web.Services;
@@ -23,7 +24,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
     public async Task<IActionResult> Index(
         int? studentId,
         DateOnly? fromDueDate,
@@ -63,7 +64,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = RoleNames.Student)]
     public async Task<IActionResult> My(
         DateOnly? fromDueDate,
         DateOnly? toDueDate,
@@ -99,7 +100,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
         var payment = await _apiClient.GetPaymentAsync(id, cancellationToken);
@@ -112,7 +113,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     public async Task<IActionResult> Create(int? studentId, CancellationToken cancellationToken = default)
     {
         if (!studentId.HasValue || studentId.Value <= 0)
@@ -141,7 +142,7 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreatePaymentCommand model, CancellationToken cancellationToken)
     {
@@ -169,7 +170,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
         var payment = await _apiClient.GetPaymentAsync(id, cancellationToken);
@@ -193,7 +194,7 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(UpdatePaymentCommand model, CancellationToken cancellationToken)
     {
@@ -218,7 +219,7 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, int? studentId, CancellationToken cancellationToken)
     {
@@ -241,7 +242,7 @@ public class PaymentsController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id, CancellationToken cancellationToken)
     {

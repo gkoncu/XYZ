@@ -27,7 +27,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(PaginationResult<AnnouncementListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<AnnouncementListItemDto>>> GetAll(
             [FromQuery] GetAllAnnouncementsQuery query,
@@ -38,7 +37,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(AnnouncementDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<AnnouncementDetailDto>> GetById(
@@ -53,7 +51,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         public async Task<ActionResult<int>> Create(
             [FromBody] CreateAnnouncementCommand command,
@@ -65,7 +62,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Update(
             int id,
@@ -79,7 +75,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Delete(
             int id,
@@ -93,13 +88,13 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("system/broadcast")]
-        [Authorize(Roles = "SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-        public async Task<ActionResult<int>> BroadcastSystem([FromBody] CreateSystemAnnouncementForAllTenantsCommand command,CancellationToken cancellationToken)
+        public async Task<ActionResult<int>> BroadcastSystem(
+            [FromBody] CreateSystemAnnouncementForAllTenantsCommand command,
+            CancellationToken cancellationToken)
         {
             var count = await _mediator.Send(command, cancellationToken);
             return Ok(count);
         }
-
     }
 }

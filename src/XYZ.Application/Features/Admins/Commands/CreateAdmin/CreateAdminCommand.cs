@@ -1,10 +1,16 @@
 ﻿using MediatR;
 using System;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Admins.Commands.CreateAdmin
 {
-    public sealed class CreateAdminCommand : IRequest<int>
+    public sealed class CreateAdminCommand : IRequest<int>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Users.Create;
+        public PermissionScope? MinimumScope => PermissionScope.Tenant;
+
         public string UserId { get; set; } = string.Empty;
 
         public int? TenantId { get; set; }

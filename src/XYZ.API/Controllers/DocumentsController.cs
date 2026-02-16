@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Features.Documents.Commands.CreateDocument;
 using XYZ.Application.Features.Documents.Commands.DeleteDocument;
@@ -40,7 +41,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<ActionResult<DocumentDetailDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new GetDocumentByIdQuery { Id = id }, cancellationToken);
@@ -48,7 +48,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("student/{studentId:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<ActionResult<IList<DocumentListItemDto>>> GetByStudent(
             int studentId,
             [FromQuery] int? documentDefinitionId,
@@ -65,7 +64,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("coach/{coachId:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<IList<DocumentListItemDto>>> GetByCoach(
             int coachId,
             [FromQuery] int? documentDefinitionId,
@@ -82,7 +80,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("student/{studentId:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [RequestSizeLimit(52_428_800)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<int>> UploadForStudent(
@@ -105,12 +102,19 @@ namespace XYZ.API.Controllers
                 FilePath = filePath
             };
 
-            var id = await _mediator.Send(command, cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { id }, id);
+            try
+            {
+                var id = await _mediator.Send(command, cancellationToken);
+                return CreatedAtAction(nameof(GetById), new { id }, id);
+            }
+            catch
+            {
+                await _fileService.DeleteFileAsync(filePath);
+                throw;
+            }
         }
 
         [HttpPost("coach/{coachId:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [RequestSizeLimit(52_428_800)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<int>> UploadForCoach(
@@ -133,12 +137,19 @@ namespace XYZ.API.Controllers
                 FilePath = filePath
             };
 
-            var id = await _mediator.Send(command, cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { id }, id);
+            try
+            {
+                var id = await _mediator.Send(command, cancellationToken);
+                return CreatedAtAction(nameof(GetById), new { id }, id);
+            }
+            catch
+            {
+                await _fileService.DeleteFileAsync(filePath);
+                throw;
+            }
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<int>> Update(int id, [FromBody] UpdateDocumentCommand command, CancellationToken cancellationToken)
         {
             command.Id = id;
@@ -147,7 +158,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<int>> Delete(int id, CancellationToken cancellationToken)
         {
             var deletedId = await _mediator.Send(new DeleteDocumentCommand { Id = id }, cancellationToken);
@@ -155,12 +165,12 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}/download")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         public async Task<IActionResult> Download(int id, CancellationToken cancellationToken)
         {
             var detail = await _mediator.Send(new GetDocumentByIdQuery { Id = id }, cancellationToken);
 
             var stream = await _fileService.DownloadFileAsync(detail.FilePath);
+
             var contentType = "application/octet-stream";
             var fileName = string.IsNullOrWhiteSpace(detail.Name)
                 ? Path.GetFileName(detail.FilePath)
@@ -170,9 +180,8 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("student/{studentId:int}/status")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(UserDocumentStatusDto), StatusCodes.Status200OK)]
-        public async Task<ActionResult<UserDocumentStatusDto>> GetStudentStatus(int studentId,CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDocumentStatusDto>> GetStudentStatus(int studentId, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(
                 new GetStudentDocumentStatusQuery { StudentId = studentId },
@@ -182,7 +191,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("coach/{coachId:int}/status")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(UserDocumentStatusDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserDocumentStatusDto>> GetCoachStatus(
             int coachId,
@@ -196,7 +204,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("students/status")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(IList<StudentDocumentStatusListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IList<StudentDocumentStatusListItemDto>>> GetStudentsStatus(
             [FromQuery] bool onlyIncomplete,
@@ -217,7 +224,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("coaches/status")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(typeof(IList<CoachDocumentStatusListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IList<CoachDocumentStatusListItemDto>>> GetCoachesStatus(
             [FromQuery] bool onlyIncomplete,

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Enums;
+using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
 {
@@ -9,21 +10,15 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _current;
 
-        public UpdateProgressRecordCommandHandler(IApplicationDbContext context, IDataScopeService dataScope, ICurrentUserService current)
+        public UpdateProgressRecordCommandHandler(IApplicationDbContext context, IDataScopeService dataScope)
         {
             _context = context;
             _dataScope = dataScope;
-            _current = current;
         }
 
         public async Task<int> Handle(UpdateProgressRecordCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "Coach" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Gelişim kaydı güncelleme yetkiniz yok.");
-
             var record = await _dataScope.ProgressRecords()
                 .Include(r => r.Values)
                 .FirstOrDefaultAsync(r => r.Id == request.Id, ct);
@@ -48,6 +43,8 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
 
             _context.ProgressRecordValues.RemoveRange(record.Values);
             record.Values.Clear();
+
+            var now = DateTime.UtcNow;
 
             foreach (var input in request.Values)
             {
@@ -76,13 +73,13 @@ namespace XYZ.Application.Features.ProgressRecords.Commands.UpdateProgressRecord
                 if (input.DecimalValue is null && input.IntValue is null && string.IsNullOrWhiteSpace(input.TextValue))
                     continue;
 
-                record.Values.Add(new XYZ.Domain.Entities.ProgressRecordValue
+                record.Values.Add(new ProgressRecordValue
                 {
                     ProgressMetricDefinitionId = def.Id,
                     DecimalValue = input.DecimalValue,
                     IntValue = input.IntValue,
                     TextValue = string.IsNullOrWhiteSpace(input.TextValue) ? null : input.TextValue.Trim(),
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = now,
                     IsActive = true
                 });
             }

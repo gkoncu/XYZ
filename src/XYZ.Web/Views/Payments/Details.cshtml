@@ -1,10 +1,11 @@
-﻿﻿@using XYZ.Domain.Enums
+﻿﻿﻿@using XYZ.Domain.Constants
+@using XYZ.Domain.Enums
 @model PaymentDetailDto
 @{
     ViewData["Title"] = "Aidat Detayı";
 
-    var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
-    var isStudent = User.IsInRole("Student");
+    var isAdmin = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin);
+    var isStudent = User.IsInRole(RoleNames.Student);
 
     var backAction = isStudent ? "My" : "Index";
     var backRouteStudentId = isStudent ? (int?)null : Model.StudentId;
@@ -64,8 +65,8 @@
                 <button type="submit"
                         class="btn btn-outline-danger"
                         onclick="return confirm('@(isPlanInstallment
-                                    ? "Bu taksiti iptal etmek istediğinize emin misiniz?"
-                                    : "Bu ödemeyi silmek istediğinize emin misiniz?")');">
+                                                            ? "Bu taksiti iptal etmek istediğinize emin misiniz?"
+                                                            : "Bu ödemeyi silmek istediğinize emin misiniz?")');">
                     @(isPlanInstallment ? "İptal Et" : "Sil")
                 </button>
 
@@ -97,10 +98,6 @@
 
             <dt class="col-4 text-muted">İndirim</dt>
             <dd class="col-8">@(Model.DiscountAmount.HasValue? Model.DiscountAmount.Value.ToString("C2") : "-")</dd>
-            <dt class="col-4 text-muted">Not</dt>
-            <dd class="col-8">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
-
-
             <dt class="col-4 text-muted">Not</dt>
             <dd class="col-8">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
 
@@ -161,7 +158,7 @@
             </div>
 
             <div class="small text-muted mt-2">
-                Not: Bu işlem sadece <strong>Admin</strong> kullanıcıları için görünür.
+                Not: Bu işlem sadece yetkili kullanıcılar için görünür.
             </div>
         </div>
     }

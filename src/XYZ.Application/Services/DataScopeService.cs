@@ -85,7 +85,7 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Student> ApplyStudentScope(IQueryable<Student> q)
     {
-        var scope = ResolveAny(PermissionNames.Students.Read);
+        var scope = ResolveAny(PermissionNames.Students.Read, PermissionNames.Students.Create, PermissionNames.Students.Update, PermissionNames.Students.Archive, PermissionNames.Students.Delete, PermissionNames.Students.AssignClass, PermissionNames.Students.ChangeClass);
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch
@@ -123,7 +123,8 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Class> ApplyClassScope(IQueryable<Class> q)
     {
-        var scope = ResolveAny(PermissionNames.Classes.Read);
+        var scope = ResolveAny(PermissionNames.Classes.Read, PermissionNames.ClassSessions.Read, PermissionNames.ClassSessions.Create, PermissionNames.ClassSessions.Update, PermissionNames.ClassSessions.ChangeStatus, PermissionNames.ClassSessions.Delete);
+
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch
@@ -193,7 +194,12 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<Branch> ApplyBranchScope(IQueryable<Branch> q)
     {
-        var scope = ResolveAny(PermissionNames.Branches.Read);
+        var scope = ResolveAny(
+            PermissionNames.Branches.Read, 
+            PermissionNames.Branches.Update, 
+            PermissionNames.Branches.Delete, 
+            PermissionNames.Branches.Archive);
+
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch
@@ -428,7 +434,7 @@ public class DataScopeService : IDataScopeService
 
     private IQueryable<ProgressRecord> ApplyProgressScope(IQueryable<ProgressRecord> q)
     {
-        var scope = ResolveAny(PermissionNames.ProgressRecords.Read);
+        var scope = ResolveAny(PermissionNames.ProgressRecords.Read, PermissionNames.ProgressRecords.Create, PermissionNames.ProgressRecords.Update, PermissionNames.ProgressRecords.Delete);
         if (scope is null) return q.Where(_ => false);
 
         return scope.Value switch

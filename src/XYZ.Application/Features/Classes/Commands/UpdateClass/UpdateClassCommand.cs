@@ -1,14 +1,15 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Classes.Commands.UpdateClass
 {
-    public class UpdateClassCommand : IRequest<int>
+    public class UpdateClassCommand : IRequest<int>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Classes.Update;
+        public PermissionScope? MinimumScope => PermissionScope.Branch;
+
         public int ClassId { get; set; }
 
         public string Name { get; set; } = string.Empty;

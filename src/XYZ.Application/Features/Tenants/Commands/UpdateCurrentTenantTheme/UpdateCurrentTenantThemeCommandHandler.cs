@@ -20,9 +20,6 @@ public sealed class UpdateCurrentTenantThemeCommandHandler : IRequestHandler<Upd
         if (!_current.IsAuthenticated || !_current.TenantId.HasValue)
             throw new UnauthorizedAccessException("Tenant bulunamadı.");
 
-        if (_current.Role is not ("Admin" or "SuperAdmin"))
-            throw new UnauthorizedAccessException("Tema güncelleme yetkisi yok.");
-
         var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _current.TenantId.Value, ct);
         if (tenant is null)
             throw new InvalidOperationException("Tenant bulunamadı.");

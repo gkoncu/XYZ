@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Enums;
 
@@ -14,46 +13,36 @@ namespace XYZ.Application.Features.PaymentPlans.Commands.CancelPaymentPlan
     {
         private readonly IApplicationDbContext _context;
         private readonly IDataScopeService _dataScope;
-        private readonly ICurrentUserService _current;
 
         public CancelPaymentPlanCommandHandler(
             IApplicationDbContext context,
-            IDataScopeService dataScope,
-            ICurrentUserService currentUser)
+            IDataScopeService dataScope)
         {
             _context = context;
             _dataScope = dataScope;
-            _current = currentUser;
         }
 
         public async Task<int> Handle(CancelPaymentPlanCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || (role != "Admin" && role != "SuperAdmin"))
-                throw new UnauthorizedAccessException("Aidat planı iptal etme yetkiniz yok.");
-
             var plan = await _dataScope.PaymentPlans()
                 .Include(pp => pp.Payments)
                 .FirstOrDefaultAsync(pp => pp.Id == request.PlanId && pp.IsActive, ct);
 
             if (plan == null)
-                throw new NotFoundException("PaymentPlan", request.PlanId);
+                throw new InvalidOperationException("Aidat planı bulunamadı.");
 
-            if (plan.Status == PaymentPlanStatus.Cancelled)
-                return plan.Id;
-
-            var now = DateTime.UtcNow;
+            if (plan.Status != PaymentPlanStatus.Active)
+                throw new InvalidOperationException("Sadece aktif plan iptal edilebilir.");
 
             plan.Status = PaymentPlanStatus.Cancelled;
-            plan.UpdatedAt = now;
 
-            foreach (var p in plan.Payments.Where(x => x.IsActive && x.Status != PaymentStatus.Paid && x.Status != PaymentStatus.Cancelled))
+            foreach (var payment in plan.Payments.Where(p => p.IsActive && p.Status == PaymentStatus.Pending))
             {
-                p.Status = PaymentStatus.Cancelled;
-                p.UpdatedAt = now;
+                payment.Status = PaymentStatus.Cancelled;
             }
 
             await _context.SaveChangesAsync(ct);
+
             return plan.Id;
         }
     }

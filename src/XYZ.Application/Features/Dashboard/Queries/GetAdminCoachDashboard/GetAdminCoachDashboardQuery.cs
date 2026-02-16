@@ -1,13 +1,12 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard
+namespace XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
+
+public sealed class GetAdminCoachDashboardQuery : IRequest<AdminCoachDashboardDto>, IRequirePermission
 {
-    public class GetAdminCoachDashboardQuery : IRequest<AdminCoachDashboardDto>
-    {
-    }
+    public string PermissionKey => PermissionNames.Attendance.Read;
+    public PermissionScope? MinimumScope => PermissionScope.OwnClasses;
 }

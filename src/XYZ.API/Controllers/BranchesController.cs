@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Common.Models;
 using XYZ.Application.Features.Branches.Commands.CreateBranch;
@@ -24,7 +23,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<PaginationResult<BranchListItemDto>>> GetAll(
             [FromQuery] GetAllBranchesQuery query,
             CancellationToken cancellationToken)
@@ -34,7 +32,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         public async Task<ActionResult<BranchDetailDto>> GetById(
             int id,
             CancellationToken cancellationToken)
@@ -47,7 +44,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Create(
             [FromBody] CreateBranchCommand command,
             CancellationToken cancellationToken)
@@ -57,7 +53,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Update(
             int id,
             [FromBody] UpdateBranchCommand command,
@@ -70,7 +65,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<int>> Delete(
             int id,
             CancellationToken cancellationToken)

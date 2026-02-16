@@ -84,7 +84,6 @@ namespace XYZ.API.Controllers
         public async Task<ActionResult<TenantThemeDto>> GetCurrentTheme(CancellationToken ct)
         => Ok(await _mediator.Send(new GetCurrentTenantThemeQuery(), ct));
 
-        [Authorize(Roles = RoleNames.Admin + "," + RoleNames.SuperAdmin)]
         [HttpPut("current-theme")]
         public async Task<IActionResult> UpdateCurrentTheme([FromBody] UpdateCurrentTenantThemeCommand command, CancellationToken ct)
         {

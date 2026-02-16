@@ -28,7 +28,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(PaginationResult<ClassSessionListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<ClassSessionListItemDto>>> GetAll(
             [FromQuery] GetClassSessionsQuery query,
@@ -39,7 +38,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("my")]
-        [Authorize(Roles = "Student")]
         [ProducesResponseType(typeof(PaginationResult<ClassSessionListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginationResult<ClassSessionListItemDto>>> GetMy(
             [FromQuery] GetMyClassSessionsQuery query,
@@ -50,9 +48,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(ClassSessionDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ClassSessionDetailDto>> GetById(
             int id,
             CancellationToken cancellationToken)
@@ -65,23 +61,17 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<int>> Create(
             [FromBody] CreateClassSessionCommand command,
             CancellationToken cancellationToken)
         {
             var id = await _mediator.Send(command, cancellationToken);
-
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<int>> Update(
             int id,
             [FromBody] UpdateClassSessionCommand command,
@@ -101,10 +91,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost("{id:int}/status")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<int>> ChangeStatus(
             int id,
             [FromBody] ChangeSessionStatusCommand command,
@@ -124,9 +111,7 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<int>> Delete(
             int id,
             CancellationToken cancellationToken)

@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.Dashboard.Queries.GetAdminCoachDashboard;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Dashboard;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Coach")]
+    [Authorize(Roles = RoleNames.Coach)]
     public class CoachDashboardController : Controller
     {
         private readonly IApiClient _apiClient;

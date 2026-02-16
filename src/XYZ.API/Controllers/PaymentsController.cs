@@ -52,7 +52,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         public async Task<ActionResult<int>> Create(
             [FromBody] CreatePaymentCommand command,
@@ -63,7 +62,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Update(
             int id,
@@ -77,7 +75,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Delete(
             int id,

@@ -39,6 +39,7 @@ namespace XYZ.Application.Data
         public DbSet<ProgressRecordValue> ProgressRecordValues => Set<ProgressRecordValue>();
 
         public DbSet<Announcement> Announcements => Set<Announcement>();
+        public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Admin> Admins => Set<Admin>();
         public DbSet<Branch> Branches => Set<Branch>();
@@ -55,6 +56,7 @@ namespace XYZ.Application.Data
             builder.Entity<Tenant>().HasQueryFilter(t => t.IsActive);
 
             ApplyTenantScopedQueryFilters(builder);
+            builder.ConfigureTenantAuditFields();
 
             ConfigureCascadeRestrictions(builder);
             ConfigureDecimalPrecisions(builder);

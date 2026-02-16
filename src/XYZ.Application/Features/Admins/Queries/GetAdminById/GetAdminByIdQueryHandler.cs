@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
@@ -11,45 +10,21 @@ namespace XYZ.Application.Features.Admins.Queries.GetAdminById
         : IRequestHandler<GetAdminByIdQuery, AdminDetailDto?>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
 
-        public GetAdminByIdQueryHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public GetAdminByIdQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _current = currentUser;
         }
 
         public async Task<AdminDetailDto?> Handle(
             GetAdminByIdQuery request,
             CancellationToken cancellationToken)
         {
-            var role = _current.Role ?? string.Empty;
-            var tenantId = _current.TenantId;
-
-            var q = _context.Admins
+            var admin = await _context.Admins
                 .Include(a => a.User)
                 .Include(a => a.Tenant)
-                .AsQueryable();
+                .FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
 
-            switch (role)
-            {
-                case "SuperAdmin":
-                    break;
-
-                case "Admin":
-                    if (tenantId > 0)
-                        q = q.Where(a => a.TenantId == tenantId);
-                    else
-                        return null;
-                    break;
-
-                default:
-                    return null;
-            }
-
-            var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
             if (admin is null) return null;
 
             return new AdminDetailDto

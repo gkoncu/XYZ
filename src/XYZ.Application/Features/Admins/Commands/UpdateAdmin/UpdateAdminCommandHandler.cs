@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Interfaces;
@@ -12,42 +11,18 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
     public sealed class UpdateAdminCommandHandler : IRequestHandler<UpdateAdminCommand, int>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
 
-        public UpdateAdminCommandHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public UpdateAdminCommandHandler(IApplicationDbContext context)
         {
             _context = context;
-            _current = currentUser;
         }
 
         public async Task<int> Handle(UpdateAdminCommand request, CancellationToken cancellationToken)
         {
-            var role = _current.Role ?? string.Empty;
-            var tenantId = _current.TenantId;
-
-            var q = _context.Admins
+            var admin = await _context.Admins
                 .Include(a => a.User)
-                .AsQueryable();
+                .FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
 
-            switch (role)
-            {
-                case "SuperAdmin":
-                    break;
-
-                case "Admin":
-                    if (tenantId > 0)
-                        q = q.Where(a => a.TenantId == tenantId);
-                    else
-                        throw new UnauthorizedAccessException("TenantId is missing.");
-                    break;
-
-                default:
-                    throw new UnauthorizedAccessException("You are not allowed to update admins.");
-            }
-
-            var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, cancellationToken);
             if (admin is null)
                 throw new KeyNotFoundException("Admin not found.");
 
@@ -62,9 +37,7 @@ namespace XYZ.Application.Features.Admins.Commands.UpdateAdmin
             if (!string.IsNullOrWhiteSpace(identityNumber))
             {
                 var dup = await _context.Admins.AnyAsync(
-                    a => a.TenantId == admin.TenantId
-                         && a.Id != admin.Id
-                         && a.IdentityNumber == identityNumber,
+                    a => a.Id != admin.Id && a.IdentityNumber == identityNumber,
                     cancellationToken);
 
                 if (dup)

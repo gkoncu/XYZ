@@ -23,7 +23,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(ProgressRecordDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProgressRecordDetailDto>> GetById(int id, CancellationToken ct)
@@ -48,7 +47,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpGet("student/{studentId:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
         [ProducesResponseType(typeof(IList<ProgressRecordListItemDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IList<ProgressRecordListItemDto>>> GetByStudent(
             int studentId,
@@ -85,7 +83,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         public async Task<ActionResult<int>> Create([FromBody] CreateProgressRecordCommand command, CancellationToken ct)
         {
@@ -105,7 +102,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Update(int id, [FromBody] UpdateProgressRecordCommand command, CancellationToken ct)
         {
@@ -130,7 +126,6 @@ namespace XYZ.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         public async Task<ActionResult<int>> Delete(int id, CancellationToken ct)
         {

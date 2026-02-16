@@ -1,14 +1,15 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Classes.Commands.CreateClass
 {
-    public class CreateClassCommand : IRequest<int>
+    public class CreateClassCommand : IRequest<int>, IRequirePermission
     {
+        public string PermissionKey => PermissionNames.Classes.Create;
+        public PermissionScope? MinimumScope => PermissionScope.Branch;
+
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }

@@ -1,13 +1,9 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
 namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
 {
@@ -16,24 +12,20 @@ namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
     {
         private readonly IDataScopeService _dataScope;
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
+        private readonly IPermissionService _permissions;
 
         public UnassignStudentFromClassCommandHandler(
             IDataScopeService dataScope,
             IApplicationDbContext context,
-            ICurrentUserService currentUser)
+            IPermissionService permissions)
         {
             _dataScope = dataScope;
             _context = context;
-            _current = currentUser;
+            _permissions = permissions;
         }
 
         public async Task<int> Handle(UnassignStudentFromClassCommand request, CancellationToken ct)
         {
-            var role = _current.Role;
-            if (role is null || role is not (RoleNames.Admin or RoleNames.Coach or RoleNames.SuperAdmin))
-                throw new UnauthorizedAccessException("Sınıftan öğrenci çıkarma yetkiniz yok.");
-
             var student = await _dataScope.Students()
                 .FirstOrDefaultAsync(s => s.Id == request.StudentId, ct);
 
@@ -75,28 +67,35 @@ namespace XYZ.Application.Features.Classes.Commands.UnassignStudentFromClass
                 student.UpdatedAt = DateTime.UtcNow;
             }
 
-            var futureAttendancesQuery = _dataScope.Attendances()
-                .Include(a => a.ClassSession)
-                .Where(a =>
-                    a.StudentId == student.Id &&
-                    a.ClassId == cls.Id);
+            var canUpdateFutureAttendanceList =
+                await _permissions.HasPermissionAsync(PermissionNames.Classes.EnrollStudents, PermissionScope.OwnClasses, ct)
+                || await _permissions.HasPermissionAsync(PermissionNames.Classes.UnenrollStudents, PermissionScope.OwnClasses, ct);
 
-            if (enrollment != null)
+            if (canUpdateFutureAttendanceList)
             {
-                futureAttendancesQuery = futureAttendancesQuery
-                    .Where(a => a.ClassSession.Date > endDate);
-            }
-            else
-            {
-                futureAttendancesQuery = futureAttendancesQuery
-                    .Where(a => a.ClassSession.Date > today);
-            }
+                var futureAttendancesQuery = _dataScope.Attendances()
+                    .Include(a => a.ClassSession)
+                    .Where(a =>
+                        a.StudentId == student.Id &&
+                        a.ClassId == cls.Id);
 
-            var futureAttendances = await futureAttendancesQuery.ToListAsync(ct);
+                if (enrollment != null)
+                {
+                    futureAttendancesQuery = futureAttendancesQuery
+                        .Where(a => a.ClassSession.Date > endDate);
+                }
+                else
+                {
+                    futureAttendancesQuery = futureAttendancesQuery
+                        .Where(a => a.ClassSession.Date > today);
+                }
 
-            foreach (var attendance in futureAttendances)
-            {
-                attendance.IsActive = false;
+                var futureAttendances = await futureAttendancesQuery.ToListAsync(ct);
+
+                foreach (var attendance in futureAttendances)
+                {
+                    attendance.IsActive = false;
+                }
             }
 
             await _context.SaveChangesAsync(ct);

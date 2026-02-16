@@ -1,12 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
@@ -14,45 +14,21 @@ namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
     public sealed class DeleteAdminCommandHandler : IRequestHandler<DeleteAdminCommand, int>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public DeleteAdminCommandHandler(
             IApplicationDbContext context,
-            ICurrentUserService currentUser,
             UserManager<ApplicationUser> userManager)
         {
             _context = context;
-            _current = currentUser;
             _userManager = userManager;
         }
 
         public async Task<int> Handle(DeleteAdminCommand request, CancellationToken ct)
         {
-            var role = _current.Role ?? string.Empty;
-            if (role != "Admin" && role != "SuperAdmin")
-                throw new UnauthorizedAccessException("Admin silme yetkiniz yok.");
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Id == request.AdminId, ct);
 
-            var tenantId = _current.TenantId;
-
-            var q = _context.Admins.AsQueryable();
-
-            if (role == "Admin")
-            {
-                if (tenantId <= 0)
-                    throw new UnauthorizedAccessException("TenantId bulunamadı.");
-
-                q = q.Where(a => a.TenantId == tenantId);
-
-                var activeAdminCount = await _context.Admins.CountAsync(
-                    a => a.TenantId == tenantId && a.IsActive,
-                    ct);
-
-                if (activeAdminCount <= 1)
-                    throw new InvalidOperationException("Tenant içinde son admin silinemez.");
-            }
-
-            var admin = await q.FirstOrDefaultAsync(a => a.Id == request.AdminId, ct);
             if (admin is null)
                 throw new NotFoundException("Admin", request.AdminId);
 
@@ -67,9 +43,9 @@ namespace XYZ.Application.Features.Admins.Commands.DeleteAdmin
                 if (user is not null)
                 {
                     var roles = await _userManager.GetRolesAsync(user);
-                    if (roles.Contains("Admin"))
+                    if (roles.Contains(RoleNames.Admin))
                     {
-                        var rmRole = await _userManager.RemoveFromRoleAsync(user, "Admin");
+                        var rmRole = await _userManager.RemoveFromRoleAsync(user, RoleNames.Admin);
                         if (!rmRole.Succeeded)
                         {
                             var msg = string.Join("; ", rmRole.Errors.Select(e => $"{e.Code}:{e.Description}"));

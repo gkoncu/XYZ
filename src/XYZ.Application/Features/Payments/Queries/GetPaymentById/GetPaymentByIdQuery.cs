@@ -1,14 +1,14 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
+using XYZ.Domain.Enums;
 
-namespace XYZ.Application.Features.Payments.Queries.GetPaymentById
+namespace XYZ.Application.Features.Payments.Queries.GetPaymentById;
+
+public sealed class GetPaymentByIdQuery : IRequest<PaymentDetailDto>, IRequirePermission
 {
-    public class GetPaymentByIdQuery : IRequest<PaymentDetailDto>
-    {
-        public int Id { get; set; }
-    }
+    public string PermissionKey => PermissionNames.Students.PaymentsRead;
+    public PermissionScope? MinimumScope => PermissionScope.Self;
+
+    public int Id { get; set; }
 }

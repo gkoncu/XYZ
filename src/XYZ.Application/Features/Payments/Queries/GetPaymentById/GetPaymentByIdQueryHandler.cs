@@ -31,6 +31,7 @@ public sealed class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQ
                 StudentFullName = p.Student.User.FullName,
                 Amount = p.Amount,
                 DiscountAmount = p.DiscountAmount,
+                Notes = p.Notes,
                 Status = p.Status,
                 DueDate = p.DueDate,
                 CreatedAt = p.CreatedAt,

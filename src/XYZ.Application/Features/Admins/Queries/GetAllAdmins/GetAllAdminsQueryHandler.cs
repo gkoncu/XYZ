@@ -12,44 +12,20 @@ namespace XYZ.Application.Features.Admins.Queries.GetAllAdmins
         : IRequestHandler<GetAllAdminsQuery, PaginationResult<AdminListItemDto>>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _current;
 
-        public GetAllAdminsQueryHandler(
-            IApplicationDbContext context,
-            ICurrentUserService currentUser)
+        public GetAllAdminsQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _current = currentUser;
         }
 
         public async Task<PaginationResult<AdminListItemDto>> Handle(
             GetAllAdminsQuery request,
             CancellationToken cancellationToken)
         {
-            var role = _current.Role ?? string.Empty;
-            var tenantId = _current.TenantId;
-
             var q = _context.Admins
                 .Include(a => a.User)
                 .Include(a => a.Tenant)
                 .AsQueryable();
-
-            switch (role)
-            {
-                case "SuperAdmin":
-                    break;
-
-                case "Admin":
-                    if (tenantId > 0)
-                        q = q.Where(a => a.TenantId == tenantId);
-                    else
-                        q = q.Where(_ => false);
-                    break;
-
-                default:
-                    q = q.Where(_ => false);
-                    break;
-            }
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {

@@ -108,6 +108,13 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             Add(admin, PermissionNames.Classes.EnrollStudents, PermissionScope.Tenant);
             Add(admin, PermissionNames.Classes.UnenrollStudents, PermissionScope.Tenant);
 
+            // ---- ClassSessions (Admin full) ----
+            Add(admin, PermissionNames.ClassSessions.Read, PermissionScope.Tenant);
+            Add(admin, PermissionNames.ClassSessions.Create, PermissionScope.Tenant);
+            Add(admin, PermissionNames.ClassSessions.Update, PermissionScope.Tenant);
+            Add(admin, PermissionNames.ClassSessions.ChangeStatus, PermissionScope.Tenant);
+            Add(admin, PermissionNames.ClassSessions.Delete, PermissionScope.Tenant);
+
             Add(admin, PermissionNames.Coaches.Read, PermissionScope.Tenant);
             Add(admin, PermissionNames.Coaches.Create, PermissionScope.Tenant);
             Add(admin, PermissionNames.Coaches.Update, PermissionScope.Tenant);
@@ -167,6 +174,8 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             // ---- Coach (default: ownClasses / branch) ----
             var coach = RoleNames.Coach;
 
+            Add(coach, PermissionNames.Coaches.Read, PermissionScope.Self);
+
             Add(coach, PermissionNames.Classes.Read, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Attendance.Read, PermissionScope.OwnClasses);
@@ -174,11 +183,20 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
 
             Add(coach, PermissionNames.Students.Read, PermissionScope.OwnClasses);
             Add(coach, PermissionNames.Students.AttendanceRead, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.Students.PaymentsRead, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Documents.Read, PermissionScope.OwnClasses);
             Add(coach, PermissionNames.Documents.Upload, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.Documents.Delete, PermissionScope.OwnClasses);
 
             Add(coach, PermissionNames.Announcements.Read, PermissionScope.OwnClasses);
+
+            // ---- ClassSessions (Coach own classes) ----
+            Add(coach, PermissionNames.ClassSessions.Read, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.ClassSessions.Create, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.ClassSessions.Update, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.ClassSessions.ChangeStatus, PermissionScope.OwnClasses);
+            Add(coach, PermissionNames.ClassSessions.Delete, PermissionScope.OwnClasses);
 
             // Progress (Coach)
             Add(coach, PermissionNames.ProgressMetrics.Read, PermissionScope.Branch);
@@ -190,32 +208,25 @@ namespace XYZ.Application.Features.Tenants.Commands.CreateTenant
             var student = RoleNames.Student;
 
             Add(student, PermissionNames.Announcements.ReadPublic, PermissionScope.Self);
+            Add(student, PermissionNames.Announcements.Read, PermissionScope.Self);
+            Add(student, PermissionNames.Classes.Read, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.ReadSelf, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.UpdateSelf, PermissionScope.Self);
             Add(student, PermissionNames.Profiles.ChangePasswordSelf, PermissionScope.Self);
 
             Add(student, PermissionNames.Students.Read, PermissionScope.Self);
             Add(student, PermissionNames.Students.AttendanceRead, PermissionScope.Self);
+            Add(student, PermissionNames.Attendance.Read, PermissionScope.Self);
             Add(student, PermissionNames.Students.PaymentsRead, PermissionScope.Self);
             Add(student, PermissionNames.Students.DocumentsRead, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Read, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Upload, PermissionScope.Self);
+            Add(student, PermissionNames.Documents.Delete, PermissionScope.Self);
 
             Add(student, PermissionNames.ProgressRecords.Read, PermissionScope.Self);
 
-            // ---- Finance (tenant financial) ----
-            var finance = RoleNames.Finance;
-
-            Add(finance, PermissionNames.Payments.Read, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.CreatePlan, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.UpdatePlan, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.RecordPayment, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.Adjust, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.ReportsRead, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Payments.Export, PermissionScope.Tenant);
-
-            Add(finance, PermissionNames.Students.Read, PermissionScope.Tenant);
-            Add(finance, PermissionNames.Students.PaymentsRead, PermissionScope.Tenant);
-
-            Add(finance, PermissionNames.Reports.Read, PermissionScope.Tenant);
+            // ---- ClassSessions (Student self) ----
+            Add(student, PermissionNames.ClassSessions.Read, PermissionScope.Self);
 
             _context.TenantRolePermissions.AddRange(list);
             await _context.SaveChangesAsync(ct);

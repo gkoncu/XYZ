@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using XYZ.Application.Features.ProgressMetricDefinitions.Commands.CreateProgressMetricDefinition;
 using XYZ.Application.Features.ProgressMetricDefinitions.Commands.UpdateProgressMetricDefinition;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.ProgressMetricDefinitions;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+    [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
     public class ProgressMetricDefinitionsController : Controller
     {
         private readonly IApiClient _api;
@@ -41,6 +42,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(int branchId, CancellationToken ct = default)
         {
             var branch = await _api.GetBranchAsync(branchId, ct);
@@ -60,6 +62,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProgressMetricDefinitionEditViewModel model, CancellationToken ct = default)
         {
@@ -74,7 +77,7 @@ namespace XYZ.Web.Controllers
                     Name = model.Name.Trim(),
                     DataType = model.DataType,
                     Unit = string.IsNullOrWhiteSpace(model.Unit) ? null : model.Unit.Trim(),
-                    IsRequired = false,
+                    IsRequired = model.IsRequired,
                     SortOrder = model.SortOrder,
                     MinValue = model.MinValue,
                     MaxValue = model.MaxValue,
@@ -96,6 +99,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, int branchId, CancellationToken ct = default)
         {
             var branch = await _api.GetBranchAsync(branchId, ct);
@@ -113,7 +117,7 @@ namespace XYZ.Web.Controllers
                 Name = item.Name,
                 DataType = item.DataType,
                 Unit = item.Unit,
-                IsRequired = false,
+                IsRequired = item.IsRequired,
                 SortOrder = item.SortOrder,
                 MinValue = item.MinValue,
                 MaxValue = item.MaxValue,
@@ -124,6 +128,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProgressMetricDefinitionEditViewModel model, CancellationToken ct = default)
         {
@@ -139,7 +144,7 @@ namespace XYZ.Web.Controllers
                     Name = model.Name.Trim(),
                     DataType = model.DataType,
                     Unit = string.IsNullOrWhiteSpace(model.Unit) ? null : model.Unit.Trim(),
-                    IsRequired = false,
+                    IsRequired = model.IsRequired,
                     SortOrder = model.SortOrder,
                     MinValue = model.MinValue,
                     MaxValue = model.MaxValue,
@@ -159,6 +164,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, int branchId, CancellationToken ct = default)
         {

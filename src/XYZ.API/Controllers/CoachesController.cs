@@ -14,6 +14,7 @@ using XYZ.Application.Features.Coaches.Commands.UpdateCoach;
 using XYZ.Application.Features.Coaches.Queries.GetAllCoaches;
 using XYZ.Application.Features.Coaches.Queries.GetCoachById;
 using XYZ.Application.Features.Email.Options;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -33,12 +34,10 @@ public sealed class CoachesController(
     IPasswordSetupLinkBuilder linkBuilder) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<IActionResult> GetAll([FromQuery] GetAllCoachesQuery query, CancellationToken ct)
         => Ok(await mediator.Send(query, ct));
 
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "Admin,Coach,SuperAdmin")]
     public async Task<IActionResult> GetById(int id, CancellationToken ct)
     {
         var dto = await mediator.Send(new GetCoachByIdQuery { CoachId = id }, ct);
@@ -46,7 +45,6 @@ public sealed class CoachesController(
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     public async Task<ActionResult<int>> Create([FromBody] CreateCoachRequestDTO request, CancellationToken ct)
     {
@@ -55,9 +53,12 @@ public sealed class CoachesController(
         if (!string.IsNullOrWhiteSpace(tenantClaim) && int.TryParse(tenantClaim, out var parsedTenantId))
             currentTenantId = parsedTenantId;
 
-        var targetTenantId = request.TenantId ?? currentTenantId;
-        if (targetTenantId is null)
-            return BadRequest("Tenant bilgisi bulunamadı. Lütfen TenantId gönderin veya geçerli bir tenant ile giriş yapın.");
+        if (request.TenantId.HasValue && currentTenantId.HasValue && request.TenantId.Value != currentTenantId.Value)
+            return BadRequest("TenantId uyuşmuyor. Önce ilgili tenant'a switch yapın.");
+
+        var targetTenantId = currentTenantId ?? request.TenantId;
+        if (!targetTenantId.HasValue)
+            return BadRequest("Tenant bilgisi bulunamadı. Geçerli bir tenant ile giriş yapın.");
 
         var email = (request.Email ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(email))
@@ -120,7 +121,7 @@ public sealed class CoachesController(
                 }
             }
 
-            const string coachRole = "Coach";
+            var coachRole = RoleNames.Coach;
             if (!await roleManager.RoleExistsAsync(coachRole))
                 await roleManager.CreateAsync(new IdentityRole(coachRole));
 
@@ -131,7 +132,7 @@ public sealed class CoachesController(
                 {
                     var errors = string.Join("; ", roleResult.Errors.Select(e => e.Description));
                     await tx.RollbackAsync(ct);
-                    return BadRequest($"Kullanıcı Coach rolüne eklenemedi: {errors}");
+                    return BadRequest($"Kullanıcı {coachRole} rolüne eklenemedi: {errors}");
                 }
             }
 
@@ -192,7 +193,6 @@ public sealed class CoachesController(
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCoachCommand command, CancellationToken ct)
     {
         if (id != command.CoachId) return BadRequest("Id uyuşmuyor.");
@@ -200,7 +200,6 @@ public sealed class CoachesController(
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
         => Ok(await mediator.Send(new DeleteCoachCommand { CoachId = id }, ct));
 

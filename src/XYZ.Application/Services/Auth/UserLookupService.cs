@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Interfaces.Auth;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 
 namespace XYZ.Application.Services.Auth
@@ -61,7 +62,22 @@ namespace XYZ.Application.Services.Auth
             if (user is null)
                 return null;
 
+            if (!user.IsActive)
+                return null;
+
             var roles = await _userManager.GetRolesAsync(user);
+
+            var isSuperAdmin = roles.Any(r => string.Equals(r, RoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase));
+
+            if (!isSuperAdmin)
+            {
+                var tenantActive = await _context.Tenants
+                    .AsNoTracking()
+                    .AnyAsync(t => t.Id == user.TenantId, ct);
+
+                if (!tenantActive)
+                    return null;
+            }
 
             var (studentId, coachId, adminId) = await FindProfileIdsAsync(user, ct);
 

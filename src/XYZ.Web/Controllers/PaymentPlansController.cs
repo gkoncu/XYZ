@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using XYZ.Application.Features.PaymentPlans.Commands.CreatePaymentPlan;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.PaymentPlans;
 using XYZ.Web.Services;
 
@@ -21,7 +22,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Student(int studentId, CancellationToken cancellationToken)
         {
             var plan = await _apiClient.GetStudentPaymentPlanAsync(studentId, cancellationToken);
@@ -35,7 +36,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> History(int studentId, CancellationToken cancellationToken)
         {
             var history = await _apiClient.GetStudentPaymentPlanHistoryAsync(studentId, cancellationToken);
@@ -44,7 +45,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,Student,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Details(int planId, CancellationToken cancellationToken)
         {
             var plan = await _apiClient.GetPaymentPlanDetailsAsync(planId, cancellationToken);
@@ -58,7 +59,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(int studentId, CancellationToken cancellationToken)
         {
             var today = DateTime.Today;
@@ -84,7 +85,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreatePaymentPlanVm model, CancellationToken cancellationToken)
         {
@@ -114,7 +115,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Student")]
+        [Authorize(Roles = RoleNames.Student)]
         public async Task<IActionResult> My(CancellationToken cancellationToken)
         {
             var plan = await _apiClient.GetMyPaymentPlanAsync(cancellationToken);
@@ -130,7 +131,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int planId, int studentId, CancellationToken cancellationToken)
         {
@@ -148,7 +149,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Archive(int planId, int studentId, CancellationToken cancellationToken)
         {

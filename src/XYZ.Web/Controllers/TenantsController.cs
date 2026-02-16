@@ -8,12 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 using XYZ.Application.Features.Auth.DTOs;
 using XYZ.Application.Features.Tenants.Commands.CreateTenant;
 using XYZ.Application.Features.Tenants.Commands.UpdateTenant;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Tenants;
 using XYZ.Web.Services;
 
 namespace XYZ.Web.Controllers
 {
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleNames.SuperAdmin)]
     public class TenantsController : Controller
     {
         private const string RefreshTokenCookieName = "xyz_rt";

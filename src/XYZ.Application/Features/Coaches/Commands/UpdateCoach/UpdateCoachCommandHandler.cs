@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System;
 using XYZ.Application.Common.Exceptions;
 using XYZ.Application.Common.Interfaces;
 using XYZ.Domain.Enums;
@@ -13,8 +14,8 @@ public sealed class UpdateCoachCommandHandler(
 {
     public async Task<int> Handle(UpdateCoachCommand request, CancellationToken ct)
     {
-        if (currentUser.Role is not ("Admin" or "SuperAdmin"))
-            throw new UnauthorizedAccessException("Bu işlem için yetkiniz yok.");
+        var tenantId = currentUser.TenantId
+            ?? throw new UnauthorizedAccessException("TenantId bulunamadı.");
 
         var coach = await dataScope.Coaches()
             .Include(c => c.User)
@@ -23,19 +24,12 @@ public sealed class UpdateCoachCommandHandler(
         if (coach is null)
             throw new NotFoundException(nameof(Domain.Entities.Coach), request.CoachId);
 
-        var effectiveTenantId = currentUser.TenantId != 0 ? currentUser.TenantId : coach.TenantId;
-
-        if (effectiveTenantId <= 0)
-            throw new UnauthorizedAccessException("Tenant bilgisi bulunamadı.");
-
-        var branchOk = await context.Branches
+        var branchOk = await dataScope.Branches()
             .AsNoTracking()
-            .AnyAsync(b => b.Id == request.BranchId
-                           && b.TenantId == effectiveTenantId
-                           && b.IsActive, ct);
+            .AnyAsync(b => b.Id == request.BranchId && b.IsActive, ct);
 
         if (!branchOk)
-            throw new InvalidOperationException("Branş bulunamadı veya bu tenant'a ait değil.");
+            throw new UnauthorizedAccessException("Bu branşa erişiminiz yok.");
 
         var email = (request.Email ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(email))
@@ -45,20 +39,20 @@ public sealed class UpdateCoachCommandHandler(
 
         var emailInUse = await context.Users
             .AsNoTracking()
-            .AnyAsync(u => u.TenantId == effectiveTenantId
+            .AnyAsync(u => u.TenantId == tenantId
                            && u.NormalizedEmail == normalizedEmail
                            && u.Id != coach.UserId
                            && u.IsActive, ct);
 
         if (emailInUse)
-            throw new InvalidOperationException("Bu e-posta adresi bu tenant içinde başka bir kullanıcı tarafından kullanılıyor.");
+            throw new InvalidOperationException("Bu e-posta adresi bu kulüp içinde başka bir kullanıcı tarafından kullanılıyor.");
 
         string? identityNumber = string.IsNullOrWhiteSpace(request.IdentityNumber) ? null : request.IdentityNumber.Trim();
         string? licenseNumber = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber.Trim();
 
         if (!string.IsNullOrWhiteSpace(identityNumber))
         {
-            var identityInUse = await dataScope.Coaches()
+            var identityInUse = await context.Coaches
                 .AsNoTracking()
                 .AnyAsync(c => c.IdentityNumber == identityNumber && c.Id != coach.Id, ct);
 
@@ -72,7 +66,7 @@ public sealed class UpdateCoachCommandHandler(
         coach.User.Email = email;
         coach.User.UserName = email;
         coach.User.NormalizedEmail = normalizedEmail;
-        coach.User.NormalizedUserName = email.ToUpperInvariant();
+        coach.User.NormalizedUserName = normalizedEmail;
 
         coach.User.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
         coach.User.BirthDate = request.BirthDate;

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using XYZ.Application.Features.Documents.Queries.DocumentStatus;
+using XYZ.Domain.Constants;
 using XYZ.Web.Models.Documents;
 using XYZ.Web.Services;
 
@@ -18,7 +19,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Students(
             string? searchTerm,
             bool onlyIncomplete = true,
@@ -48,7 +49,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Coaches(
             string? searchTerm,
             bool onlyIncomplete = true,
@@ -78,7 +79,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Student(
             int studentId,
             int? type,
@@ -108,7 +109,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> UploadStudent(
             int studentId,
             UserDocumentsViewModel model,
@@ -144,7 +145,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin,Coach")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> Coach(
             int coachId,
             int? type,
@@ -174,7 +175,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,SuperAdmin,Coach")]
+        [Authorize(Roles = RoleNames.AdminCoachOrSuperAdmin)]
         public async Task<IActionResult> UploadCoach(
             int coachId,
             UserDocumentsViewModel model,
@@ -210,7 +211,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Download(int id, CancellationToken ct = default)
         {
             var streamResult = await _api.DownloadDocumentAsync(id, ct);
@@ -219,7 +220,7 @@ namespace XYZ.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Delete(
             int id,
             string returnTo,
@@ -239,7 +240,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Student")]
+        [Authorize(Roles = RoleNames.Student)]
         public async Task<IActionResult> My(CancellationToken ct = default)
         {
             var me = await _api.GetMyProfileAsync(ct);

@@ -1,13 +1,8 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XYZ.Application.Common.Interfaces;
 using XYZ.Application.Common.Exceptions;
-using XYZ.Application.Data;
+using XYZ.Application.Common.Interfaces;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Entities;
 using XYZ.Domain.Enums;
 
@@ -22,10 +17,14 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
         string? Description,
         string? Location,
         bool GenerateAttendance = true
-    ) : IRequest<int>;
+    ) : IRequest<int>, IRequirePermission
+    {
+        public string PermissionKey => PermissionNames.ClassSessions.Create;
+        public PermissionScope? MinimumScope => PermissionScope.OwnClasses;
+    }
 
     public sealed class CreateClassSessionCommandHandler(
-        ApplicationDbContext db,
+        IApplicationDbContext db,
         IDataScopeService dataScope
     ) : IRequestHandler<CreateClassSessionCommand, int>
     {
@@ -35,9 +34,7 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
                 .FirstOrDefaultAsync(c => c.Id == request.ClassId, cancellationToken);
 
             if (@class is null)
-            {
                 throw new NotFoundException($"Class not found. Id = {request.ClassId}");
-            }
 
             var session = new ClassSession
             {
@@ -55,28 +52,25 @@ namespace XYZ.Application.Features.ClassSessions.Commands.CreateClassSession
             if (request.GenerateAttendance)
             {
                 var activeEnrollments = await db.ClassEnrollments
-                    .Where(e => e.ClassId == request.ClassId &&
-                                e.StartDate <= request.Date &&
-                               (e.EndDate == null || e.EndDate >= request.Date))
+                    .Where(e => e.ClassId == request.ClassId
+                                && e.StartDate <= request.Date
+                                && (e.EndDate == null || e.EndDate >= request.Date))
                     .ToListAsync(cancellationToken);
 
                 foreach (var enrollment in activeEnrollments)
                 {
-                    var attendance = new Attendance
+                    session.Attendances.Add(new Attendance
                     {
                         TenantId = @class.TenantId,
                         ClassSession = session,
                         ClassId = request.ClassId,
                         StudentId = enrollment.StudentId,
                         Status = AttendanceStatus.Unknown
-                    };
-
-                    session.Attendances.Add(attendance);
+                    });
                 }
             }
 
             db.ClassSessions.Add(session);
-
             await db.SaveChangesAsync(cancellationToken);
 
             return session.Id;

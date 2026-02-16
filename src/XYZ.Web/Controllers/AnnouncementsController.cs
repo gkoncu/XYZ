@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using XYZ.Application.Features.Announcements.Commands.CreateAnnouncement;
 using XYZ.Application.Features.Announcements.Commands.CreateSystemAnnouncementForAllTenants;
 using XYZ.Application.Features.Announcements.Commands.UpdateAnnouncement;
+using XYZ.Domain.Constants;
 using XYZ.Domain.Enums;
 using XYZ.Web.Models.Announcements;
 using XYZ.Web.Services;
@@ -28,7 +29,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Index(
             string? searchTerm,
             int? classId,
@@ -68,7 +69,7 @@ namespace XYZ.Web.Controllers
                 TotalCount = result.TotalCount,
                 Items = result.Items?.ToList() ?? new List<XYZ.Application.Features.Announcements.Queries.GetAllAnnouncements.AnnouncementListItemDto>(),
 
-                CanWrite = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin")
+                CanWrite = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin)
             };
 
             await FillClassesSelectList(ct, selectedClassId: classId);
@@ -78,19 +79,19 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin,Student")]
+        [Authorize(Roles = RoleNames.AdminCoachStudentOrSuperAdmin)]
         public async Task<IActionResult> Details(int id, CancellationToken ct = default)
         {
             var dto = await _api.GetAnnouncementAsync(id, ct);
             if (dto is null)
                 return NotFound();
 
-            ViewBag.CanWrite = User.IsInRole("Admin") || User.IsInRole("Coach") || User.IsInRole("SuperAdmin");
+            ViewBag.CanWrite = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.SuperAdmin);
             return View(dto);
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Create(CancellationToken ct = default)
         {
             await FillClassesSelectList(ct, selectedClassId: null);
@@ -106,7 +107,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AnnouncementUpsertViewModel model, CancellationToken ct = default)
         {
@@ -142,7 +143,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         public async Task<IActionResult> Edit(int id, CancellationToken ct = default)
         {
             var dto = await _api.GetAnnouncementAsync(id, ct);
@@ -167,7 +168,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, AnnouncementUpsertViewModel model, CancellationToken ct = default)
         {
@@ -208,7 +209,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Coach,SuperAdmin")]
+        [Authorize(Roles = RoleNames.AdminOrSuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
         {
@@ -219,7 +220,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Roles = RoleNames.SuperAdmin)]
         public IActionResult Broadcast()
         {
             ViewData["Title"] = "Sistem Duyurusu Gönder";
@@ -230,7 +231,7 @@ namespace XYZ.Web.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Roles = RoleNames.SuperAdmin)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Broadcast(BroadcastAnnouncementViewModel model, CancellationToken ct = default)
         {
@@ -265,7 +266,7 @@ namespace XYZ.Web.Controllers
 
         private async Task FillClassesSelectList(CancellationToken ct, int? selectedClassId)
         {
-            if (User.IsInRole("Student"))
+            if (User.IsInRole(RoleNames.Student))
             {
                 ViewBag.ClassesSelectList = new List<SelectListItem>();
                 return;
